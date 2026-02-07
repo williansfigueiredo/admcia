@@ -658,17 +658,6 @@ app.get('/veiculos', (req, res) => {
 });
 
 
-// Rota para buscar Equipamentos
-app.get('/equipamentos', (req, res) => {
-  const sql = "SELECT * FROM equipamentos";
-  db.query(sql, (err, data) => {
-    if (err) return res.json(err);
-    return res.json(data);
-  });
-});
-
-
-
 app.post('/jobs/update/:id', (req, res) => {
   const { id } = req.params;
   const { campo, valor } = req.body;

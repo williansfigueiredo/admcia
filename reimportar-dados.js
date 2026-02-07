@@ -46,8 +46,12 @@ db.connect((err) => {
     
     console.log('✅ Tabelas limpas!\n');
     
-    // Importar dados
-    const sql = fs.readFileSync('dados-local.sql', 'utf8');
+    // Importar dados e REMOVER caracteres problemáticos
+    let sql = fs.readFileSync('dados-local.sql', 'utf8');
+    
+    // Remover BOM e caracteres invisíveis
+    sql = sql.replace(/^\uFEFF/, '');  // Remove BOM
+    sql = sql.replace(/[^\x00-\x7F]/g, '');  // Remove caracteres não-ASCII
     
     console.log('📤 Inserindo dados...\n');
     
