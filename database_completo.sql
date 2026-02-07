@@ -5,10 +5,19 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- Dropar todas as tabelas para recriar com estrutura correta
+DROP TABLE IF EXISTS `escalas`;
+DROP TABLE IF EXISTS `job_equipe`;
+DROP TABLE IF EXISTS `job_itens`;
+DROP TABLE IF EXISTS `jobs`;
+DROP TABLE IF EXISTS `equipamentos`;
+DROP TABLE IF EXISTS `veiculos`;
+DROP TABLE IF EXISTS `funcionarios`;
+DROP TABLE IF EXISTS `clientes`;
+
 -- ============================================
 -- TABELA: clientes
 -- ============================================
-DROP TABLE IF EXISTS `clientes`;
 CREATE TABLE `clientes` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(255) NOT NULL,
