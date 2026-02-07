@@ -34,10 +34,11 @@ const upload = multer({ storage: storage });
 
 // --- CONEXÃO COM O BANCO ---
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '', // Se tiver senha no seu MySQL, coloque aqui
-  database: 'sistema_gestao_tp'
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASS || '',
+  database: process.env.DB_NAME || 'sistema_gestao_tp',
+  port: Number(process.env.DB_PORT || 3306)
 });
 
 db.connect((err) => {
@@ -49,8 +50,6 @@ db.connect((err) => {
 
 
 // --- ROTAS ---
-
-
 
 
 
@@ -636,8 +635,9 @@ app.get('/debug/recalcular-estoque', (req, res) => {
 
 
 // Inicia o servidor
-app.listen(3000, () => {
-  console.log("Servidor rodando na porta 3000");
+const PORT = Number(process.env.PORT || 3000);
+app.listen(PORT, () => {
+  console.log("Servidor rodando na porta", PORT);
 });
 
 // Rota para buscar a Frota
