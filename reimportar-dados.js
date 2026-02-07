@@ -56,8 +56,8 @@ db.connect((err) => {
 
       INSERT INTO funcionarios (id, nome, cargo, departamento, email, telefone, cep, logradouro, numero, bairro, cidade, uf, status, data_admissao, data_demissao, observacoes, cpf, endereco) VALUES 
       (14,'Willian Operador','Operador de Teleprompter','Producao','willian@empresa.com',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Ativo',NULL,NULL,NULL,NULL,NULL),
-      (15,'Carlos Tecnico','Tecnico de Video','Operacao','carlos@empresa.com','','','','','','','','Ferias','0000-00-00',NULL,'','',NULL),
-      (16,'Bruna Operadora','Operadora','Operacao','bruna@empresa.com','','','','','','','','Ferias','0000-00-00',NULL,'','',NULL),
+      (15,'Carlos Tecnico','Tecnico de Video','Operacao','carlos@empresa.com','','','','','','','','Ferias',NULL,NULL,'','',NULL),
+      (16,'Bruna Operadora','Operadora','Operacao','bruna@empresa.com','','','','','','','','Ferias',NULL,NULL,'','',NULL),
       (17,'Juliana Producao','Produtora','Producao','juliana@empresa.com',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Ativo',NULL,NULL,NULL,NULL,NULL),
       (18,'Rafael Freelancer','Freelancer','Operacao','rafael@empresa.com',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Inativo',NULL,NULL,NULL,NULL,NULL),
       (19,'Marcos Logistica','Motorista','Logistica','marcos@empresa.com',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Ativo',NULL,NULL,NULL,NULL,NULL),
