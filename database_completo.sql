@@ -8,7 +8,8 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ============================================
 -- TABELA: clientes
 -- ============================================
-CREATE TABLE IF NOT EXISTS `clientes` (
+DROP TABLE IF EXISTS `clientes`;
+CREATE TABLE `clientes` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(255) NOT NULL,
   `nome_fantasia` VARCHAR(255) DEFAULT NULL,
