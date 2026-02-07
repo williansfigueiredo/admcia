@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS `clientes` (
   `observacoes` TEXT DEFAULT NULL,
   `site` VARCHAR(255) DEFAULT NULL,
   `status` ENUM('Ativo','Inativo','Bloqueado') DEFAULT 'Ativo',
+  `desconto_porcentage` DECIMAL(5,2) DEFAULT 0.00,
   PRIMARY KEY (`id`),
   INDEX `idx_cliente_status` (`status`),
   INDEX `idx_cliente_documento` (`documento`)
