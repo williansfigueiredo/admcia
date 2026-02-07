@@ -2,7 +2,7 @@
    CONFIGURAÇÕES GERAIS E INICIALIZAÇÃO
    ============================================================= */
 // Detecta automaticamente se está rodando local ou no Railway
-const API_URL = window.location.hostname === 'localhost' 
+const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000' 
   : window.location.origin;
 
