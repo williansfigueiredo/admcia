@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate": "npx sequelize-cli db:migrate",
     "criar-tabelas": "node criar-tabelas.js",
-    "start": "node criar-tabelas.js && node server.js"
+    "importar-dados": "node importar-dados.js",
+    "start": "node criar-tabelas.js && node importar-dados.js && node server.js"
   },
   "keywords": [],
   "author": "",
