@@ -1,0 +1,2779 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cia ADM</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="public/css/styles.css" />
+</head>
+
+<body>
+  <div class="sidebar" id="sidebar">
+    
+    <!-- Botão de toggle dentro do sidebar -->
+    <div class="sidebar-header">
+      <div class="brand-logo">
+        <i class="bi bi-grid-3x3-gap-fill" style="color: var(--primary-blue);"></i>
+        <span class="brand-text">Painel ERP</span>
+      </div>
+      <button class="btn-sidebar-toggle" id="sidebar-toggle" title="Minimizar Menu">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+    </div>
+
+    <div class="nav flex-column">
+      <div class="menu-label">DASHBOARDS</div>
+
+      <div class="nav-item">
+
+        <div class="nav-link active" data-bs-toggle="collapse" data-bs-target="#menuIndicadores" title="Indicadores">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-grid-fill nav-icon"></i> <span class="nav-text">Indicadores</span>
+          </div>
+          <i class="bi bi-chevron-down small nav-arrow"></i>
+        </div>
+
+        <div class="collapse show" id="menuIndicadores">
+          <div class="submenu-link" id="link-principal" onclick="switchView('principal')">
+            <span class="nav-text">Principal</span>
+          </div>
+          <div class="submenu-link" id="link-financeiro" onclick="switchView('financeiro')">
+            <span class="nav-text">Financeiro</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="menu-label">COMERCIAL</div>
+
+      <div class="nav-item">
+
+        <div class="nav-link" data-bs-toggle="collapse" data-bs-target="#menuComercial" title="Vendas e CRM">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-bag nav-icon"></i> <span class="nav-text">Vendas e CRM</span>
+          </div>
+          <i class="bi bi-chevron-down small nav-arrow"></i>
+        </div>
+
+        <div class="collapse" id="menuComercial">
+
+          <div class="submenu-link" id="link-clientes" onclick="switchView('clientes')">
+            <span class="nav-text">Clientes (PF/PJ)</span>
+          </div>
+
+          <div class="submenu-link" onclick="abrirTelaNovoCliente()" style="cursor: pointer;">
+            <i class="bi bi-person-plus me-2"></i><span class="nav-text">Novo Cliente</span>
+          </div>
+
+          <div class="submenu-link" id="link-contratos" onclick="switchView('contratos')">
+            <span class="nav-text">Contratos Ativos</span>
+          </div>
+
+          <div class="submenu-link" id="link-novo-job" onclick="switchView('novo-job')">
+            <i class="bi bi-plus-circle me-2"></i><span class="nav-text">Novo Pedido</span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="menu-label">OPERACIONAL</div>
+
+      <div class="nav-item">
+        <div class="nav-link active" data-bs-toggle="collapse" data-bs-target="#menuOperacional" title="Inventário">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-box-seam nav-icon"></i> <span class="nav-text">Inventário</span>
+          </div>
+          <i class="bi bi-chevron-down small nav-arrow"></i>
+        </div>
+
+        <div class="collapse show" id="menuOperacional">
+          <div class="submenu-link active" id="link-estoque" onclick="switchView('estoque')">
+            <span class="nav-text">Estoque Geral</span>
+          </div>
+          <div class="submenu-link" onclick="switchView('novo-item')" style="cursor: pointer;">
+            <i class="bi bi-plus-circle me-2"></i><span class="nav-text">Novo Item</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-label">GESTÃO INTERNA</div>
+      <div class="nav-item">
+        <div class="nav-link" data-bs-toggle="collapse" data-bs-target="#menuRH" title="RH">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-people nav-icon"></i> <span class="nav-text">RH</span>
+          </div>
+          <i class="bi bi-chevron-down small nav-arrow"></i>
+        </div>
+        <div class="collapse" id="menuRH">
+          <div class="submenu-link" id="link-funcionarios" onclick="switchView('funcionarios')">
+            <span class="nav-text">Funcionários</span>
+          </div>
+
+          <div class="submenu-link" onclick="abrirTelaNovoFuncionario()" style="cursor: pointer;">
+            <i class="bi bi-person-plus me-2"></i><span class="nav-text">Novo Funcionário</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-item mt-auto">
+        <div class="nav-link" title="Configurações">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-gear nav-icon"></i> <span class="nav-text">Configurações</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="main-content">
+    <header class="d-flex justify-content-between align-items-center mb-5">
+      
+      <!-- Botão menu mobile -->
+      <button class="btn border-0 d-lg-none me-2" id="mobile-menu-toggle" title="Abrir Menu">
+        <i class="bi bi-list fs-4 text-dark"></i>
+      </button>
+
+      <div class="position-relative flex-grow-1 mx-3 d-none d-md-block">
+      </div>
+
+<div class="d-flex align-items-center gap-3 gap-md-4">
+    
+    <div class="d-flex align-items-center">
+        <button class="btn btn-link p-0 me-3 text-decoration-none" onclick="window.toggleDarkMode()" title="Alternar Tema">
+    <i id="iconTheme" class="bi bi-moon-stars-fill fs-5 text-secondary"></i>
+</button>
+    </div>
+    <i class="bi bi-bell fs-5 text-secondary cursor-pointer"></i>
+
+    <div class="d-flex align-items-center gap-2">
+      <div class="user-avatar">P</div>
+      <div class="d-none d-md-block lh-1">
+        <div class="fw-bold small">Patrícia</div>
+        <div class="small text-muted">Diretora Comercial</div>
+      </div>
+    </div>
+</div>
+    </header>
+
+    <div id="view-principal" class="view-section active">
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h3 class="fw-bold text-dark mb-1">Visão Geral da Operação</h3>
+          <p class="text-muted mb-0">
+            Monitoramento de Jobs e Equipe Externa
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn-header-outline">
+            <i class="bi bi-file-earmark-spreadsheet me-2"></i>Relatório
+            Diário
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+          <div class="card-custom stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="kpi-title">FATURAMENTO (DIÁRIAS)</div>
+
+                <div class="kpi-value" id="kpi-faturamento">R$ 0.0K</div>
+
+                <div class="kpi-trend" id="kpi-faturamento-trend">
+                  <i class="bi bi-dash"></i>
+                  <span id="kpi-faturamento-pct">--%</span>
+                  <span class="text-muted ms-1 fw-normal">vs mês ant.</span>
+                </div>
+              </div>
+              <div class="kpi-icon-circle bg-green-soft">
+                <i class="bi bi-currency-dollar"></i>
+              </div>
+            </div>
+            <div class="mini-chart" id="mini-chart-faturamento"></div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card-custom stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div style="width: 100%; overflow: hidden">
+                <div class="kpi-title">JOBS EM ANDAMENTO</div>
+
+                <div class="kpi-value" id="kpi-jobs">0</div>
+
+                <div class="kpi-trend" id="kpi-jobs-trend">
+                  <i class="bi bi-dash"></i>
+                  <span id="kpi-jobs-pct">--%</span>
+                  <span class="text-muted ms-1 fw-normal small">vs semana ant.</span>
+                </div>
+              </div>
+
+              <div class="kpi-icon-circle bg-green-soft text-green">
+                <i class="bi bi-camera-video"></i>
+              </div>
+            </div>
+
+            <div class="mini-chart" id="mini-chart-jobs" style="
+                  display: flex;
+                  justify-content: space-between;
+                  gap: 4px;
+                  height: 35px;
+                  align-items: flex-end;
+                  width: 100%;
+                  padding-bottom: 8px;
+                "></div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card-custom stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="kpi-title">VEÍCULOS ATIVOS</div>
+                <div class="kpi-value" id="kpi-frota-valor">5/5</div>
+
+                <div class="mt-2" id="kpi-frota-status">
+                  <span class="text-muted small">Carregando...</span>
+                </div>
+              </div>
+
+              <div class="kpi-icon-circle bg-purple-soft text-purple" id="kpi-frota-icon">
+                <i class="bi bi-truck"></i>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card-custom stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="kpi-title">MANUTENÇÃO TÉCNICA</div>
+
+                <div class="kpi-value" id="kpi-equip-valor">0</div>
+
+                <div class="mt-2" id="kpi-equip-status">
+                  <span class="text-muted small">Verificando...</span>
+                </div>
+              </div>
+
+              <div class="kpi-icon-circle bg-red-soft text-red" id="kpi-equip-icon">
+                <i class="bi bi-tools"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+          <div class="card-custom">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h5 class="fw-bold mb-1">Diárias Realizadas vs Metas</h5>
+                <p class="text-muted small mb-0">
+                  Comparativo mensal de jobs executados
+                </p>
+              </div>
+              <div class="small">
+                <span class="text-primary me-2"><i class="bi bi-circle-fill" style="font-size: 8px"></i>
+                  Realizado</span><span class="text-secondary"><i class="bi bi-circle-fill" style="font-size: 8px"></i>
+                  Meta</span>
+              </div>
+            </div>
+            <div style="height: 300px">
+              <canvas id="chartPrincipal"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card-custom">
+            <h5 class="fw-bold mb-4">Status da Operação</h5>
+
+            <div class="status-row">
+              <div class="d-flex align-items-center">
+                <div class="status-icon-box bg-purple-soft">
+                  <i class="bi bi-calendar-event"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-dark">Jobs da Semana</div>
+                  <div class="small text-muted">confirmados</div>
+                </div>
+              </div>
+              <div class="fs-4 fw-bold text-purple">8</div>
+            </div>
+
+            <div class="status-row">
+              <div class="d-flex align-items-center">
+                <div class="status-icon-box bg-red-soft">
+                  <i class="bi bi-tablet"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-dark">iPads em Falta</div>
+                  <div class="small text-muted">bateria/cabo</div>
+                </div>
+              </div>
+              <div class="fs-4 fw-bold text-red">2</div>
+            </div>
+
+            <div class="status-row">
+              <div class="d-flex align-items-center">
+                <div class="status-icon-box bg-orange-soft">
+                  <i class="bi bi-truck"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-dark">Carros na Oficina</div>
+                  <div class="small text-muted">preventiva</div>
+                </div>
+              </div>
+              <div class="fs-4 fw-bold text-orange">1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h5 class="fw-bold mb-1">Últimas Diárias</h5>
+            <p class="text-muted small mb-0">
+              Controle de saídas recentes de operadores
+            </p>
+          </div>
+          <a href="#" class="text-decoration-none small fw-bold" onclick="navegarParaContratos(event)">
+            Ver agenda completa</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-custom table-borderless mb-0">
+            <thead>
+              <tr>
+                <th style="width: 30%">JOB / CLIENTE</th>
+                <th style="width: 15%">PERÍODO</th>
+                <th style="width: 20%">VALOR</th>
+                <th style="width: 20%">STATUS</th>
+                <th style="width: 15%">PAGAMENTO</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-ultimas-diarias"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-financeiro" class="view-section">
+
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h3 class="fw-bold text-dark mb-1">Controle Financeiro</h3>
+          <p class="text-muted mb-0">Fluxo de caixa: Locações e Serviços</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn-header-outline">
+            <i class="bi bi-download me-2"></i>Exportar
+          </button>
+          <button class="btn-header-dark">
+            <i class="bi bi-plus-lg me-2"></i>Nova Transação
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+
+        <div class="col-md-4">
+          <div class="card-custom stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="fin-icon-box bg-green-soft">
+                <i class="bi bi-arrow-down-left"></i>
+              </div>
+              <div class="trend-pill bg-green-soft">
+                <i class="bi bi-graph-up-arrow"></i> 8.5%
+              </div>
+            </div>
+            <div class="fin-label">A Receber (Jobs)</div>
+            <div class="fin-value">R$ 17.3K</div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card-custom stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="fin-icon-box bg-red-soft">
+                <i class="bi bi-arrow-up-right"></i>
+              </div>
+              <div class="trend-pill bg-red-soft">
+                <i class="bi bi-graph-down-arrow"></i> 3.2%
+              </div>
+            </div>
+            <div class="fin-label">Custos Operacionais</div>
+            <div class="fin-value">R$ 5.8K</div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card-custom stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="fin-icon-box bg-blue-soft">
+                <i class="bi bi-wallet2"></i>
+              </div>
+              <div class="trend-pill bg-green-soft">
+                <i class="bi bi-graph-up-arrow"></i> 12.8%
+              </div>
+            </div>
+            <div class="fin-label">Saldo em Caixa</div>
+            <div class="fin-value">R$ 11.5K</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="card-custom mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h5 class="fw-bold mb-1">Fluxo de Caixa</h5>
+            <p class="text-muted small mb-0">
+              Receitas (Locações) vs Despesas (Frota/Equipe)
+            </p>
+          </div>
+          <div class="d-flex gap-3 small">
+            <div class="d-flex align-items-center gap-2">
+              <span style="
+                    width: 12px;
+                    height: 12px;
+                    background: #0ab39c;
+                    border-radius: 4px;
+                  "></span>
+              Entradas
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span style="
+                    width: 12px;
+                    height: 12px;
+                    background: #f06548;
+                    border-radius: 4px;
+                  "></span>
+              Saídas
+            </div>
+          </div>
+        </div>
+        <div style="height: 320px"><canvas id="financeChart"></canvas></div>
+      </div>
+      <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h5 class="fw-bold mb-1">Transações Recentes</h5>
+            <p class="text-muted small mb-0">
+              Histórico de faturamento e pagamentos
+            </p>
+          </div>
+          <div class="d-flex gap-2">
+            <div class="d-flex align-items-center border rounded px-2 bg-white">
+              <i class="bi bi-search text-muted small"></i><input type="text" class="border-0 small p-1 ms-1"
+                style="outline: none; width: 120px" placeholder="Buscar..." />
+            </div>
+            <select class="form-select form-select-sm" style="width: 100px">
+              <option>Todos</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-fin table-borderless mb-0">
+            <thead>
+              <tr>
+                <th>DESCRIÇÃO <i class="bi bi-arrow-down-short"></i></th>
+                <th>TIPO</th>
+                <th>CATEGORIA</th>
+                <th>VALOR <i class="bi bi-arrow-down-short"></i></th>
+                <th>VENCIMENTO</th>
+                <th>STATUS</th>
+                <th class="text-end">AÇÕES</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span class="fw-bold text-dark">Job - TV Record (Estúdio 3)</span>
+                </td>
+                <td class="text-income">Receita</td>
+                <td>Locação TP</td>
+                <td class="fw-bold text-income">+ R$ 15.800</td>
+                <td>24 jan 2026</td>
+                <td><span class="pill-green">Pago</span></td>
+                <td class="text-end text-muted">
+                  <i class="bi bi-eye cursor-pointer"></i>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="fw-bold text-dark">Reparo Monitor 19" (Quebra)</span>
+                </td>
+                <td class="text-expense">Despesa</td>
+                <td>Manutenção</td>
+                <td class="fw-bold text-expense">- R$ 2.500</td>
+                <td>27 jan 2026</td>
+                <td><span class="pill-green">Pago</span></td>
+                <td class="text-end text-muted">
+                  <i class="bi bi-eye cursor-pointer"></i>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="fw-bold text-dark">Job - Palestra Pfizer</span>
+                </td>
+                <td class="text-income">Receita</td>
+                <td>TP + Operador</td>
+                <td class="fw-bold text-income">+ R$ 4.200</td>
+                <td>19 jan 2026</td>
+                <td><span class="pill-yellow">Pendente</span></td>
+                <td class="text-end text-muted">
+                  <i class="bi bi-eye cursor-pointer"></i>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="fw-bold text-dark">Combustível - Fiorino</span>
+                </td>
+                <td class="text-expense">Despesa</td>
+                <td>Logística</td>
+                <td class="fw-bold text-expense">- R$ 3.800</td>
+                <td>14 jan 2026</td>
+                <td><span class="pill-red">Atrasado</span></td>
+                <td class="text-end text-muted">
+                  <i class="bi bi-eye cursor-pointer"></i>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="fw-bold text-dark">Campanha Política (Pacote)</span>
+                </td>
+                <td class="text-income">Receita</td>
+                <td>Locação Mensal</td>
+                <td class="fw-bold text-income">+ R$ 28.500</td>
+                <td>21 jan 2026</td>
+                <td><span class="pill-green">Pago</span></td>
+                <td class="text-end text-muted">
+                  <i class="bi bi-eye cursor-pointer"></i>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="fw-bold text-dark">Pagamento Operadores</span>
+                </td>
+                <td class="text-expense">Despesa</td>
+                <td>Mão de Obra</td>
+                <td class="fw-bold text-expense">- R$ 45.000</td>
+                <td>04 jan 2026</td>
+                <td><span class="pill-green">Pago</span></td>
+                <td class="text-end text-muted">
+                  <i class="bi bi-eye cursor-pointer"></i>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="fw-bold text-dark">Produtora VideoArt (Extra)</span>
+                </td>
+                <td class="text-income">Receita</td>
+                <td>Diária Extra</td>
+                <td class="fw-bold text-income">+ R$ 3.100</td>
+                <td>17 jan 2026</td>
+                <td><span class="pill-red">Atrasado</span></td>
+                <td class="text-end text-muted">
+                  <i class="bi bi-eye cursor-pointer"></i>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-3 text-muted small">Mostrando 7 transações</div>
+      </div>
+    </div>
+
+    <!--
+    <div id="view-logistica" class="view-section">
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h3 class="fw-bold text-dark mb-1">Logística & Frota</h3>
+          <p class="text-muted mb-0">
+            Monitoramento de deslocamento e equipamentos
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn-header-outline">
+            <i class="bi bi-file-text me-2"></i>Relatório KM
+          </button>
+          <button class="btn-header-dark">
+            <i class="bi bi-plus-lg me-2"></i>Nova Saída
+          </button>
+        </div>
+      </div>
+      <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+          <div class="card-custom p-0 overflow-hidden" style="min-height: 480px">
+            <div class="p-4 border-bottom">
+              <h5 class="fw-bold mb-1">Localização da Frota</h5>
+              <div class="d-flex gap-3 small mt-2">
+                <span class="d-flex align-items-center">
+                  <span class="legend-dot" style="background: #0ab39c"></span>
+                  Em Job (Externas)
+                </span>
+                <span class="d-flex align-items-center">
+                  <span class="legend-dot" style="background: #299cdb"></span>
+                  Na Base
+                </span>
+                <span class="d-flex align-items-center">
+                  <span class="legend-dot" style="background: #f7b84b"></span>
+                  Oficina/Manutenção
+                </span>
+              </div>
+            </div>
+            <div id="map"></div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card-custom">
+            <h5 class="fw-bold mb-3">Linha do Tempo (Hoje)</h5>
+            <div class="timeline-container">
+              <div class="timeline-item">
+                <div class="timeline-icon success">
+                  <i class="bi bi-check-lg"></i>
+                </div>
+                <div class="fw-bold text-dark text-truncate">
+                  Chegada Confirmada - TV Record
+                </div>
+                <div class="small text-muted mt-1">
+                  <i class="bi bi-clock me-1"></i> 16:01
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon info">
+                  <i class="bi bi-truck"></i>
+                </div>
+                <div class="fw-bold text-dark text-truncate">
+                  Retorno Base - Kit 04 (Fiorino)
+                </div>
+                <div class="small text-muted mt-1">
+                  <i class="bi bi-clock me-1"></i> 15:31
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon danger">
+                  <i class="bi bi-exclamation-lg"></i>
+                </div>
+                <div class="fw-bold text-dark text-truncate">
+                  Atraso - Trânsito na Marginal
+                </div>
+                <div class="small text-muted mt-1">
+                  <i class="bi bi-clock me-1"></i> 15:01
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon success">
+                  <i class="bi bi-check-lg"></i>
+                </div>
+                <div class="fw-bold text-dark text-truncate">
+                  Montagem Finalizada - Evento XP
+                </div>
+                <div class="small text-muted mt-1">
+                  <i class="bi bi-clock me-1"></i> 14:31
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon info">
+                  <i class="bi bi-truck"></i>
+                </div>
+                <div class="fw-bold text-dark text-truncate">
+                  Em deslocamento - Op. Carlos
+                </div>
+                <div class="small text-muted mt-1">
+                  <i class="bi bi-clock me-1"></i> 14:01
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon info">
+                  <i class="bi bi-box-seam"></i>
+                </div>
+                <div class="fw-bold text-dark text-truncate">
+                  Carga de Equipamento - Doblo 02
+                </div>
+                <div class="small text-muted mt-1">
+                  <i class="bi bi-clock me-1"></i> 13:45
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h5 class="fw-bold mb-1">Escala de Veículos</h5>
+            <p class="text-muted small mb-0">
+              Alocação da frota para a semana
+            </p>
+          </div>
+          <div class="d-none d-md-block">
+            <h5 class="fw-bold mb-1" style="font-size: 0.95rem">
+              Manutenção Programada
+            </h5>
+            <p class="text-muted small mb-0">Próximas revisões</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th style="width: 15%">VEÍCULO</th>
+                <th style="width: 12%">SEG</th>
+                <th style="width: 12%">TER</th>
+                <th style="width: 12%">QUA</th>
+                <th style="width: 12%">QUI</th>
+                <th style="width: 12%">SEX</th>
+                <th style="width: 12%">SÁB</th>
+                <th style="width: 12%">DOM</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Fiorino 01</td>
+                <td>
+                  <div class="schedule-block bg-solid-blue">TV Globo</div>
+                </td>
+                <td></td>
+                <td>
+                  <div class="schedule-block bg-solid-green">
+                    Institucional
+                  </div>
+                </td>
+                <td></td>
+                <td>
+                  <div class="schedule-block bg-solid-purple">
+                    Evento Agro
+                  </div>
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Doblo Teto Alto</td>
+                <td></td>
+                <td>
+                  <div class="schedule-block bg-solid-yellow">
+                    Live Youtube
+                  </div>
+                </td>
+                <td></td>
+                <td>
+                  <div class="schedule-block bg-solid-purple">
+                    Produtora O2
+                  </div>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Mobi 01 (Técnico)</td>
+                <td>
+                  <div class="schedule-block bg-solid-cyan">
+                    Visita Téc...
+                  </div>
+                </td>
+                <td></td>
+                <td>
+                  <div class="schedule-block bg-solid-yellow">Suporte</div>
+                </td>
+                <td></td>
+                <td></td>
+                <td>
+                  <div class="schedule-block bg-solid-red text-white">
+                    Oficina
+                  </div>
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Spin 7 Lugares</td>
+                <td></td>
+                <td>
+                  <div class="schedule-block bg-solid-blue" style="background: #6366f1">
+                    Equipe Globo
+                  </div>
+                </td>
+                <td></td>
+                <td></td>
+                <td>
+                  <div class="schedule-block bg-solid-green" style="background: #14b8a6">
+                    Viagem Interior
+                  </div>
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="text-muted small mt-3">
+          Clique em um bloco para ver detalhes da rota
+        </div>
+      </div>
+    </div>
+    -->
+
+    <div id="view-clientes" class="view-section">
+
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h3 class="fw-bold text-dark mb-1">Clientes</h3>
+          <p class="text-muted mb-0">Gestão de clientes PF e PJ</p>
+        </div>
+        <div class="d-flex gap-2">
+
+          <div class="btn-group me-2" role="group">
+            <button type="button" class="btn btn-outline-secondary active" id="btn-view-card"
+              onclick="alternarViewCliente('card')" title="Visualização em Cards">
+              <i class="bi bi-grid-fill"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btn-view-list"
+              onclick="alternarViewCliente('list')" title="Visualização em Lista">
+              <i class="bi bi-list-ul"></i>
+            </button>
+          </div>
+
+          <button class="btn-header-outline">
+            <i class="bi bi-download me-2"></i>Exportar
+          </button>
+          <button class="btn btn-primary" onclick="abrirTelaNovoCliente()">
+            <i class="bi bi-plus-lg me-2"></i>Novo Cliente
+          </button>
+        </div>
+      </div>
+
+      <div class="card-custom mb-4 p-3">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <div class="search-box">
+              <i class="bi bi-search text-muted me-2"></i>
+              <input type="text" id="inputBuscaCliente"
+                placeholder="Buscar Nome, CNPJ, CPF ou Responsável..." oninput="filtrarClientes()" />
+            </div>
+          </div>
+          <div class="col-md-6 text-end">
+            <select id="filtroTipoCliente" class="form-select d-inline-block w-auto" onchange="filtrarClientes()">
+              <option value="">Todos</option>
+              <option value="PF">Pessoa Física</option>
+              <option value="PJ">Pessoa Jurídica</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4" id="lista-clientes-cards"></div>
+
+
+      <div id="lista-clientes-tabela-container" class="d-none">
+        <div class="card-custom p-0 overflow-hidden">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-light small text-muted">
+                <tr>
+                  <th class="ps-4">CLIENTE / RAZÃO SOCIAL</th>
+                  <th>DOCUMENTO</th>
+                  <th>CONTATO</th>
+                  <th>LOCALIZAÇÃO</th>
+                  <th>STATUS</th>
+                  <th class="text-end pe-4">AÇÕES</th>
+                </tr>
+              </thead>
+              <tbody id="lista-clientes-tabela-body">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <section id="view-perfil-cliente" class="view-section">
+      <div class="container-fluid p-4">
+
+        <div class="card border-0 shadow-sm mb-4 print-no-border">
+          <div class="card-header bg-white pt-4 pb-0 border-0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-light border rounded-circle d-print-none" onclick="switchView('clientes')"
+                  title="Voltar">
+                  <i class="bi bi-arrow-left"></i>
+                </button>
+                <div>
+                  <h3 class="fw-bold text-dark mb-0" id="tituloPerfilNome">Carregando...</h3>
+                  <div class="text-muted small">
+                    <span id="tituloPerfilDoc">---</span> • <span id="tituloPerfilStatus"
+                      class="badge bg-light text-dark border">Ativo</span>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn btn-dark d-print-none" onclick="window.print()">
+                <i class="bi bi-printer me-2"></i>Imprimir Ficha
+              </button>
+            </div>
+
+            <ul class="nav nav-tabs card-header-tabs d-print-none" id="abasCliente" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#aba-dados" type="button" role="tab">
+                  <i class="bi bi-person-vcard me-2"></i>Dados Cadastrais
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#aba-pedidos" type="button" role="tab">
+                  <i class="bi bi-clipboard-check me-2"></i>Histórico de Pedidos
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#aba-financeiro" type="button" role="tab">
+                  <i class="bi bi-currency-dollar me-2"></i>Financeiro
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card-body p-0">
+            <div class="tab-content">
+
+              <div class="tab-pane fade show active p-4" id="aba-dados">
+                <form id="formPerfilCliente">
+                  <div class="row g-3">
+                    <div class="col-12 mb-2 d-none d-print-block">
+                      <h5 class="fw-bold border-bottom pb-2">Ficha Cadastral do Cliente</h5>
+                    </div>
+
+                    <div class="col-12">
+                      <h6 class="text-primary border-bottom pb-2 mb-3">Dados Empresariais</h6>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="small text-muted fw-bold">Razão Social / Nome</label>
+                      <input type="text" id="perfil_nome" class="form-control bg-light fw-bold" readonly>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="small text-muted fw-bold">Nome Fantasia</label>
+                      <input type="text" id="perfil_fantasia" class="form-control bg-light" readonly>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="small text-muted fw-bold">Documento (CPF/CNPJ)</label>
+                      <input type="text" id="perfil_doc" class="form-control bg-light font-monospace" readonly>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="small text-muted fw-bold">Inscrição Estadual</label>
+                      <input type="text" id="perfil_ie" class="form-control bg-light" readonly>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="small text-muted fw-bold">Status</label>
+                      <input type="text" id="perfil_status" class="form-control bg-light" readonly>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <h6 class="text-primary border-bottom pb-2 mb-3">Endereço & Localização</h6>
+                    </div>
+
+                    <div class="col-md-2">
+                      <label class="small text-muted fw-bold">CEP</label>
+                      <input type="text" id="perfil_cep" class="form-control bg-light" readonly>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="small text-muted fw-bold">Logradouro</label>
+                      <input type="text" id="perfil_logradouro" class="form-control bg-light" readonly>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="small text-muted fw-bold">Cidade/UF</label>
+                      <input type="text" id="perfil_cidade_uf" class="form-control bg-light" readonly>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <h6 class="text-primary border-bottom pb-2 mb-3">Contatos</h6>
+                    </div>
+
+                    <div class="col-md-6">
+                      <div class="p-3 border rounded bg-white h-100">
+                        <div class="badge bg-light text-dark mb-2 border">Contato Principal</div>
+                        <div class="mb-2">
+                          <label class="small text-muted">Nome</label>
+                          <input type="text" id="perfil_c1_nome" class="form-control form-control-sm bg-light" readonly>
+                        </div>
+                        <div class="mb-2">
+                          <label class="small text-muted">E-mail</label>
+                          <input type="text" id="perfil_c1_email" class="form-control form-control-sm bg-light"
+                            readonly>
+                        </div>
+                        <div>
+                          <label class="small text-muted">Telefone</label>
+                          <input type="text" id="perfil_c1_tel" class="form-control form-control-sm bg-light" readonly>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <div class="p-3 border rounded bg-white h-100">
+                        <div class="badge bg-light text-dark mb-2 border">Contato Secundário</div>
+                        <div class="mb-2">
+                          <label class="small text-muted">Nome</label>
+                          <input type="text" id="perfil_c2_nome" class="form-control form-control-sm bg-light" readonly>
+                        </div>
+                        <div class="mb-2">
+                          <label class="small text-muted">E-mail</label>
+                          <input type="text" id="perfil_c2_email" class="form-control form-control-sm bg-light"
+                            readonly>
+                        </div>
+                        <div>
+                          <label class="small text-muted">Telefone</label>
+                          <input type="text" id="perfil_c2_tel" class="form-control form-control-sm bg-light" readonly>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-3">
+                      <label class="small text-muted fw-bold">Observações</label>
+                      <textarea id="perfil_obs" class="form-control bg-light" rows="3" readonly></textarea>
+                    </div>
+
+                  </div>
+                </form>
+              </div>
+              <div class="tab-pane fade d-print-none" id="aba-pedidos">
+                <div class="card p-3 mb-3 bg-light border-0">
+                  <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                      <label class="small fw-bold text-muted">Buscar (ID ou Nome)</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" id="filtroPedBusca" class="form-control border-start-0"
+                          placeholder="Digite para buscar..." oninput="aplicarFiltroPedidosPerfil()">
+                      </div>
+                    </div>
+
+                    <div class="col-md-2">
+                      <label class="small fw-bold text-muted">Data Início</label>
+                      <input type="date" id="filtroPedInicio" class="form-control"
+                        onchange="aplicarFiltroPedidosPerfil()">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="small fw-bold text-muted">Data Fim</label>
+                      <input type="date" id="filtroPedFim" class="form-control" onchange="aplicarFiltroPedidosPerfil()">
+                    </div>
+
+                    <div class="col-md-3">
+                      <label class="small fw-bold text-muted">Status</label>
+                      <select id="filtroPedStatus" class="form-select" onchange="aplicarFiltroPedidosPerfil()">
+                        <option value="">Todos</option>
+                        <option value="Agendado">Agendado</option>
+                        <option value="Em Andamento">Em Andamento</option>
+                        <option value="Confirmado">Confirmado</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Cancelado">Cancelado</option>
+                      </select>
+                    </div>
+
+                    <div class="col-md-1">
+                      <button class="btn btn-outline-secondary w-100" onclick="limparFiltroPedidosPerfil()"
+                        title="Limpar Filtros">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light small text-muted">
+                      <tr>
+                        <th class="ps-4">#ID</th>
+                        <th>JOB / DESCRIÇÃO</th>
+                        <th>DATA</th>
+                        <th>VALOR</th>
+                        <th>STATUS</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tabela-perfil-pedidos"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="tab-pane fade p-4 d-print-none" id="aba-financeiro">
+                <div class="card p-3 mb-4 bg-white border shadow-sm">
+                  <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                      <label class="small fw-bold text-muted">Buscar (ID ou Ref.)</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" id="filtroFinBusca" class="form-control border-start-0"
+                          placeholder="Digite para buscar..." oninput="aplicarFiltroFinanceiroPerfil()">
+                      </div>
+                    </div>
+
+                    <div class="col-md-2">
+                      <label class="small fw-bold text-muted">Venc. Início</label>
+                      <input type="date" id="filtroFinInicio" class="form-control"
+                        onchange="aplicarFiltroFinanceiroPerfil()">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="small fw-bold text-muted">Venc. Fim</label>
+                      <input type="date" id="filtroFinFim" class="form-control"
+                        onchange="aplicarFiltroFinanceiroPerfil()">
+                    </div>
+
+                    <div class="col-md-3">
+                      <label class="small fw-bold text-muted">Status Pagamento</label>
+                      <select id="filtroFinStatus" class="form-select" onchange="aplicarFiltroFinanceiroPerfil()">
+                        <option value="">Todos</option>
+                        <option value="Pendente">Pendente</option>
+                        <option value="Pago">Pago</option>
+                        <option value="Vencido">Vencido</option>
+                        <option value="Cancelado">Cancelado</option>
+                      </select>
+                    </div>
+
+                    <div class="col-md-1">
+                      <button class="btn btn-outline-secondary w-100" onclick="limparFiltroFinanceiroPerfil()"
+                        title="Limpar Filtros">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mb-4">
+                  <div class="col-md-4">
+                    <div class="card p-3 bg-light border-0">
+                      <small class="text-muted fw-bold">Total Pago</small>
+                      <h4 class="text-success fw-bold mb-0" id="resumo_pago">R$ 0,00</h4>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card p-3 bg-light border-0">
+                      <small class="text-muted fw-bold">Em Aberto</small>
+                      <h4 class="text-warning fw-bold mb-0" id="resumo_aberto">R$ 0,00</h4>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card p-3 bg-light border-0">
+                      <small class="text-muted fw-bold">Cancelado / Perdido</small>
+                      <h4 class="text-danger fw-bold mb-0" id="resumo_cancelado">R$ 0,00</h4>
+                    </div>
+                  </div>
+                </div>
+                <div class="table-responsive border rounded">
+                  <table class="table table-sm table-hover mb-0">
+                    <thead class="bg-light">
+                      <tr>
+                        <th class="ps-3">Vencimento</th>
+                        <th>Ref.</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tabela-perfil-financeiro"></tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
+    <section id="view-cadastro-cliente" class="view-section">
+      <div class="container-fluid p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2 class="fw-bold text-dark mb-1">Novo Cliente</h2>
+            <p class="text-muted">Preencha os dados completos para o cadastro.</p>
+          </div>
+          <div>
+            <button class="btn btn-outline-secondary me-2" onclick="switchView('clientes')">
+              <i class="bi bi-arrow-left"></i> Cancelar
+            </button>
+            <button class="btn btn-success px-4" onclick="salvarClienteFull()">
+              <i class="bi bi-check-lg me-2"></i> Salvar Cadastro
+            </button>
+          </div>
+        </div>
+
+        <form id="formClienteFull">
+          <div class="row g-4">
+
+            <div class="col-lg-8">
+
+              <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                  <h6 class="fw-bold m-0 text-primary"><i class="bi bi-building me-2"></i>Dados Empresariais</h6>
+                </div>
+                <div class="card-body">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label small text-muted">Razão Social / Nome Completo *</label>
+                      <input type="text" id="cadCliNome" class="form-control fw-bold" required>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label small text-muted">Nome Fantasia</label>
+                      <input type="text" id="cadCliFantasia" class="form-control" placeholder="Nome comercial...">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label small text-muted">CNPJ / CPF</label>
+                      <input type="text" id="cadCliDoc" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label small text-muted">Inscrição Estadual (I.E)</label>
+                      <input type="text" id="cadCliIE" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label small text-muted">Status</label>
+                      <select id="cadCliStatus" class="form-select">
+                        <option value="Ativo" selected>Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                        <option value="Bloqueado">Bloqueado</option>
+                      </select>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label small text-muted">Site / Redes Sociais</label>
+                      <input type="text" id="cadCliSite" class="form-control" placeholder="www.exemplo.com.br">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                  <h6 class="fw-bold m-0 text-primary"><i class="bi bi-geo-alt-fill me-2"></i>Endereço e Localização
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label small text-muted">CEP</label>
+                      <div class="input-group">
+                        <input type="text" id="cadCliCep" class="form-control"
+                          onblur="buscarCepGenerico(this.value, 'cadCli')">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                      </div>
+                    </div>
+                    <div class="col-md-7">
+                      <label class="form-label small text-muted">Logradouro (Rua/Av)</label>
+                      <input type="text" id="cadCliLogradouro" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label small text-muted">Número</label>
+                      <input type="text" id="cadCliNumero" class="form-control">
+                    </div>
+                    <div class="col-md-5">
+                      <label class="form-label small text-muted">Bairro</label>
+                      <input type="text" id="cadCliBairro" class="form-control">
+                    </div>
+                    <div class="col-md-5">
+                      <label class="form-label small text-muted">Cidade</label>
+                      <input type="text" id="cadCliCidade" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label small text-muted">UF</label>
+                      <input type="text" id="cadCliUf" class="form-control">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="col-lg-4">
+
+              <div class="card border-0 shadow-sm mb-4 h-100">
+                <div class="card-header bg-white py-3">
+                  <h6 class="fw-bold m-0 text-primary"><i class="bi bi-people-fill me-2"></i>Contatos</h6>
+                </div>
+                <div class="card-body">
+
+                  <h6 class="small fw-bold text-muted border-bottom pb-1 mb-2">CONTATO PRINCIPAL</h6>
+                  <div class="mb-2">
+                    <label class="small text-muted">Nome</label>
+                    <input type="text" id="cadCliContato1Nome" class="form-control form-control-sm">
+                  </div>
+                  <div class="mb-2">
+                    <label class="small text-muted">Cargo/Depto</label>
+                    <input type="text" id="cadCliContato1Cargo" class="form-control form-control-sm"
+                      placeholder="Ex: Gerente">
+                  </div>
+                  <div class="mb-2">
+                    <label class="small text-muted">Telefone/Celular</label>
+                    <input type="text" id="cadCliContato1Tel" class="form-control form-control-sm">
+                  </div>
+                  <div class="mb-3">
+                    <label class="small text-muted">E-mail</label>
+                    <input type="email" id="cadCliContato1Email" class="form-control form-control-sm">
+                  </div>
+
+                  <h6 class="small fw-bold text-muted border-bottom pb-1 mb-2 mt-4">CONTATO SECUNDÁRIO</h6>
+                  <div class="mb-2">
+                    <label class="small text-muted">Nome</label>
+                    <input type="text" id="cadCliContato2Nome" class="form-control form-control-sm">
+                  </div>
+                  <div class="mb-2">
+                    <label class="small text-muted">Cargo/Depto</label>
+                    <input type="text" id="cadCliContato2Cargo" class="form-control form-control-sm"
+                      placeholder="Ex: Financeiro">
+                  </div>
+                  <div class="mb-2">
+                    <label class="small text-muted">Telefone/Celular</label>
+                    <input type="text" id="cadCliContato2Tel" class="form-control form-control-sm">
+                  </div>
+                  <div class="mb-3">
+                    <label class="small text-muted">E-mail</label>
+                    <input type="email" id="cadCliContato2Email" class="form-control form-control-sm">
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+
+            <div class="col-12">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                  <label class="form-label fw-bold small text-muted">Observações Gerais</label>
+                  <textarea id="cadCliObs" class="form-control" rows="3"
+                    placeholder="Informações internas sobre o cliente..."></textarea>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </section>
+
+
+    <div id="view-contratos" class="view-section">
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h3 class="fw-bold text-dark mb-1">Gestão de Contratos</h3>
+          <p class="text-muted mb-0">
+            Controle de jobs ativos e histórico de locações
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn-header-outline" onclick="exportarParaExcel()">
+            <i class="bi bi-download me-2"></i>Relatório
+          </button>
+          <button class="btn-header-dark" onclick="switchView('novo-job')">
+            <i class="bi bi-plus-lg me-2"></i>Novo Pedido
+          </button>
+        </div>
+      </div>
+      <div class="row g-4 mb-4">
+        <div class="col-md-4">
+          <div class="card-custom d-flex align-items-center justify-content-between cursor-pointer"
+            onclick="alternarViewJobs()" title="Ver Cancelados">
+            <div>
+              <div class="text-muted small fw-bold mb-1" id="titulo-jobs">
+                Jobs em Aberto
+              </div>
+              <div class="fs-3 fw-bold text-dark" id="kpi-contratos-ativos">
+                0
+              </div>
+            </div>
+            <div class="fin-icon-box bg-green-soft mb-0" id="icon-bg-jobs" style="margin-bottom: 0">
+              <i class="bi bi-camera-reels" id="icon-jobs"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card-custom d-flex align-items-center justify-content-between cursor-pointer"
+            onclick="alternarViewFaturamento()" title="Ver Valor Perdido em Cancelamentos">
+            <div>
+              <div class="text-muted small fw-bold mb-1" id="titulo-faturamento">
+                Previsão Faturamento
+              </div>
+              <div class="fs-3 fw-bold text-green" id="kpi-contratos-valor">
+                R$ 0,00
+              </div>
+            </div>
+            <div class="fin-icon-box bg-blue-soft mb-0" id="icon-bg-fat" style="margin-bottom: 0">
+              <i class="bi bi-currency-dollar" id="icon-fat"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card-custom d-flex align-items-center justify-content-between cursor-pointer"
+            onclick="alternarViewFinanceiro()" title="Ver Vencidas">
+            <div>
+              <div class="text-muted small fw-bold mb-1" id="titulo-pendentes">
+                Faturas Pendentes
+              </div>
+              <div class="fs-3 fw-bold text-orange" id="kpi-contratos-pendentes">
+                0
+              </div>
+            </div>
+            <div class="fin-icon-box bg-orange-soft mb-0" id="icon-bg-fin" style="margin-bottom: 0">
+              <i class="bi bi-file-earmark-text" id="icon-fin"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-3 mb-3 border-0 shadow-sm bg-white">
+        <div class="row g-2">
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="bi bi-search"></i>
+              </span>
+
+              <input type="text" id="filtro-busca" class="form-control border-start-0 bg-light"
+                placeholder="Buscar Cliente, Job ou ID..." onkeyup="aplicarFiltrosContratos()"
+                list="lista-clientes-busca" />
+              <datalist id="lista-clientes-busca"> </datalist>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <select id="filtro-status" class="form-select bg-light" onchange="aplicarFiltrosContratos()">
+              <option value="">Status: Todos</option>
+              <option value="Agendado">Agendado</option>
+              <option value="Em Andamento">Em Andamento</option>
+              <option value="Confirmado">Confirmado</option>
+              <option value="Finalizado">Finalizado</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <select id="filtro-pagamento" class="form-select bg-light" onchange="aplicarFiltrosContratos()">
+              <option value="">Pagto: Todos</option>
+              <option value="Pendente">Pendente</option>
+              <option value="Vencido">Vencido</option>
+              <option value="Pago">Pago</option>
+              <option value="Faturado">Faturado</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" onclick="limparFiltros()">
+              <i class="bi bi-x-lg"></i> Limpar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-custom table-borderless mb-0">
+          <thead>
+            <tr class="text-nowrap">
+              <th style="min-width: 250px">JOB / CLIENTE</th>
+
+              <th style="min-width: 120px">PERÍODO</th>
+              <th style="min-width: 120px">VALOR</th>
+              <th style="min-width: 160px">STATUS</th>
+              <th style="min-width: 140px">PAGAMENTO</th>
+              <th style="width: 50px;" class="text-center">AÇÃO</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-contratos"></tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end align-items-center mt-3" id="paginacao-contratos"></div>
+    </div>
+
+    <div id="view-novo-job" class="view-section">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 class="fw-bold text-dark mb-1">Novo Pedido de Serviço</h4>
+          <p class="text-muted small mb-0">Preenchimento completo de Job e Faturamento.</p>
+        </div>
+        <div>
+          <button class="btn btn-light border bg-white text-muted" onclick="processarVoltarDoJob()">
+            <i class="bi bi-arrow-left me-1"></i> Voltar / Cancelar
+          </button>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm p-4 p-md-5" style="width: 100%; min-height: 100%;">
+        <form id="formNovoJobFull">
+
+          <div class="row mb-4 align-items-center">
+            <div class="col-md-6">
+              <div class="d-flex align-items-center gap-3">
+                <div class="upload-area"
+                  style="width: 150px; height: 60px; border: 2px dashed var(--border-color); display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 0.8rem; font-weight: bold;">
+                  <i class="bi bi-image me-2"></i> SEU LOGO
+                </div>
+                <div>
+                  <h3 class="fw-bold text-dark mb-0">PEDIDO DE SERVIÇO</h3>
+                  <div class="text-muted small">Cia do TP - Teleprompter</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 text-end">
+              <div class="d-inline-block text-start">
+                <label class="form-label small fw-bold text-muted mb-1">NÚMERO DO PEDIDO</label>
+                <input type="text" id="jobNumber"
+                  class="form-control form-control-lg fw-bold text-center bg-light border-0"
+                  style="width: 180px; letter-spacing: 2px;" readonly>
+              </div>
+            </div>
+          </div>
+
+          <hr class="mb-4">
+
+          <h6 class="text-uppercase fw-bold text-primary small mb-3"><i class="bi bi-geo-alt-fill me-2"></i>Dados do Job
+            e Localização</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-8">
+              <label class="form-label small fw-bold text-muted">Nome do JOB (Evento)</label>
+              <input type="text" id="jobDescricaoFull" class="form-control fw-bold"
+                placeholder="Ex: Gravação Institucional Natura" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Operador Técnico</label>
+              <select id="jobOperadorFull" class="form-select" required>
+                <option value="" selected disabled>Selecione...</option>
+              </select>
+            </div>
+
+            <!-- TABELA DE EQUIPE (NOVO) -->
+<div class="mb-4 bg-light p-3 rounded border">
+  <h6 class="text-uppercase fw-bold text-dark small mb-3">
+    👥 Equipe do Evento
+  </h6>
+
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <label class="form-label small fw-bold text-muted">Adicionar Funcionário</label>
+      <select id="selectFuncionarioEquipe" class="form-select">
+        <option value="">-- Selecione --</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small fw-bold text-muted">&nbsp;</label>
+      <button type="button" class="btn btn-sm btn-outline-primary w-100" 
+              onclick="adicionarFuncionarioEquipe()">
+        <i class="bi bi-plus-lg"></i> Adicionar
+      </button>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small fw-bold text-muted">Função</label>
+      <input type="text" id="inputFuncaoEquipe" class="form-control form-control-sm" 
+             placeholder="Ex: Técnico" value="Técnico">
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-sm table-borderless mb-0">
+      <thead class="bg-white small text-muted">
+        <tr>
+          <th>Nome</th>
+          <th>Cargo</th>
+          <th>Função no Job</th>
+          <th class="text-center">Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-equipe-job">
+        <!-- Preenchido dinamicamente -->
+      </tbody>
+    </table>
+  </div>
+  <small class="text-muted">Adicione os funcionários que estarão trabalhando neste evento</small>
+</div>
+
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-muted">CEP</label>
+              <input type="text" id="jobCep" class="form-control" placeholder="00000-000"
+                onblur="buscarEnderecoPorCEP(this.value)">
+              <div id="cep-erro" style="display:none;"></div>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label small fw-bold text-muted">Endereço (Rua/Av)</label>
+              <input type="text" id="jobLogradouro" class="form-control" placeholder="Rua...">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-muted">Número</label>
+              <input type="text" id="jobNumeroLocal" class="form-control" placeholder="Nº">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-bold text-muted">Bairro</label>
+              <input type="text" id="jobBairro" class="form-control" placeholder="Bairro">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Cidade</label>
+              <input type="text" id="jobCidade" class="form-control" placeholder="Cidade">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-muted">Estado (UF)</label>
+              <input type="text" id="jobUf" class="form-control" placeholder="UF">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label small fw-bold text-muted">Data Início</label>
+              <input type="date" id="jobDataInicio" class="form-control bg-light" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-bold text-muted">Data Fim</label>
+              <input type="date" id="jobDataFim" class="form-control bg-light" required>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <label class="form-label small fw-bold text-muted">Hora Chegada Prevista</label>
+    <input type="time" id="jobHoraChegada" class="form-control">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label small fw-bold text-muted">Hora Início Evento</label>
+    <input type="time" id="jobHoraInicio" class="form-control">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label small fw-bold text-muted">Hora Fim Evento</label>
+    <input type="time" id="jobHoraFim" class="form-control">
+  </div>
+</div>
+
+          <div class="row g-4 mb-4">
+            <div class="col-md-6 border-end">
+              <h6 class="text-uppercase fw-bold text-secondary small mb-3">Cliente / Solicitante</h6>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label small fw-bold">Empresa (Cliente)</label>
+                  <select id="jobClienteFull" class="form-select fw-bold" required>
+                    <option value="" selected disabled>Selecione o Cliente...</option>
+                  </select>
+                </div>
+                <div class="col-12 mb-2">
+                  <label class="form-label small text-muted">Cadastro (CNPJ/CPF)</label>
+                  <input type="text" id="jobClienteDocumento" class="form-control form-control-sm bg-light"
+                    placeholder="Automático...">
+                </div>
+                <div class="col-12 border-top pt-2">
+                  <label class="form-label small fw-bold text-primary">Quem fez o pedido?</label>
+                </div>
+                <div class="col-md-12">
+                  <input type="text" id="jobSolicitanteNome" class="form-control" placeholder="Nome Completo">
+                </div>
+                <div class="col-md-6">
+                  <input type="email" id="jobSolicitanteEmail" class="form-control" placeholder="E-mail">
+                </div>
+                <div class="col-md-6">
+                  <input type="text" id="jobSolicitanteTelefone" class="form-control" placeholder="Telefone / WhatsApp">
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6 ps-md-4">
+              <h6 class="text-uppercase fw-bold text-secondary small mb-3">Produção Local / Apoio</h6>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label small fw-bold">Nome da Produção Local</label>
+                  <input type="text" id="jobProducaoLocal" class="form-control"
+                    placeholder="Ex: Agência XYZ ou Produtora Local">
+                </div>
+
+                <div class="col-md-6 mt-3">
+                  <label class="form-label small fw-bold">Telefone / WhatsApp</label>
+                  <input type="text" id="jobProducaoContato" class="form-control" placeholder="(00) 00000-0000">
+                </div>
+                <div class="col-md-6 mt-3">
+                  <label class="form-label small fw-bold">E-mail da Produção</label>
+                  <input type="email" id="jobProducaoEmail" class="form-control" placeholder="contato@produtora.com">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ANTES: tinha um botão "Adicionar Item" -->
+
+          <!-- DEPOIS: Dropdown de Equipamentos -->
+          <div class="mb-4 bg-light p-3 rounded border">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="text-uppercase fw-bold text-dark small mb-0">
+                Equipamentos / Serviços
+              </h6>
+            </div>
+
+            <!-- ⭐ NOVO DROPDOWN -->
+            <div class="row mb-3">
+              <div class="col-md-8">
+                <label class="form-label small fw-bold text-muted">Selecione um equipamento:</label>
+                <select id="selectEquipamentoPedido" class="form-select" onchange="adicionarEquipamentoPedido()">
+                  <option value="">-- Carregando equipamentos... --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">&nbsp;</label>
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="adicionarLinhaItem()">
+                  <i class="bi bi-plus-lg me-1"></i> Ou adicionar manualmente
+                </button>
+              </div>
+            </div>
+
+            <!-- Tabela de Itens (igual antes) -->
+            <div class="table-responsive bg-white rounded border">
+              <table class="table table-borderless align-middle mb-0">
+                <thead class="small text-muted bg-light border-bottom">
+                  <tr>
+                    <th style="width: 40%; padding-left: 20px;">Descrição do Item</th>
+                    <th style="width: 10%; text-align: center;">Qtd</th>
+                    <th style="width: 20%;">Valor Unitário</th>
+                    <th style="width: 15%;">Desconto (%)</th>
+                    <th style="width: 10%; text-align: center;">Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="lista-itens-job">
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="row g-3 bg-light p-4 rounded border-top border-3 border-dark">
+            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-wallet2 me-1"></i> Dados de Faturamento e
+              Vencimento</h6>
+
+            <div class="col-12 mb-2">
+              <div class="d-flex gap-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="modoVencimento" id="modoData" checked
+                    onclick="toggleModoVencimento()">
+                  <label class="form-check-label small fw-bold" for="modoData">Data Específica</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="modoVencimento" id="modoPrazo"
+                    onclick="toggleModoVencimento()">
+                  <label class="form-check-label small fw-bold" for="modoPrazo">Parcelado / Prazo</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div id="boxVencimentoData">
+                <label class="form-label small fw-bold text-muted">Data do Vencimento</label>
+                <input type="date" id="jobVencimento" class="form-control border-primary">
+              </div>
+              <div id="boxVencimentoPrazo" class="d-none">
+                <label class="form-label small fw-bold text-muted">Escolha o Prazo</label>
+                <select id="jobVencimentoPrazo" class="form-select border-primary">
+                  <option value="30 dias">30 Dias</option>
+                  <option value="60 dias">60 Dias</option>
+                  <option value="30/60 dias">30 / 60 Dias</option>
+                  <option value="30/60/90 dias">30 / 60 / 90 Dias</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Tipo de Documento</label>
+              <select id="jobTipoDocumento" class="form-select">
+                <option value="Nota Fiscal">Nota Fiscal (NF)</option>
+                <option value="Recibo">Recibo Simples</option>
+                <option value="Contrato">Apenas Contrato</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Forma de Pagamento</label>
+              <select id="jobFormaPagamento" class="form-select">
+                <option value="Pix">Pix</option>
+                <option value="Boleto">Boleto Bancário</option>
+                <option value="Transferência">Transferência TED/DOC</option>
+                <option value="Dinheiro">Dinheiro / Espécie</option>
+                <option value="Cartão">Cartão de Crédito</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <hr class="my-2 text-muted">
+            </div>
+
+            <div class="col-12 mt-3">
+              <div class="p-3 dados-faturamento-box" style="border: 1px dashed var(--orange-500); border-radius: 8px;">
+                <h6 class="text-warning fw-bold mb-3 small">
+                  <i class="bi bi-receipt"></i> DADOS DE FATURAMENTO / NOTA FISCAL
+                </h6>
+
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label small text-muted">Razão Social</label>
+                    <input type="text" id="jobPagador" class="form-control form-control-sm"
+                      placeholder="Nome da Empresa">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small text-muted">CNPJ / CPF</label>
+                    <input type="text" id="jobPagadorCNPJ" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small text-muted">E-mail Financeiro</label>
+                    <input type="email" id="jobPagadorEmail" class="form-control form-control-sm">
+                  </div>
+
+                  <div class="col-md-3">
+                    <label class="form-label small text-muted">CEP</label>
+                    <input type="text" id="jobPagadorCep" class="form-control form-control-sm"
+                      onblur="buscarEnderecoPagador(this.value)">
+                  </div>
+                  <div class="col-md-5">
+                    <label class="form-label small text-muted">Rua / Logradouro</label>
+                    <input type="text" id="jobPagadorLogradouro" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small text-muted">Número</label>
+                    <input type="text" id="jobPagadorNumero" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small text-muted">Bairro</label>
+                    <input type="text" id="jobPagadorBairro" class="form-control form-control-sm">
+                  </div>
+
+                  <div class="col-md-10">
+                    <label class="form-label small text-muted">Cidade</label>
+                    <input type="text" id="jobPagadorCidade" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small text-muted">UF</label>
+                    <input type="text" id="jobPagadorUf" class="form-control form-control-sm">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 mt-3">
+              <label class="form-label small fw-bold text-dark">
+                <i class="bi bi-pencil-square me-1"></i> Observações Gerais
+              </label>
+              <textarea id="jobObservacoes" class="form-control bg-white" rows="2"
+                placeholder="Observações do pedido..."></textarea>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-end mt-4 pt-3 border-top">
+            <div class="text-start">
+              <button type="button" class="btn btn-outline-secondary" onclick="switchView('contratos')">
+                Cancelar
+              </button>
+            </div>
+
+            <div class="text-end">
+              <div class="row mb-2">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-muted">Desconto sobre o valor total (%)</label>
+                  <input type="number" id="descontoTotal" class="form-control" min="0" max="100" value="0"
+                    onchange="calcularValorTotalComDesconto()">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-muted">Motivo do desconto</label>
+                  <input type="text" id="motivoDesconto" class="form-control" maxlength="100"
+                    placeholder="Descreva o motivo do desconto">
+                </div>
+              </div>
+              <div class="text-uppercase small text-muted fw-bold">Valor Total do Pedido</div>
+              <h2 class="fw-bold text-success mb-3" id="displayValorTotal">R$ 0,00</h2>
+              <button type="button" class="btn btn-success btn-lg px-5 fw-bold shadow-sm"
+                onclick="salvarJobTelaCheia()">
+                <i class="bi bi-check-circle-fill me-2"></i> SALVAR PEDIDO
+              </button>
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </div>
+    <div id="view-estoque" class="view-section">
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h3 class="fw-bold text-dark mb-1">Estoque de Equipamentos</h3>
+          <p class="text-muted mb-0">Gestão de Inventário, Avarias e Manutenção</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn-header-outline" onclick="alert('Em breve: Exportar Excel')">
+            <i class="bi bi-download me-2"></i>Exportar
+          </button>
+          <button class="btn-header-dark" onclick="switchView('novo-item')">
+            <i class="bi bi-plus-lg me-2"></i>Novo Item
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-md-4">
+          <div class="card-custom stat-card d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-bold mb-1">Total de Itens</div>
+              <div class="fs-3 fw-bold text-dark" id="kpi-estoque-total">0</div>
+            </div>
+            <div class="fin-icon-box bg-blue-soft mb-0">
+              <i class="bi bi-box-seam"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card-custom stat-card d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-bold mb-1">Valor do Patrimônio</div>
+              <div class="fs-3 fw-bold text-green" id="kpi-estoque-valor">R$ 0,00</div>
+            </div>
+            <div class="fin-icon-box bg-green-soft mb-0">
+              <i class="bi bi-currency-dollar"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card-custom stat-card d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-bold mb-1">Em Manutenção/Avaria</div>
+              <div class="fs-3 fw-bold text-red" id="kpi-estoque-manutencao">0</div>
+            </div>
+            <div class="fin-icon-box bg-red-soft mb-0">
+              <i class="bi bi-tools"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-custom mb-4 p-3">
+        <div class="row g-2 align-items-center">
+
+          <div class="col-lg-4">
+            <div class="search-box">
+              <i class="bi bi-search text-muted me-2"></i>
+              <input type="text" id="buscaEstoque" onkeyup="filtrarEstoque()"
+                placeholder="Buscar por Nome, Marca ou Modelo..." />
+            </div>
+          </div>
+
+          <div class="col-lg-2 col-md-3">
+            <select class="form-select border-0 bg-light fw-bold text-muted" id="filtroCategoriaEstoque"
+              onchange="filtrarEstoque()">
+              <option value="">Todas Categorias</option>
+              <option value="Teleprompter">Teleprompter</option>
+              <option value="Vídeo">Vídeo / Câmera</option>
+              <option value="Informática">Informática</option>
+              <option value="Cabos">Cabos / Acessórios</option>
+              <option value="Mobiliário">Mobiliário</option>
+            </select>
+          </div>
+
+          <div class="col-lg-2 col-md-3">
+            <select class="form-select border-0 bg-light fw-bold text-muted" id="filtroStatusEstoque"
+              onchange="filtrarEstoque()">
+              <option value="">Status: Todos</option>
+              <option value="Disponível">Disponível</option>
+              <option value="Manutenção">Em Manutenção</option>
+              <option value="Em Uso">Em Uso (Job)</option>
+            </select>
+          </div>
+
+          <div class="col-lg-1 col-md-2">
+            <button class="btn btn-outline-secondary w-100 border-dashed" onclick="limparFiltrosEstoque()"
+              title="Limpar Filtros">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <div class="col-lg-3 col-md-4 text-end">
+            <div class="btn-group shadow-sm">
+              <button type="button" class="btn btn-white border active" id="btn-view-grid"
+                onclick="alternarModoEstoque('grid')">
+                <i class="bi bi-grid-fill"></i>
+              </button>
+              <button type="button" class="btn btn-white border" id="btn-view-lista"
+                onclick="alternarModoEstoque('lista')">
+                <i class="bi bi-list-ul"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4" id="grid-estoque-real">
+        <div class="col-12 text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <div class="mt-2 text-muted">Carregando estoque...</div>
+        </div>
+      </div>
+
+      <div id="lista-estoque-tabela-container" class="d-none">
+        <div class="card-custom p-0 overflow-hidden">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-light small text-muted">
+                <tr>
+                  <th class="ps-4">EQUIPAMENTO</th>
+                  <th>CATEGORIA</th>
+                  <th>MARCA / MODELO</th>
+                  <th class="text-center">QTD (DISP / TOTAL)</th>
+                  <th>VALOR DIÁRIA</th>
+                  <th>STATUS</th>
+                  <th class="text-end pe-4">AÇÕES</th>
+                </tr>
+              </thead>
+              <tbody id="lista-estoque-tabela-body">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div id="view-novo-item" class="view-section">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 class="fw-bold text-dark mb-1">Cadastrar Equipamento</h4>
+          <p class="text-muted small mb-0">Adicione novos itens ao seu inventário.</p>
+        </div>
+        <div>
+          <button class="btn btn-light border bg-white text-muted" onclick="switchView('estoque')">
+            <i class="bi bi-arrow-left me-1"></i> Cancelar
+          </button>
+          <button class="btn btn-success ms-2 px-4" onclick="salvarNovoItem()">
+            <i class="bi bi-check-lg me-2"></i> Salvar Item
+          </button>
+        </div>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card border-0 shadow-sm p-4">
+            <form id="formNovoItem">
+              <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Dados do Equipamento</h6>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                  <label class="form-label small fw-bold text-muted">Nome / Descrição do Item *</label>
+                  <input type="text" id="cadItemNome" class="form-control fw-bold"
+                    placeholder="Ex: Monitor Dell 24 Polegadas" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Categoria</label>
+                  <select id="cadItemCategoria" class="form-select">
+                    <option value="Teleprompter">Teleprompter</option>
+                    <option value="Informática">Informática (Notebooks/PCs)</option>
+                    <option value="Vídeo">Vídeo (Monitores/Câmeras)</option>
+                    <option value="Cabos">Cabos e Conectores</option>
+                    <option value="Acessórios">Acessórios / Tripés</option>
+                    <option value="Mobiliário">Mobiliário</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Quantidade Total</label>
+                  <input type="number" id="cadItemQtd" class="form-control" value="1" min="1">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Valor de Locação (Diária)</label>
+                  <div class="input-group">
+                    <span class="input-group-text">R$</span>
+                    <input type="number" id="cadItemValor" class="form-control" placeholder="0,00" step="0.01">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Status Inicial</label>
+                  <select id="cadItemStatus" class="form-select">
+                    <option value="Disponível">Disponível</option>
+                    <option value="Manutenção">Em Manutenção</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Marca / Fabricante</label>
+                  <input type="text" id="cadItemMarca" class="form-control" placeholder="Ex: Dell...">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Modelo</label>
+                  <input type="text" id="cadItemModelo" class="form-control">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Nº Série / Patrimônio</label>
+                  <input type="text" id="cadItemSerie" class="form-control" placeholder="Patrimônio ou Serial">
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-muted">Observações</label>
+                <textarea id="cadItemObs" class="form-control" rows="3"
+                  placeholder="Detalhes técnicos, voltagem, etc..."></textarea>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card border-0 shadow-sm p-4 text-center h-100">
+            <h6 class="text-muted fw-bold mb-3">Imagem do Item</h6>
+
+            <div class="upload-area"
+              style="width: 100%; height: 250px; border: 2px dashed var(--border-color); border-radius: 8px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+
+              <img id="previewFoto" src="data:," style="width: 100%; height: 100%; object-fit: cover; display: none;">
+
+              <div id="placeholderFoto" class="text-muted">
+                <i class="bi bi-image fs-1 mb-2 d-block"></i>
+                <span class="small">Nenhuma foto selecionada</span>
+              </div>
+            </div>
+
+            <input type="file" id="cadItemInputFoto" accept="image/*" class="d-none"
+              onchange="mostrarPreviewFoto(this)">
+
+            <div class="d-grid gap-2 mt-3">
+              <button class="btn btn-sm btn-outline-primary"
+                onclick="document.getElementById('cadItemInputFoto').click()">
+                <i class="bi bi-camera me-2"></i>Selecionar Foto
+              </button>
+              <button class="btn btn-sm btn-link text-danger text-decoration-none" onclick="removerFotoPreview()">
+                Remover
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <div id="view-funcionarios" class="view-section">
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h3 class="fw-bold text-dark mb-1">Equipe & Escalas</h3>
+          <p class="text-muted mb-0">
+            Gestão de operadores, motoristas e administrativo
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn-header-outline" onclick="alert('Em breve')">
+            <i class="bi bi-download me-2"></i>Exportar
+          </button>
+          <button class="btn-header-outline" style="color: var(--primary-blue); border-color: var(--primary-blue);"
+            data-bs-toggle="modal" data-bs-target="#modalNovaEscala">
+            <i class="bi bi-calendar-event me-2"></i>Nova Escala
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+          <div class="card-stat-func">
+            <div>
+              <div class="text-muted small fw-bold mb-1">Total Equipe</div>
+              <div class="fs-3 fw-bold text-dark" id="kpi-rh-total">--</div>
+            </div>
+            <div class="icon-soft-box bg-blue-soft text-blue">
+              <i class="bi bi-people"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card-stat-func">
+            <div>
+              <div class="text-muted small fw-bold mb-1">Em Atividade</div>
+              <div class="fs-3 fw-bold text-green" id="kpi-rh-ativos">--</div>
+            </div>
+            <div class="icon-soft-box bg-green-soft text-green">
+              <i class="bi bi-person-check"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card-stat-func">
+            <div>
+              <div class="text-muted small fw-bold mb-1">De Férias</div>
+              <div class="fs-3 fw-bold text-orange" id="kpi-rh-ferias">--</div>
+            </div>
+            <div class="icon-soft-box bg-orange-soft text-orange">
+              <i class="bi bi-tree"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card-stat-func">
+            <div>
+              <div class="text-muted small fw-bold mb-1">Inativos</div>
+              <div class="fs-3 fw-bold text-secondary" id="kpi-rh-inativos">--</div>
+            </div>
+            <div class="icon-soft-box bg-gray-soft text-muted">
+              <i class="bi bi-person-x"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mb-4">
+        <button id="btn-tab-lista" class="btn-tab-dark" onclick="toggleFuncView('lista')">
+          <i class="bi bi-people-fill me-2"></i>Lista de Funcionários
+        </button>
+        <button class="btn btn-white border" id="btn-tab-calendario" onclick="toggleFuncView('calendario')">
+          <i class="bi bi-calendar-week me-2"></i>Calendário de Escalas
+        </button>
+      </div>
+
+      <div id="container-lista">
+        <div class="card-custom mb-4 p-3">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <div class="search-box">
+                <i class="bi bi-search text-muted me-2"></i>
+                <input type="text" id="buscaFuncionarios"
+                  placeholder="Buscar por operador, técnico..." />
+              </div>
+            </div>
+            <div class="col-md-4 text-end d-flex gap-2 justify-content-end">
+              <select class="form-select d-inline-block w-auto" style="min-width: 120px">
+                <option>Todos</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4" id="lista-funcionarios-real">
+          <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="mt-2 text-muted">Carregando equipe...</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="container-calendario" class="card-custom" style="margin: 24px; margin-top: 0; display: none">
+        <div class="p-3">
+          <div id="calendar"></div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="modalNovaEscalaManual" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header">
+              <h5 class="modal-title fw-bold">Adicionar Escala Manual</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <form id="formEscalaManual">
+                <input type="hidden" id="escalaData">
+                <div class="mb-3">
+                  <label class="form-label small text-muted">Funcionário</label>
+                  <select id="escalaFuncionario" class="form-select" required>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small text-muted">Tipo / Observação</label>
+                  <select id="escalaTipo" class="form-select mb-2">
+                    <option value="Plantão">Plantão</option>
+                    <option value="Manutenção">Manutenção Interna</option>
+                    <option value="Folga">Folga / Indisponível</option>
+                    <option value="Treinamento">Treinamento</option>
+                  </select>
+                  <input type="text" id="escalaObs" class="form-control" placeholder="Detalhes (opcional)">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" class="btn btn-primary" onclick="salvarEscalaManual()">Salvar na Agenda</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+<section id="view-cadastro-funcionario" class="view-section">
+      <div class="container-fluid p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h2 class="fw-bold text-dark mb-1" id="tituloPaginaFuncionario">Novo Funcionário</h2>
+            <p class="text-muted small mb-0">Gestão de colaboradores e dados contratuais.</p>
+          </div>
+          <div>
+            <button class="btn btn-outline-secondary me-2" onclick="switchView('funcionarios')">
+              <i class="bi bi-arrow-left"></i> Voltar
+            </button>
+            <button id="btnSalvarFuncionario" class="btn btn-success px-4" onclick="salvarFuncionario()">
+              <i class="bi bi-check-lg me-2"></i> Salvar Ficha
+            </button>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            
+            <div class="card-header bg-white border-bottom pt-3 pb-2">
+                <ul class="nav nav-tabs card-header-tabs" id="tabFuncionario" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold" id="dados-tab" data-bs-toggle="tab" data-bs-target="#tab-dados-func" type="button" role="tab">
+                            <i class="bi bi-person-vcard me-2"></i>Dados Cadastrais
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold" id="historico-tab" data-bs-toggle="tab" data-bs-target="#tab-historico-func" type="button" role="tab">
+                            <i class="bi bi-clock-history me-2"></i>Histórico de Jobs
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            
+            <div class="card-body p-4">
+                <div class="tab-content" id="tabFuncionarioContent">
+            
+                    <div class="tab-pane fade show active" id="tab-dados-func" role="tabpanel">
+                        <form id="formFuncionarioFull">
+                          <div class="row g-4">
+                            <div class="col-lg-8">
+                                  <h6 class="fw-bold text-primary mb-3">Dados Pessoais</h6>
+                                  <div class="row g-3">
+                                    <div class="col-md-8">
+                                      <label class="form-label small text-muted">Nome Completo</label>
+                                      <input type="text" id="rhNome" class="form-control fw-bold" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                      <label class="form-label small text-muted">CPF</label>
+                                      <input type="text" id="rhCpf" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                      <label class="form-label small text-muted">E-mail</label>
+                                      <input type="email" id="rhEmail" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                      <label class="form-label small text-muted">Telefone</label>
+                                      <input type="text" id="rhTelefone" class="form-control">
+                                    </div>
+                                    <div class="col-12 mt-4">
+                                        <div class="p-3 bg-light rounded border">
+                                            <label class="form-label small fw-bold text-uppercase mb-2">Endereço</label>
+                                            <div class="row g-2">
+                                                <div class="col-md-3"><input type="text" id="rhCep" class="form-control bg-white" placeholder="CEP" onblur="buscarCepGenerico(this.value, 'rh')"></div>
+                                                <div class="col-md-7"><input type="text" id="rhLogradouro" class="form-control bg-white" placeholder="Rua"></div>
+                                                <div class="col-md-2"><input type="text" id="rhNumero" class="form-control bg-white" placeholder="Nº"></div>
+                                                <div class="col-md-5"><input type="text" id="rhBairro" class="form-control bg-white" placeholder="Bairro"></div>
+                                                <div class="col-md-5"><input type="text" id="rhCidade" class="form-control bg-white" placeholder="Cidade"></div>
+                                                <div class="col-md-2"><input type="text" id="rhUf" class="form-control bg-white" placeholder="UF"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-3">
+                                      <label class="form-label small text-muted">Observações</label>
+                                      <textarea id="rhObs" class="form-control" rows="3"></textarea>
+                                    </div>
+                                  </div>
+                            </div>
+                            <div class="col-lg-4 border-start">
+                                  <h6 class="fw-bold text-primary mb-3">Contrato & Função</h6>
+                                  <div class="mb-3">
+                                    <label class="form-label small text-muted">Status Atual</label>
+                                    <select id="rhStatus" class="form-select fw-bold bg-light">
+                                      <option value="Ativo">Ativo</option>
+                                      <option value="Férias">Férias</option>
+                                      <option value="Inativo">Inativo</option>
+                                    </select>
+                                  </div>
+                                  <div class="mb-3">
+                                    <label class="form-label small text-muted">Departamento</label>
+                                    <select id="rhDepartamento" class="form-select">
+                                      <option value="Operações">Operações</option>
+                                      <option value="Logística">Logística</option>
+                                      <option value="Administrativo">Administrativo</option>
+                                      <option value="Financeiro">Financeiro</option>
+                                    </select>
+                                  </div>
+                                  <div class="mb-3">
+                                    <label class="form-label small text-muted">Cargo</label>
+                                    <input type="text" id="rhCargo" class="form-control">
+                                  </div>
+                                  <hr class="text-muted my-4">
+                                  <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="small text-muted">Admissão</label>
+                                        <input type="date" id="rhAdmissao" class="form-control">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-muted text-danger">Demissão</label>
+                                        <input type="date" id="rhDemissao" class="form-control">
+                                    </div>
+                                  </div>
+                            </div>
+                          </div>
+                        </form>
+                    </div>
+
+<div class="tab-pane fade" id="tab-historico-func" role="tabpanel">
+    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold text-secondary mb-0">
+            <i class="bi bi-clock-history me-2"></i>Histórico de Atividades
+        </h6>
+        
+        <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="btnradio" id="btnRadioLista" autocomplete="off" checked onclick="alternarModoHistoricoFunc('lista')">
+            <label class="btn btn-outline-secondary btn-sm" for="btnRadioLista">
+                <i class="bi bi-list-ul me-1"></i> Lista
+            </label>
+          
+            <input type="radio" class="btn-check" name="btnradio" id="btnRadioCal" autocomplete="off" onclick="alternarModoHistoricoFunc('calendario')">
+            <label class="btn btn-outline-secondary btn-sm" for="btnRadioCal">
+                <i class="bi bi-calendar3 me-1"></i> Calendário
+            </label>
+        </div>
+    </div>
+
+    <div id="loadingHistorico" class="text-center py-5 d-none">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Buscando histórico...</p>
+    </div>
+
+    <div id="containerHistoricoLista">
+        <div id="tabelaHistoricoContainer"></div>
+    </div>
+
+    <div id="containerHistoricoCalendario" class="d-none">
+        <div class="card p-3 border shadow-sm">
+            <div id="calendarFuncionario"></div>
+        </div>
+    </div>
+
+</div>
+
+                </div>
+            </div> 
+        </div>
+
+      </div>
+    </section>
+</div>
+
+  <div class="modal fade" id="modalNovoCliente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold">Novo Cliente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body pt-4">
+          <form>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Nome</label>
+              <input type="text" class="form-control" placeholder="Nome completo ou razão social" />
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Tipo</label>
+                <select class="form-select">
+                  <option>Pessoa Física</option>
+                  <option>Pessoa Jurídica</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">CPF/CNPJ</label>
+                <input type="text" class="form-control" placeholder="000.000.000-00" />
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">E-mail</label>
+              <input type="email" class="form-control" placeholder="email@exemplo.com" />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Telefone</label>
+              <input type="tel" class="form-control" placeholder="(00) 00000-0000" />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Endereço</label>
+              <input type="text" class="form-control" placeholder="Cidade, Estado" />
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer border-top-0 pt-0 pb-4">
+          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-dark" style="background-color: var(--primary-blue)">
+            Criar Cliente
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalNovoItem" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold">Novo Item</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-4">
+          <form>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Nome do Item</label>
+              <input type="text" class="form-control" placeholder="Ex: Cadeira Tiffany" />
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Categoria</label>
+                <select class="form-select">
+                  <option>Mobiliário</option>
+                  <option>Decoração</option>
+                  <option>Iluminação</option>
+                  <option>Equipamentos</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Condição</label>
+                <select class="form-select">
+                  <option>Excelente</option>
+                  <option>Bom</option>
+                  <option>Regular</option>
+                  <option>Manutenção</option>
+                </select>
+              </div>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Qtd. Total</label>
+                <input type="number" class="form-control" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Qtd. Disponível</label>
+                <input type="number" class="form-control" />
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Valor Diária (R$)</label>
+              <input type="text" class="form-control" />
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-top-0 pt-0 pb-4">
+          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-dark" style="background-color: var(--primary-blue)">
+            Criar Item
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalNovoFuncionario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold">Novo Funcionário</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-4">
+          <form>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Nome Completo</label>
+              <input type="text" class="form-control" />
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Cargo</label>
+                <input type="text" class="form-control" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Departamento</label>
+                <select class="form-select">
+                  <option>Operações</option>
+                  <!--<option>Logística</option>-->
+                  <option>Vendas</option>
+                  <option>Administrativo</option>
+                </select>
+              </div>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">E-mail</label>
+                <input type="email" class="form-control" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Telefone</label>
+                <input type="tel" class="form-control" />
+              </div>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">CPF</label>
+                <input type="text" class="form-control" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Data de Admissão</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" placeholder="dd/mm/aaaa" />
+                  <span class="input-group-text bg-white border-start-0"><i class="bi bi-calendar"></i></span>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Salário (R$)</label>
+              <input type="text" class="form-control" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Endereço</label>
+              <input type="text" class="form-control" />
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-top-0 pt-0 pb-4">
+          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-dark" style="background-color: var(--primary-blue)">
+            Criar Funcionário
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="modalNovaEscala" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold">Nova Escala de Trabalho</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-4">
+          <form>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Funcionário</label>
+              <select class="form-select">
+                <option selected>Pedro Santos</option>
+                <option>Carlos Silva</option>
+                <option>Ana Costa</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Data</label>
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="dd/mm/aaaa" />
+                <span class="input-group-text bg-white border-start-0"><i class="bi bi-calendar"></i></span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Local</label>
+              <input type="text" class="form-control" placeholder="Ex: Espaço Eventos ABC" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Cliente</label>
+              <input type="text" class="form-control" placeholder="Nome do cliente" />
+            </div>
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label small fw-bold text-muted">Início</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" value="08:00" />
+                  <span class="input-group-text bg-white border-start-0"><i class="bi bi-clock"></i></span>
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold text-muted">Término</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" value="18:00" />
+                  <span class="input-group-text bg-white border-start-0"><i class="bi bi-clock"></i></span>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-top-0 pt-0 pb-4">
+          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-dark" style="background-color: var(--primary-blue)">
+            Criar Escala
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalNovoJob" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold">Nova Diária / Job</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body pt-4">
+          <form id="formNovoJob">
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Cliente</label>
+              <select id="jobCliente" class="form-select" required>
+                <option value="" selected disabled>
+                  Carregando clientes...
+                </option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Descrição</label>
+              <input type="text" id="jobDescricao" class="form-control" placeholder="Ex: Gravação Estúdio 1" required />
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label small fw-bold text-muted">Valor (R$)</label>
+                <input type="number" id="jobValor" class="form-control" placeholder="0.00" required />
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold text-muted">Data</label>
+                <input type="date" id="jobData" class="form-control" required />
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Operador</label>
+              <select id="jobOperador" class="form-select" required>
+                <option value="" selected disabled>
+                  Carregando equipe...
+                </option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-top-0 pt-0 pb-4">
+          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-dark" onclick="salvarNovoJob()">
+            Salvar Job
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="public/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+</body>
+
+</html>

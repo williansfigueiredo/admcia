@@ -1,0 +1,3155 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --vz-body-bg: #f3f6fc;
+  --vz-sidebar-bg: #0d1321;
+  /* Azul Escuro ERP */
+  --vz-sidebar-hover: rgba(255, 255, 255, 0.05);
+  --vz-active-border: #0ab39c;
+  /* Teal/Ciano - Cor primária */
+  --vz-text-muted: #8b9bb4;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  background-color: var(--vz-body-bg);
+  color: #495057;
+}
+
+/* Títulos grandes (Ex: Dashboard Principal) */
+h1,
+h2,
+h3,
+h4,
+.fw-bold {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 700;
+  /* Peso forte igual à referência */
+  letter-spacing: -0.02em;
+  /* Um leve ajuste de espaçamento que deixa a Inter mais elegante */
+}
+
+#kpi-faturamento {
+  font-feature-settings: "tnum" on, "lnum" on;
+  /* Garante que os números tenham largura fixa, facilitando a leitura de valores */
+}
+
+/* Valores de Faturamento (Números grandes nos cards) */
+#kpi-faturamento,
+.kpi-value,
+h3 {
+  font-weight: 800 !important;
+  /* Deixa os números bem destacados */
+  color: #0f172a;
+  /* Cor azul marinho muito escuro, padrão de ERPs modernos */
+}
+
+/* Textos pequenos de legenda (vs mês anterior, labels) */
+.text-muted,
+.kpi-title,
+.small {
+  font-weight: 500;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+  background-color: var(--vz-sidebar-bg);
+  min-height: 100vh;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  z-index: 1000;
+}
+
+.menu-category {
+  color: var(--vz-text-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 20px 8px 20px;
+}
+
+.sidebar .nav-link {
+  color: #abb9e8;
+  /* Azul claro acinzentado */
+  font-size: 0.9rem;
+  padding: 10px 20px;
+  margin-bottom: 2px;
+  transition: all 0.3s ease;
+  font-weight: 400;
+}
+
+.sidebar .nav-link:hover {
+  color: #fff;
+  background-color: var(--vz-sidebar-hover);
+}
+
+.sidebar .nav-link.active {
+  color: #fff;
+  background-color: rgba(10, 179, 156, 0.15);
+  /* Fundo sutil teal */
+  border-left: 3px solid var(--vz-active-border);
+  font-weight: 500;
+}
+
+.sidebar .nav-link i {
+  font-size: 1.1rem;
+  margin-right: 10px;
+  width: 20px;
+  text-align: center;
+}
+
+/* --- CARDS & METRICS --- */
+.card-metric {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(56, 65, 74, 0.05);
+  background: var(--bg-card);
+  color: var(--text-dark);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-metric:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 20px rgba(56, 65, 74, 0.1);
+}
+
+/* Ícones Coloridos (Quadrados) */
+.icon-shape {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Cores Personalizadas (Soft) */
+.bg-cyan-soft {
+  background-color: rgba(41, 156, 219, 0.12);
+}
+
+.text-cyan {
+  color: #299cdb;
+}
+
+.bg-green-soft {
+  background-color: rgba(10, 179, 156, 0.12);
+}
+
+.text-green {
+  color: #0ab39c;
+}
+
+.bg-red-soft {
+  background-color: rgba(240, 101, 72, 0.12);
+}
+
+.text-red {
+  color: #f06548;
+}
+
+.bg-yellow-soft {
+  background-color: rgba(247, 184, 75, 0.12);
+}
+
+.text-yellow {
+  color: #f7b84b;
+}
+
+.bg-purple-soft {
+  background-color: rgba(139, 92, 246, 0.12);
+}
+
+.text-purple {
+  color: #8b5cf6;
+}
+
+.bg-teal-soft {
+  background-color: rgba(10, 179, 156, 0.12);
+}
+
+.text-teal {
+  color: #0ab39c;
+}
+
+.bg-gray-soft {
+  background-color: rgba(107, 122, 144, 0.12);
+}
+
+/* --- HEADER & ELEMENTS --- */
+.avatar-circle {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  background-color: #dff0fa;
+  /* Azul bem claro */
+  color: #299cdb;
+}
+
+.gradient-btn {
+  background: linear-gradient(135deg, #0ab39c, #299cdb);
+  /* Gradiente Teal para Ciano */
+  border: none;
+}
+
+.form-control:focus {
+  box-shadow: none;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+:root {
+  /* ========================================
+     MODO LIGHT - Paleta ERP (Cores claras)
+     ======================================== */
+  /* Backgrounds */
+  --bg-body: #f0f4f8;
+  --bg-sidebar: #0c111b;
+  --bg-card: #ffffff;
+  --bg-hover: #f5f7fa;
+  --bg-card-header: #fafbfc;
+  --bg-input: #ffffff;
+
+  /* Textos */
+  --text-dark: #1a2332;
+  --text-gray: #5a6a85;
+  --text-muted: #8b9bb4;
+  --text-light: #b8c5d6;
+
+  /* Cores Primárias (ERP - Teal/Ciano) */
+  --primary-blue: #0ab39c;
+  --primary-cyan: #00d4aa;
+  --sidebar-dark: #0c111b;
+
+  /* Cores Funcionais */
+  --green-500: #0ab39c;
+  --green-400: #10b981;
+  --green-100: #d1fae5;
+  --red-500: #f06548;
+  --red-400: #ef4444;
+  --red-100: #fee2e2;
+  --blue-500: #299cdb;
+  --blue-400: #3b82f6;
+  --blue-100: #dbeafe;
+  --orange-500: #f7b84b;
+  --orange-100: #fef3c7;
+  --purple-500: #8b5cf6;
+  --purple-100: #f3e8ff;
+  --yellow-500: #f7b84b;
+
+  /* Borders */
+  --border-color: #e2e8f0;
+  --border-dark: #334155;
+  --border-subtle: #e8ecf1;
+
+  --sidebar-width: 260px;
+  --card-radius: 12px;
+}
+
+/* ========================================
+   MODO DARK - Paleta ERP Escura (Idêntico ao PDF)
+   ======================================== */
+[data-bs-theme="dark"] {
+  /* Backgrounds - Tons escuros azulados profundos */
+  --bg-body: #0c111b;
+  --bg-sidebar: #0c111b;
+  --bg-card: #151c28;
+  --bg-hover: #1c2433;
+  --bg-card-header: #111720;
+  --bg-input: #1c2433;
+
+  /* Textos - Não usar branco puro */
+  --text-dark: #e4e9f0;
+  --text-gray: #a0aec0;
+  --text-muted: #6b7a90;
+  --text-light: #c8d1dc;
+
+  /* Cores Primárias (ERP - Teal/Ciano) VIBRANTES */
+  --primary-blue: #0ab39c;
+  --primary-cyan: #00d4aa;
+  --sidebar-dark: #0c111b;
+
+  /* Cores Funcionais VIBRANTES */
+  --green-500: #0ab39c;
+  --green-400: #10b981;
+  --green-100: rgba(10, 179, 156, 0.18);
+  --red-500: #f06548;
+  --red-400: #ef4444;
+  --red-100: rgba(240, 101, 72, 0.18);
+  --blue-500: #299cdb;
+  --blue-400: #3b82f6;
+  --blue-100: rgba(41, 156, 219, 0.18);
+  --orange-500: #f7b84b;
+  --orange-100: rgba(247, 184, 75, 0.18);
+  --purple-500: #8b5cf6;
+  --purple-100: rgba(139, 92, 246, 0.18);
+  --yellow-500: #f7b84b;
+
+  /* Borders - MUITO SUTIS, quase invisíveis */
+  --border-color: #1e2736;
+  --border-dark: #252f3f;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background-color: var(--bg-body);
+  color: var(--text-dark);
+  overflow-x: hidden;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--bg-sidebar);
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* Header do Sidebar com logo e botão toggle */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  min-height: 70px;
+}
+
+.btn-sidebar-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* Sidebar colapsada */
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.sidebar.collapsed .brand-text,
+.sidebar.collapsed .nav-text,
+.sidebar.collapsed .nav-arrow,
+.sidebar.collapsed .menu-label {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .brand-logo {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar.collapsed .brand-logo i {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.sidebar.collapsed .sidebar-header {
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 8px;
+}
+
+.sidebar.collapsed .btn-sidebar-toggle {
+  transform: rotate(180deg);
+}
+
+.sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 14px 0;
+}
+
+.sidebar.collapsed .nav-link .d-flex {
+  justify-content: center;
+}
+
+.sidebar.collapsed .nav-icon {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.sidebar.collapsed .submenu-link {
+  display: none;
+}
+
+.sidebar.collapsed .collapse {
+  display: none !important;
+}
+
+/* Main content ajuste quando sidebar colapsa */
+.main-content {
+  margin-left: var(--sidebar-width);
+  padding: 24px 32px;
+  min-height: 100vh;
+  background-color: var(--bg-body);
+  color: var(--text-dark);
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar.collapsed~.main-content {
+  margin-left: 70px;
+}
+
+/* Estilos do nav-icon */
+.nav-icon {
+  font-size: 1.1rem;
+  margin-right: 10px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  transition: margin 0.3s, font-size 0.3s;
+}
+
+.nav-text {
+  transition: opacity 0.2s, width 0.3s;
+  white-space: nowrap;
+}
+
+.brand-logo {
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.brand-logo i {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  transition: opacity 0.2s, width 0.3s;
+}
+
+.menu-label {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 20px 24px 10px 24px;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.nav-link {
+  color: #cbd5e1;
+  padding: 12px 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.nav-link:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.nav-link.active {
+  background-color: rgba(14, 165, 233, 0.1);
+  color: var(--primary-blue);
+  border-left-color: var(--primary-blue);
+}
+
+/* Submenu */
+.submenu-link {
+  padding-left: 54px;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.submenu-link:hover {
+  color: white;
+}
+
+.submenu-link.active {
+  color: var(--primary-blue);
+  font-weight: 600;
+}
+
+/* --- MAIN CONTENT & SPA LOGIC --- */
+.main-content {
+  margin-left: var(--sidebar-width);
+  padding: 24px 32px;
+  min-height: 100vh;
+  background-color: var(--bg-body);
+  color: var(--text-dark);
+}
+
+.view-section {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.view-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- COMPONENTES GERAIS --- */
+.search-input {
+  width: 400px;
+  padding: 10px 15px 10px 40px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  outline: none;
+  background: white;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background-color: #0f172a;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.card-custom {
+  background: var(--bg-card);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border-subtle, #e8ecf1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02),
+    0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  padding: 24px;
+  height: 100%;
+  position: relative;
+}
+
+/* === CARDS DE ESTATÍSTICAS COM HOVER === */
+.stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px -4px rgba(0, 0, 0, 0.08),
+    0 4px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+[data-bs-theme="dark"] .stat-card:hover {
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.35),
+    0 4px 8px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Botões */
+.btn-header-outline {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: var(--text-dark);
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  border-radius: 6px;
+}
+
+.btn-header-dark {
+  background-color: #0f172a;
+  color: white;
+  border: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  border-radius: 6px;
+}
+
+/* --- ESTILOS ESPECÍFICOS: ABA PRINCIPAL --- */
+.kpi-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+  line-height: 1.1;
+}
+
+.kpi-trend {
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.kpi-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.mini-chart {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 30px;
+  margin-top: 15px;
+}
+
+.mini-bar {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  opacity: 0.4;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.status-row:last-child {
+  border-bottom: none;
+}
+
+.status-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+  font-size: 1.1rem;
+}
+
+/* --- ESTILOS ESPECÍFICOS: ABA FINANCEIRO --- */
+.fin-icon-box {
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+}
+
+.trend-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fin-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.fin-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  letter-spacing: -0.5px;
+}
+
+/* Tabela Financeira */
+.table-fin th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+}
+
+.table-fin td {
+  vertical-align: middle;
+  padding: 18px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+.text-income {
+  color: var(--green-500);
+}
+
+.text-expense {
+  color: var(--red-500);
+}
+
+/* --- ESTILOS ESPECÍFICOS: ABA LOGÍSTICA --- */
+#map {
+  height: 350px;
+  width: 100%;
+  border-radius: 12px;
+  z-index: 1;
+  margin-top: 15px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.timeline-container {
+  position: relative;
+  padding-left: 10px;
+  margin-top: 15px;
+  height: 350px;
+  overflow-y: auto;
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 35px;
+  padding-bottom: 30px;
+  border-left: 2px solid #e2e8f0;
+}
+
+.timeline-item:last-child {
+  border-left: 2px solid transparent;
+}
+
+.timeline-icon {
+  position: absolute;
+  left: -11px;
+  top: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  z-index: 2;
+}
+
+.timeline-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.timeline-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.timeline-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.timeline-icon.success {
+  border: 2px solid var(--green-500);
+  color: var(--green-500);
+}
+
+.timeline-icon.info {
+  border: 2px solid var(--blue-500);
+  color: var(--blue-500);
+}
+
+.timeline-icon.danger {
+  border: 2px solid var(--red-500);
+  color: var(--red-500);
+}
+
+/* Tabela Agendamento */
+.schedule-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.schedule-table th {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  padding-bottom: 10px;
+}
+
+.schedule-table th:first-child {
+  text-align: left;
+  padding-left: 10px;
+}
+
+.schedule-table td {
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 15px 10px;
+  vertical-align: middle;
+}
+
+.schedule-table td:first-child {
+  border-left: 1px solid #f1f5f9;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 0.85rem;
+}
+
+.schedule-table td:last-child {
+  border-right: 1px solid #f1f5f9;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.schedule-block {
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.schedule-block:hover {
+  opacity: 0.9;
+}
+
+.bg-solid-blue {
+  background-color: #299cdb;
+}
+
+.bg-solid-green {
+  background-color: #0ab39c;
+}
+
+.bg-solid-yellow {
+  background-color: #f7b84b;
+}
+
+.bg-solid-purple {
+  background-color: #8b5cf6;
+}
+
+.bg-solid-cyan {
+  background-color: #0ab39c;
+}
+
+.bg-solid-red {
+  background-color: #f06548;
+}
+
+.bg-solid-teal {
+  background-color: #0ab39c;
+}
+
+/* --- ESTILOS ESPECÍFICOS: CLIENTES --- */
+.client-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-right: 15px;
+}
+
+.type-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.type-pj {
+  background-color: rgba(41, 156, 219, 0.15);
+  color: #299cdb;
+}
+
+.type-pf {
+  background-color: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+}
+
+.contact-info {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.contact-info i {
+  margin-right: 8px;
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+/* --- ESTILOS ESPECÍFICOS: INVENTÁRIO / ESTOQUE (NOVO) --- */
+.item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+.progress-thin {
+  height: 4px;
+  width: 100%;
+  background-color: #f3f3f9;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.progress-bar-custom {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.badge-soft {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Helpers de Cor */
+.bg-green-soft {
+  background-color: var(--green-100);
+  color: var(--green-500);
+}
+
+.bg-red-soft {
+  background-color: var(--red-100);
+  color: var(--red-500);
+}
+
+.bg-blue-soft {
+  background-color: var(--blue-100);
+  color: var(--blue-500);
+}
+
+.bg-purple-soft {
+  background-color: var(--purple-100);
+  color: var(--purple-500);
+}
+
+.bg-orange-soft {
+  background-color: var(--orange-100);
+  color: var(--orange-500);
+}
+
+.bg-bar-green {
+  background-color: var(--green-500);
+}
+
+.bg-bar-red {
+  background-color: var(--red-500);
+}
+
+.pill-green {
+  background-color: rgba(10, 179, 156, 0.15);
+  color: #0ab39c;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.pill-yellow {
+  background-color: rgba(247, 184, 75, 0.15);
+  color: #f7b84b;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.pill-red {
+  background-color: rgba(240, 101, 72, 0.15);
+  color: #f06548;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.pill-blue {
+  background-color: rgba(41, 156, 219, 0.15);
+  color: #299cdb;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.pill-teal {
+  background-color: rgba(10, 179, 156, 0.15);
+  color: #0ab39c;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-pill {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Helpers de Texto */
+.text-green {
+  color: var(--green-500);
+}
+
+.text-red {
+  color: var(--red-500);
+}
+
+.text-blue {
+  color: var(--blue-500);
+}
+
+.text-orange {
+  color: var(--orange-500);
+}
+
+.text-purple {
+  color: var(--purple-500);
+}
+
+/* --- ESTILOS ESPECÍFICOS: FUNCIONÁRIOS (NOVO) --- */
+.avatar-square {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  /* Quadrado arredondado */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-right: 15px;
+  background-color: #0f172a;
+  color: white;
+}
+
+.badge-dept {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.badge-logistica {
+  background-color: rgba(219, 39, 119, 0.15);
+  color: #db2777;
+}
+
+.badge-operacoes,
+.badge-operacao {
+  background-color: rgba(41, 156, 219, 0.15);
+  color: #299cdb;
+}
+
+.badge-vendas,
+.badge-comercial {
+  background-color: rgba(10, 179, 156, 0.15);
+  color: #0ab39c;
+}
+
+.badge-admin,
+.badge-administrativo {
+  background-color: rgba(247, 184, 75, 0.15);
+  color: #f7b84b;
+}
+
+.badge-manutencao {
+  background-color: rgba(139, 155, 180, 0.15);
+  color: #8b9bb4;
+}
+
+.badge-financeiro {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.badge-producao {
+  background-color: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+}
+
+.badge-tecnologia,
+.badge-ti {
+  background-color: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+}
+
+.btn-tab-dark {
+  background-color: #0f172a;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.btn-tab-light {
+  background-color: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.btn-tab-light:hover {
+  background-color: #f8fafc;
+}
+
+.card-stat-func {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--border-subtle, #e8ecf1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.card-stat-func:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px -4px rgba(0, 0, 0, 0.08),
+    0 4px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+[data-bs-theme="dark"] .card-stat-func:hover {
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.35),
+    0 4px 8px -2px rgba(0, 0, 0, 0.2);
+}
+
+.icon-soft-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+/* --- ESTILOS ESPECÍFICOS: CALENDÁRIO & ESCALAS --- */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+.calendar-header-cell {
+  padding: 12px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  background-color: #f8fafc;
+}
+
+.calendar-day-cell {
+  min-height: 100px;
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  padding: 8px;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.calendar-day-cell:hover {
+  background-color: #f8fafc;
+  cursor: pointer;
+}
+
+.calendar-day-cell:nth-child(7n) {
+  border-right: none;
+}
+
+/* Remove borda direita do sábado */
+
+.day-number {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.text-muted-light {
+  color: #cbd5e1;
+}
+
+/* Dias de outro mês */
+
+/* Etiquetas de Eventos (Pills) */
+.event-pill {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  cursor: pointer;
+  display: block;
+}
+
+.event-agendado {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border-left: 2px solid #3b82f6;
+}
+
+/* Azul */
+.event-confirmado {
+  background-color: #dcfce7;
+  color: #15803d;
+  border-left: 2px solid #22c55e;
+}
+
+/* Verde */
+.event-concluido {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-left: 2px solid #94a3b8;
+}
+
+/* Cinza */
+.event-cancelado {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-left: 2px solid #ef4444;
+}
+
+/* Vermelho */
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+/* --- ESTILOS INTERATIVIDADE CALENDÁRIO --- */
+.calendar-day-cell.selected {
+  border: 2px solid #3b82f6 !important;
+  /* Borda Azul */
+  background-color: #eff6ff !important;
+  /* Fundo azul bem claro */
+  z-index: 10;
+  /* Para a borda ficar sobre as outras */
+}
+
+/* Card de Detalhes na Lateral */
+.detail-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s;
+}
+
+.detail-card:hover {
+  border-color: #cbd5e1;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.detail-avatar {
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.detail-row {
+  display: flex;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 6px;
+  align-items: flex-start;
+}
+
+.detail-row i {
+  font-size: 0.9rem;
+  margin-top: 2px;
+  color: #94a3b8;
+}
+
+.client-text {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-left: 24px;
+  margin-top: -4px;
+  margin-bottom: 8px;
+}
+
+.calendar-wrapper {
+  display: flex;
+  gap: 0;
+  height: 100%;
+}
+
+.calendar-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.details-section {
+  width: 300px;
+  border-left: 1px solid #e2e8f0;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+.calendar-header-cell {
+  padding: 12px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  background-color: #f8fafc;
+}
+
+.calendar-day-cell {
+  min-height: 100px;
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  padding: 8px;
+  position: relative;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.calendar-day-cell:hover {
+  background-color: #f8fafc;
+}
+
+.calendar-day-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.calendar-day-cell.selected {
+  border: 2px solid #3b82f6 !important;
+  background-color: #eff6ff !important;
+  z-index: 10;
+}
+
+.day-number {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.text-muted-light {
+  color: #cbd5e1;
+}
+
+.event-pill {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  cursor: pointer;
+  display: block;
+}
+
+.event-agendado {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border-left: 2px solid #3b82f6;
+}
+
+.event-confirmado {
+  background-color: #dcfce7;
+  color: #15803d;
+  border-left: 2px solid #22c55e;
+}
+
+.event-concluido {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-left: 2px solid #94a3b8;
+}
+
+.event-cancelado {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-left: 2px solid #ef4444;
+}
+
+#detalhes-vazio {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 32px;
+  color: #94a3b8;
+  height: 100%;
+}
+
+#detalhes-conteudo {
+  display: none;
+  height: 100%;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+#detalhes-conteudo.active {
+  display: flex;
+  flex-direction: column;
+}
+
+#lista-escalas {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  margin: 0 0 16px 0;
+}
+
+#lista-escalas::-webkit-scrollbar {
+  width: 4px;
+}
+
+#lista-escalas::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+#lista-escalas::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.detail-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s;
+}
+
+.detail-card:hover {
+  border-color: #cbd5e1;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.detail-avatar {
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.detail-row {
+  display: flex;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 6px;
+  align-items: flex-start;
+}
+
+.detail-row i {
+  font-size: 0.9rem;
+  margin-top: 2px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.client-text {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-left: 24px;
+  margin-top: -4px;
+  margin-bottom: 8px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.card-custom {
+  background: white;
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  padding: 24px;
+}
+
+/* ========== IMPRESSÃO SOMENTE DO INVOICE ========== */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  #modalInvoice,
+  #modalInvoice * {
+    visibility: visible !important;
+  }
+
+  #modalInvoice {
+    position: absolute !important;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: auto;
+    background: #fff !important;
+    z-index: 99999;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .modal-backdrop,
+  .modal-footer,
+  .btn,
+  .btn-close {
+    display: none !important;
+  }
+
+  /* Remove rolagem e centraliza */
+  html,
+  body {
+    overflow: visible !important;
+    background: #fff !important;
+  }
+}
+
+/* --- RESPONSIVIDADE SIDEBAR --- */
+
+/* Overlay escuro para quando o menu abrir no mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  /* Fica abaixo da sidebar (1050) mas acima do resto */
+  display: none;
+  /* Escondido por padrão */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+/* Regras para Tablets e Celulares (Abaixo de 992px) */
+@media (max-width: 991.98px) {
+
+  /* 1. Ajustar a Sidebar para ficar escondida */
+  .sidebar {
+    left: -260px;
+    width: var(--sidebar-width);
+    transition: left 0.3s ease-in-out;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 1050;
+  }
+
+  /* 2. Classe para mostrar a sidebar */
+  .sidebar.show {
+    left: 0;
+  }
+
+  /* Remover colapso em mobile */
+  .sidebar.collapsed {
+    width: var(--sidebar-width);
+  }
+
+  .sidebar.collapsed~.main-content {
+    margin-left: 0;
+  }
+
+  /* 3. Remover a margem do conteúdo principal */
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 20px;
+  }
+
+  /* Mostrar textos em mobile */
+  .sidebar .brand-text,
+  .sidebar .nav-text,
+  .sidebar .nav-arrow,
+  .sidebar .menu-label {
+    opacity: 1 !important;
+    width: auto !important;
+  }
+
+  .sidebar .submenu-link {
+    display: block !important;
+  }
+
+  .sidebar-header {
+    flex-direction: row !important;
+  }
+
+  .btn-sidebar-toggle {
+    transform: none !important;
+  }
+
+  /* 4. Ajustes na busca para mobile (opcional) */
+  .search-input {
+    width: 100%;
+  }
+}
+
+
+/* =========================================
+   NOVO MENU DE STATUS (PREMIUM)
+   ========================================= */
+
+/* Remove o lápis e deixa o cursor de clique */
+.cursor-pointer {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.cursor-pointer:hover {
+  transform: scale(1.05);
+  /* Leve efeito de zoom ao passar o mouse */
+  opacity: 0.9;
+}
+
+/* Menu Flutuante - Correção de Rolagem */
+.status-popover {
+  position: absolute;
+  background: white;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  padding: 6px;
+  z-index: 9999 !important;
+  min-width: 170px;
+
+  /* LIMITES PARA NÃO QUEBRAR A TELA */
+  max-height: 250px;
+  /* Altura máxima */
+  overflow-y: auto;
+  /* Cria barra de rolagem DENTRO do menu se precisar */
+
+  /* Animação */
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* Personaliza a barra de rolagem do menu para ficar bonitinha */
+.status-popover::-webkit-scrollbar {
+  width: 6px;
+}
+
+.status-popover::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+/* Itens do Menu */
+.popover-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #444;
+  transition: all 0.2s;
+  margin-bottom: 2px;
+}
+
+.popover-item:hover {
+  background-color: #f3f4f6;
+}
+
+/* Bolinhas Coloridas no Menu */
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 10px;
+  display: inline-block;
+}
+
+/* Cores das Bolinhas */
+.dot-blue {
+  background-color: #3b82f6;
+}
+
+.dot-green {
+  background-color: #10b981;
+}
+
+.dot-gray {
+  background-color: #6b7280;
+}
+
+.dot-red {
+  background-color: #ef4444;
+}
+
+.dot-yellow {
+  background-color: #f59e0b;
+}
+
+/* Animação suave de entrada */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================
+   FLIP CARD 3D (JOBS)
+   ========================================= */
+/* Animação de Fade In para a troca de cards */
+.fade-in {
+  animation: fadeInEffect 0.4s ease-in-out;
+}
+
+@keyframes fadeInEffect {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Garante que o cursor mostre que é clicável */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* --- ESTILO PROFISSIONAL PARA O FORMULÁRIO --- */
+
+.form-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.input-group-text {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+/* INPUTS NORMAIS (TEXTO, DATA, ETC) */
+.form-control {
+  border-color: #e2e8f0;
+  padding: 10px 15px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+/* SELECTS (DROPDOWNS) - PRECISAM DE MAIS ESPAÇO NA DIREITA */
+.form-select {
+  border-color: #e2e8f0;
+  /* Topo | Direita (40px pra seta) | Baixo | Esquerda */
+  padding: 10px 40px 10px 15px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Área de destaque para datas */
+.date-card {
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 15px;
+}
+
+/* Container centralizado */
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Coluna ação não pode crescer nem criar scroll */
+.col-acao {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Botão 3 pontos minimalista */
+.btn-acao-3pontos {
+  border: 1px solid #d0d7de;
+  background: #f6f8fa;
+  color: #111;
+  border-radius: 8px;
+  padding: 2px 8px;
+  line-height: 1;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.btn-acao-3pontos:hover {
+  background: #eef2f6;
+}
+
+/* ===== Botão ⋯ Ação (compacto, sem quebrar layout) ===== */
+.btn-acao-3pontos {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 18px;
+}
+
+.btn-acao-3pontos:hover {
+  background: #eef2f7;
+}
+
+/* ===== Menu flutuante das ações (não influencia o layout / sem scroll da página) ===== */
+.menu-acoes-flutuante {
+  position: fixed;
+  z-index: 99999;
+  min-width: 190px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .15);
+  padding: 6px;
+  animation: fadeIn 0.12s ease-out;
+}
+
+.menu-acoes-flutuante button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #111827;
+  cursor: pointer;
+}
+
+.menu-acoes-flutuante button:hover {
+  background: #f3f4f6;
+}
+
+.menu-acoes-flutuante .divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 6px 4px;
+}
+
+.menu-acoes-flutuante button.danger {
+  color: #b91c1c;
+}
+
+.menu-acoes-flutuante button.danger:hover {
+  background: rgba(185, 28, 28, 0.08);
+}
+
+
+
+/* Garante que o dropdown apareça acima dos cards */
+.card-custom {
+  overflow: visible !important;
+}
+
+/* Ajuste fino no botão do olhinho */
+.dropdown-toggle::after {
+  display: none;
+  /* Remove a setinha padrão do bootstrap para ficar mais limpo */
+}
+
+/* Correção para o Dropdown da Tabela aparecer inteiro */
+.table-responsive {
+  overflow: visible !important;
+  /* Permite que o menu saia da caixa da tabela */
+}
+
+/* Ajuste fino para tabela ficar bonita com fundo branco */
+#lista-clientes-tabela-body tr:hover {
+  background-color: #f8fafc !important;
+  /* Efeito hover suave */
+}
+
+/* Garante que o botão de ação fique alinhado */
+.btn-action-tabela {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.btn-action-tabela:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+
+/* --- MENU ESTILO MODERNO (IGUAL FOTO) --- */
+.dropdown-menu-modern {
+  border: none !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  min-width: 180px;
+}
+
+.dropdown-item-modern {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Espaço entre ícone e texto */
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+  /* Cor padrão cinza */
+  text-decoration: none;
+  background: transparent;
+}
+
+/* Efeito ao passar o mouse: Fundo cinza claro e move um pouquinho para direita */
+.dropdown-item-modern:hover {
+  background-color: #f8fafc;
+  transform: translateX(4px);
+}
+
+/* Cores Específicas */
+.item-blue {
+  color: #2563eb !important;
+}
+
+/* Azul para Editar */
+.item-red {
+  color: #ef4444 !important;
+}
+
+/* Vermelho para Excluir */
+.item-gray {
+  color: #64748b !important;
+}
+
+/* Cinza para Ver */
+
+/* Ajuste dos Ícones */
+.dropdown-item-modern i {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+
+/* ABAS ESTILO PERFIL */
+.nav-tabs-custom {
+  border-bottom: 1px solid #e5e7eb;
+  gap: 20px;
+}
+
+.nav-tabs-custom .nav-link {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-weight: 500;
+  padding: 12px 0;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-tabs-custom .nav-link:hover {
+  color: #0f172a;
+}
+
+.nav-tabs-custom .nav-link.active {
+  color: #0ab39c;
+  /* Teal - cor primária do ERP */
+  border-bottom: 2px solid #0ab39c;
+  font-weight: 600;
+}
+
+.nav-tabs-custom .nav-link i {
+  font-size: 1.1rem;
+}
+
+
+/* =========================================
+   CONFIGURAÇÃO DE IMPRESSÃO (PDF)
+   ========================================= */
+@media print {
+
+  /* Esconde tudo que não é essencial */
+  .sidebar,
+  .d-print-none,
+  .btn,
+  .modal,
+  header,
+  #aba-pedidos,
+  #aba-financeiro {
+    display: none !important;
+  }
+
+  /* Ajusta o layout para papel */
+  body,
+  .main-content {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Garante que a tela de perfil apareça */
+  #view-perfil-cliente {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  /* Remove sombras e bordas para economizar tinta */
+  .card,
+  .shadow-sm {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Ajusta inputs para parecerem texto normal */
+  .form-control {
+    border: none !important;
+    background: transparent !important;
+    padding-left: 0 !important;
+    font-size: 14px !important;
+  }
+
+  label {
+    color: #000 !important;
+    font-size: 12px !important;
+    text-transform: uppercase;
+  }
+}
+
+/* Efeito ao passar o mouse no Card */
+.card-hover-effect:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Efeito ao passar o mouse na Tabela */
+.table-row-hover:hover {
+  background-color: #f8fafc !important;
+}
+
+
+.bg-success {
+  background-color: #0ab39c !important;
+}
+
+/* Teal/Verde */
+.bg-warning {
+  background-color: #f7b84b !important;
+}
+
+/* Amarelo */
+.bg-danger {
+  background-color: #f06548 !important;
+}
+
+/* Vermelho */
+.bg-info {
+  background-color: #299cdb !important;
+}
+
+/* Azul/Ciano */
+
+
+
+/* =============================================================
+   FULLCALENDAR COM VISUAL "APPLE / SCHEDULE-X"
+   ============================================================= */
+
+#calendar {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  /* Sombra suave e difusa igual ao Schedule-X */
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 700px;
+}
+
+/* --- Cabeçalho Limpo --- */
+.fc-header-toolbar {
+  margin-bottom: 24px !important;
+}
+
+.fc-toolbar-title {
+  font-size: 1.75rem !important;
+  font-weight: 700;
+  color: #111827;
+  /* Preto suave */
+  letter-spacing: -0.025em;
+}
+
+/* --- Botões (Estilo iOS) --- */
+.fc-button-primary {
+  background-color: #fff !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+  text-transform: capitalize;
+}
+
+.fc-button-primary:hover {
+  background-color: #f9fafb !important;
+  color: #111827 !important;
+}
+
+.fc-button-active {
+  background-color: #1f2937 !important;
+  /* Escuro ativo */
+  border-color: #1f2937 !important;
+  color: #fff !important;
+}
+
+/* --- Grade do Calendário --- */
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: #f3f4f6 !important;
+  /* Linhas quase invisíveis */
+}
+
+.fc-col-header-cell-cushion {
+  color: #9ca3af;
+  /* Cinza claro para os dias da semana */
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 12px 0 !important;
+  letter-spacing: 0.05em;
+}
+
+.fc-daygrid-day-number {
+  color: #374151;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 8px 12px !important;
+}
+
+/* --- Dia Atual (A bolinha azul estilo Apple) --- */
+.fc-day-today {
+  background: transparent !important;
+}
+
+.fc-day-today .fc-daygrid-day-number {
+  background-color: #0ab39c;
+  /* Teal - cor primária do ERP */
+  color: white;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin: 4px;
+}
+
+/* --- Eventos (Estilo "Chip" Moderno) --- */
+.fc-event {
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 2px 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 3px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: transform 0.1s;
+}
+
+.fc-event:hover {
+  transform: scale(1.01);
+  filter: brightness(0.97);
+  cursor: pointer;
+}
+
+/* Cores automáticas bonitas se não vier do banco */
+.fc-h-event {
+  background-color: #dbeafe;
+  /* Fundo azul bem claro */
+  border-left: 3px solid #3b82f6 !important;
+  /* Borda lateral azul */
+}
+
+.fc-event-main {
+  color: #1e40af;
+  /* Texto azul escuro */
+  padding-left: 4px;
+}
+
+/* Ajuste para eventos de "Trabalho" (Verde) se você usar classes */
+.evento-trabalho {
+  background-color: #d1fae5 !important;
+  border-left: 3px solid #10b981 !important;
+}
+
+.evento-trabalho .fc-event-main {
+  color: #065f46 !important;
+}
+
+/* Remove sublinhados */
+a.fc-col-header-cell-cushion,
+a.fc-daygrid-day-number {
+  text-decoration: none;
+}
+
+/* Deixa o calendário multi-mês mais delicado/compacto */
+.fc-multimonth {
+  font-size: 0.85rem;
+  /* Diminui a fonte geral */
+}
+
+.fc-multimonth-title {
+  font-size: 1rem !important;
+  /* Título do mês menor */
+  padding-bottom: 5px !important;
+}
+
+.fc-daygrid-day-frame {
+  min-height: auto !important;
+  /* Remove altura mínima excessiva dos dias */
+}
+
+
+
+
+
+
+/* =========================================================
+   MODO DARK - Estilos Consolidados (CORES VIBRANTES + BORDAS SUTIS)
+   ========================================================= */
+
+/* === BASE === */
+[data-bs-theme="dark"] body,
+[data-bs-theme="dark"] .main-content {
+  background-color: var(--bg-body) !important;
+  color: var(--text-dark) !important;
+}
+
+[data-bs-theme="dark"] .sidebar {
+  background-color: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--border-subtle) !important;
+}
+
+/* === CARDS - Bordas muito sutis === */
+[data-bs-theme="dark"] .card,
+[data-bs-theme="dark"] .card-custom,
+[data-bs-theme="dark"] .modal-content,
+[data-bs-theme="dark"] .bg-white,
+[data-bs-theme="dark"] .detail-card,
+[data-bs-theme="dark"] .card-metric,
+[data-bs-theme="dark"] .card-stat-func {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  color: var(--text-dark) !important;
+}
+
+/* === TEXTOS === */
+[data-bs-theme="dark"] h1,
+[data-bs-theme="dark"] h2,
+[data-bs-theme="dark"] h3,
+[data-bs-theme="dark"] h4,
+[data-bs-theme="dark"] h5,
+[data-bs-theme="dark"] h6,
+[data-bs-theme="dark"] .fw-bold,
+[data-bs-theme="dark"] .text-dark,
+[data-bs-theme="dark"] .kpi-value,
+[data-bs-theme="dark"] .fin-value {
+  color: var(--text-dark) !important;
+}
+
+[data-bs-theme="dark"] .kpi-title,
+[data-bs-theme="dark"] .fin-label,
+[data-bs-theme="dark"] .menu-label {
+  color: var(--text-muted) !important;
+}
+
+[data-bs-theme="dark"] p,
+[data-bs-theme="dark"] span,
+[data-bs-theme="dark"] .small {
+  color: var(--text-gray);
+}
+
+/* === INPUTS/SELECTS - Fundo escuro, bordas sutis === */
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select,
+[data-bs-theme="dark"] .search-input {
+  background-color: var(--bg-input) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-dark) !important;
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+  border-color: var(--primary-blue) !important;
+  box-shadow: 0 0 0 2px rgba(10, 179, 156, 0.15) !important;
+}
+
+[data-bs-theme="dark"] .form-control::placeholder,
+[data-bs-theme="dark"] .search-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+[data-bs-theme="dark"] .input-group-text,
+[data-bs-theme="dark"] .bg-light {
+  background-color: var(--bg-hover) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+}
+
+/* === TABELAS - Linhas sutis === */
+[data-bs-theme="dark"] .table {
+  color: var(--text-gray) !important;
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--border-subtle);
+}
+
+[data-bs-theme="dark"] .table> :not(caption)>*>* {
+  border-bottom-color: var(--border-subtle) !important;
+}
+
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-dark) !important;
+}
+
+/* === TABELA CABEÇALHO === */
+[data-bs-theme="dark"] thead th,
+[data-bs-theme="dark"] .table-fin th {
+  background-color: transparent !important;
+  color: var(--text-muted) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  font-weight: 600;
+}
+
+[data-bs-theme="dark"] .table-fin td {
+  color: var(--text-gray) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+/* === BOTÕES === */
+[data-bs-theme="dark"] .btn-light,
+[data-bs-theme="dark"] .btn-white,
+[data-bs-theme="dark"] .btn-header-outline,
+[data-bs-theme="dark"] .btn-outline-secondary {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-gray) !important;
+}
+
+[data-bs-theme="dark"] .btn-light:hover,
+[data-bs-theme="dark"] .btn-header-outline:hover {
+  background-color: var(--bg-hover) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-bs-theme="dark"] .btn-tab-light {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-gray) !important;
+}
+
+[data-bs-theme="dark"] .btn-tab-dark {
+  background-color: var(--primary-blue) !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+[data-bs-theme="dark"] .btn-header-dark {
+  background-color: var(--primary-blue) !important;
+  color: #fff !important;
+}
+
+[data-bs-theme="dark"] .text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* === NAVEGAÇÃO SIDEBAR === */
+[data-bs-theme="dark"] .nav-link {
+  color: var(--text-gray) !important;
+  border-left: 3px solid transparent;
+}
+
+[data-bs-theme="dark"] .nav-link:hover {
+  color: var(--text-dark) !important;
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+[data-bs-theme="dark"] .nav-link.active {
+  background-color: rgba(10, 179, 156, 0.12) !important;
+  color: var(--primary-blue) !important;
+  border-left-color: var(--primary-blue) !important;
+}
+
+[data-bs-theme="dark"] .submenu-link {
+  color: var(--text-muted) !important;
+}
+
+[data-bs-theme="dark"] .submenu-link:hover {
+  color: var(--text-dark) !important;
+}
+
+[data-bs-theme="dark"] .submenu-link.active {
+  color: var(--primary-blue) !important;
+}
+
+/* === CALENDÁRIO === */
+[data-bs-theme="dark"] #calendar,
+[data-bs-theme="dark"] .calendar-grid {
+  background-color: var(--bg-card) !important;
+  color: var(--text-dark) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+[data-bs-theme="dark"] .fc-theme-standard td,
+[data-bs-theme="dark"] .fc-theme-standard th,
+[data-bs-theme="dark"] .calendar-header-cell,
+[data-bs-theme="dark"] .calendar-day-cell {
+  border-color: var(--border-subtle) !important;
+}
+
+[data-bs-theme="dark"] .calendar-header-cell {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-muted) !important;
+}
+
+[data-bs-theme="dark"] .day-number {
+  color: var(--text-gray) !important;
+}
+
+[data-bs-theme="dark"] .fc-col-header-cell-cushion {
+  color: var(--text-muted) !important;
+}
+
+[data-bs-theme="dark"] .fc-daygrid-day-number {
+  color: var(--text-gray) !important;
+}
+
+[data-bs-theme="dark"] .fc-button-primary {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-dark) !important;
+}
+
+[data-bs-theme="dark"] .fc-button-primary:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+[data-bs-theme="dark"] .fc-button-active {
+  background-color: var(--primary-blue) !important;
+  border-color: var(--primary-blue) !important;
+  color: #fff !important;
+}
+
+[data-bs-theme="dark"] .fc-toolbar-title {
+  color: var(--text-dark) !important;
+}
+
+/* === HEADER === */
+[data-bs-theme="dark"] header {
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+/* === DROPDOWNS/MENUS === */
+[data-bs-theme="dark"] .status-popover,
+[data-bs-theme="dark"] .menu-acoes-flutuante,
+[data-bs-theme="dark"] .dropdown-menu,
+[data-bs-theme="dark"] .dropdown-menu-modern {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-bs-theme="dark"] .popover-item,
+[data-bs-theme="dark"] .dropdown-item,
+[data-bs-theme="dark"] .dropdown-item-modern,
+[data-bs-theme="dark"] .menu-acoes-flutuante button {
+  color: var(--text-gray) !important;
+}
+
+[data-bs-theme="dark"] .popover-item:hover,
+[data-bs-theme="dark"] .dropdown-item:hover,
+[data-bs-theme="dark"] .dropdown-item-modern:hover,
+[data-bs-theme="dark"] .menu-acoes-flutuante button:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+/* === TIMELINE === */
+[data-bs-theme="dark"] .timeline-item {
+  border-left-color: var(--border-subtle) !important;
+}
+
+[data-bs-theme="dark"] .timeline-icon {
+  background: var(--bg-card) !important;
+}
+
+/* === DIVISORES === */
+[data-bs-theme="dark"] .status-row {
+  border-bottom-color: var(--border-subtle) !important;
+}
+
+[data-bs-theme="dark"] .schedule-table td,
+[data-bs-theme="dark"] .schedule-table th {
+  border-color: var(--border-subtle) !important;
+}
+
+[data-bs-theme="dark"] .border-bottom {
+  border-bottom-color: var(--border-subtle) !important;
+}
+
+[data-bs-theme="dark"] .border {
+  border-color: var(--border-subtle) !important;
+}
+
+/* === AVATARES === */
+[data-bs-theme="dark"] .user-avatar {
+  background-color: var(--primary-blue) !important;
+  color: #fff !important;
+}
+
+[data-bs-theme="dark"] .avatar-square {
+  background-color: var(--primary-blue) !important;
+  color: #fff !important;
+}
+
+/* === PROGRESS BARS === */
+[data-bs-theme="dark"] .progress-thin {
+  background-color: var(--bg-hover) !important;
+}
+
+[data-bs-theme="dark"] .progress,
+[data-bs-theme="dark"] .progress-stacked {
+  background-color: var(--bg-hover) !important;
+}
+
+/* === CONTATOS === */
+[data-bs-theme="dark"] .contact-info {
+  color: var(--text-muted) !important;
+}
+
+[data-bs-theme="dark"] .contact-info i {
+  color: var(--text-muted) !important;
+}
+
+/* === ÍCONES COLORIDOS VIBRANTES === */
+[data-bs-theme="dark"] .kpi-icon-circle,
+[data-bs-theme="dark"] .icon-shape,
+[data-bs-theme="dark"] .fin-icon-box,
+[data-bs-theme="dark"] .status-icon-box,
+[data-bs-theme="dark"] .item-icon,
+[data-bs-theme="dark"] .icon-soft-box {
+  opacity: 1 !important;
+}
+
+/* Cores de fundo soft com mais intensidade no dark */
+[data-bs-theme="dark"] .bg-cyan-soft {
+  background-color: rgba(41, 156, 219, 0.18) !important;
+}
+
+[data-bs-theme="dark"] .bg-green-soft {
+  background-color: rgba(10, 179, 156, 0.18) !important;
+}
+
+[data-bs-theme="dark"] .bg-red-soft {
+  background-color: rgba(240, 101, 72, 0.18) !important;
+}
+
+[data-bs-theme="dark"] .bg-yellow-soft {
+  background-color: rgba(247, 184, 75, 0.18) !important;
+}
+
+[data-bs-theme="dark"] .bg-purple-soft {
+  background-color: rgba(139, 92, 246, 0.18) !important;
+}
+
+[data-bs-theme="dark"] .bg-orange-soft {
+  background-color: rgba(247, 184, 75, 0.18) !important;
+}
+
+[data-bs-theme="dark"] .bg-blue-soft {
+  background-color: rgba(41, 156, 219, 0.18) !important;
+}
+
+[data-bs-theme="dark"] .bg-gray-soft {
+  background-color: rgba(107, 122, 144, 0.18) !important;
+}
+
+/* === CORREÇÃO BOOTSTRAP OVERRIDES === */
+[data-bs-theme="dark"] .text-secondary {
+  color: var(--text-muted) !important;
+}
+
+[data-bs-theme="dark"] .text-body {
+  color: var(--text-dark) !important;
+}
+
+[data-bs-theme="dark"] .bg-body {
+  background-color: var(--bg-body) !important;
+}
+
+[data-bs-theme="dark"] .bg-body-secondary {
+  background-color: var(--bg-card) !important;
+}
+
+[data-bs-theme="dark"] .bg-body-tertiary {
+  background-color: var(--bg-hover) !important;
+}
+
+/* Date Card */
+[data-bs-theme="dark"] .date-card {
+  background-color: var(--bg-hover) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+/* Modal */
+[data-bs-theme="dark"] .modal-header,
+[data-bs-theme="dark"] .modal-footer {
+  border-color: var(--border-subtle) !important;
+}
+
+/* === GRÁFICOS CHART.JS === */
+[data-bs-theme="dark"] .chartjs-render-monitor {
+  background-color: transparent !important;
+}
+
+/* === PILLS/BADGES STATUS === */
+[data-bs-theme="dark"] .pill-green,
+[data-bs-theme="dark"] .badge-success {
+  background-color: rgba(10, 179, 156, 0.2) !important;
+  color: #0ab39c !important;
+}
+
+[data-bs-theme="dark"] .pill-red,
+[data-bs-theme="dark"] .badge-danger {
+  background-color: rgba(240, 101, 72, 0.2) !important;
+  color: #f06548 !important;
+}
+
+[data-bs-theme="dark"] .pill-yellow,
+[data-bs-theme="dark"] .badge-warning {
+  background-color: rgba(247, 184, 75, 0.2) !important;
+  color: #f7b84b !important;
+}
+
+[data-bs-theme="dark"] .pill-blue,
+[data-bs-theme="dark"] .badge-primary,
+[data-bs-theme="dark"] .badge-info {
+  background-color: rgba(41, 156, 219, 0.2) !important;
+  color: #299cdb !important;
+}
+
+/* === TEXTOS COLORIDOS VIBRANTES === */
+[data-bs-theme="dark"] .text-green,
+[data-bs-theme="dark"] .text-success,
+[data-bs-theme="dark"] .text-income {
+  color: #0ab39c !important;
+}
+
+[data-bs-theme="dark"] .text-red,
+[data-bs-theme="dark"] .text-danger,
+[data-bs-theme="dark"] .text-expense {
+  color: #f06548 !important;
+}
+
+[data-bs-theme="dark"] .text-yellow,
+[data-bs-theme="dark"] .text-warning {
+  color: #f7b84b !important;
+}
+
+[data-bs-theme="dark"] .text-blue,
+[data-bs-theme="dark"] .text-primary,
+[data-bs-theme="dark"] .text-info,
+[data-bs-theme="dark"] .text-cyan {
+  color: #299cdb !important;
+}
+
+[data-bs-theme="dark"] .text-purple {
+  color: #8b5cf6 !important;
+}
+
+[data-bs-theme="dark"] .text-teal {
+  color: #0ab39c !important;
+}
+
+[data-bs-theme="dark"] .text-orange {
+  color: #f7b84b !important;
+}
+
+/* === LINHAS DE GRID EM GRÁFICOS === */
+[data-bs-theme="dark"] canvas {
+  --chart-grid-color: rgba(255, 255, 255, 0.05);
+}
+
+/* === SELECT/DROPDOWN ARROWS === */
+[data-bs-theme="dark"] .form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7a90' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+}
+
+/* === BARRA DE ROLAGEM ESCURA === */
+[data-bs-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--bg-body);
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* === LINKS === */
+[data-bs-theme="dark"] a:not(.btn):not(.nav-link):not(.dropdown-item) {
+  color: var(--primary-blue);
+}
+
+[data-bs-theme="dark"] a:not(.btn):not(.nav-link):not(.dropdown-item):hover {
+  color: var(--primary-cyan);
+}
+
+/* === STATUS ESPECÍFICOS === */
+[data-bs-theme="dark"] .status-pill {
+  font-weight: 600;
+}
+
+/* Agendado - Azul */
+[data-bs-theme="dark"] .status-agendado,
+[data-bs-theme="dark"] [class*="agendado"] {
+  background-color: rgba(41, 156, 219, 0.18) !important;
+  color: #299cdb !important;
+}
+
+/* Em Andamento - Verde/Teal */
+[data-bs-theme="dark"] .status-andamento,
+[data-bs-theme="dark"] [class*="andamento"] {
+  background-color: rgba(10, 179, 156, 0.18) !important;
+  color: #0ab39c !important;
+}
+
+/* Finalizado - Cinza */
+[data-bs-theme="dark"] .status-finalizado,
+[data-bs-theme="dark"] [class*="finalizado"] {
+  background-color: rgba(107, 122, 144, 0.18) !important;
+  color: #a0aec0 !important;
+}
+
+/* Pendente - Amarelo */
+[data-bs-theme="dark"] .status-pendente,
+[data-bs-theme="dark"] [class*="pendente"] {
+  background-color: rgba(247, 184, 75, 0.18) !important;
+  color: #f7b84b !important;
+}
+
+/* Cancelado - Vermelho */
+[data-bs-theme="dark"] .status-cancelado,
+[data-bs-theme="dark"] [class*="cancelado"] {
+  background-color: rgba(240, 101, 72, 0.18) !important;
+  color: #f06548 !important;
+}
+
+/* === ÍCONE DE TEMA === */
+[data-bs-theme="dark"] #iconTheme {
+  color: var(--text-muted) !important;
+}
+
+/* === CAIXAS ESPECIAIS === */
+.dados-faturamento-box {
+  background: rgba(247, 184, 75, 0.08);
+}
+
+[data-bs-theme="dark"] .dados-faturamento-box {
+  background: rgba(247, 184, 75, 0.1) !important;
+}
+
+/* Upload areas */
+.upload-area {
+  background-color: var(--bg-hover);
+}
+
+[data-bs-theme="dark"] .upload-area {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-bs-theme="dark"] [style*="dashed"] {
+  border-color: var(--border-color) !important;
+}
+
+/* === CORREÇÃO DE ELEMENTOS ESPECÍFICOS === */
+[data-bs-theme="dark"] .input-group-text.bg-white {
+  background-color: var(--bg-input) !important;
+}
+
+[data-bs-theme="dark"] hr {
+  border-color: var(--border-subtle) !important;
+  opacity: 1;
+}
+
+/* === BADGES DE DEPARTAMENTO NO DARK === */
+[data-bs-theme="dark"] .badge-dept {
+  font-weight: 600;
+}
+
+[data-bs-theme="dark"] .badge-logistica {
+  background-color: rgba(219, 39, 119, 0.2) !important;
+  color: #f472b6 !important;
+}
+
+[data-bs-theme="dark"] .badge-operacoes,
+[data-bs-theme="dark"] .badge-operacao {
+  background-color: rgba(41, 156, 219, 0.2) !important;
+  color: #38bdf8 !important;
+}
+
+[data-bs-theme="dark"] .badge-vendas,
+[data-bs-theme="dark"] .badge-comercial {
+  background-color: rgba(10, 179, 156, 0.2) !important;
+  color: #2dd4bf !important;
+}
+
+[data-bs-theme="dark"] .badge-admin,
+[data-bs-theme="dark"] .badge-administrativo {
+  background-color: rgba(247, 184, 75, 0.2) !important;
+  color: #fbbf24 !important;
+}
+
+[data-bs-theme="dark"] .badge-financeiro {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+}
+
+[data-bs-theme="dark"] .badge-producao {
+  background-color: rgba(139, 92, 246, 0.2) !important;
+  color: #a78bfa !important;
+}
+
+[data-bs-theme="dark"] .badge-tecnologia,
+[data-bs-theme="dark"] .badge-ti {
+  background-color: rgba(6, 182, 212, 0.2) !important;
+  color: #22d3ee !important;
+}
+
+/* === CORREÇÃO DO bg-light NO DARK === */
+[data-bs-theme="dark"] .bg-light,
+[data-bs-theme="dark"] .form-control.bg-light,
+[data-bs-theme="dark"] input.bg-light {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-dark) !important;
+}
+
+/* === SEARCH INPUT CORREÇÃO === */
+[data-bs-theme="dark"] .search-input,
+[data-bs-theme="dark"] input[type="search"],
+[data-bs-theme="dark"] input[type="text"].form-control {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-dark) !important;
+}
+
+/* === BARRA DE BUSCA UNIVERSAL === */
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: all 0.2s;
+}
+
+.search-box:focus-within {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(41, 156, 219, 0.15);
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  width: 100%;
+  background: transparent;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+[data-bs-theme="dark"] .search-box {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+[data-bs-theme="dark"] .search-box input {
+  color: var(--text-dark) !important;
+}
+
+/* === ABAS (TABS) ESTILO MODERNO === */
+.nav-tabs.card-header-tabs {
+  border-bottom: none;
+}
+
+.nav-tabs.card-header-tabs .nav-link {
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 12px 20px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.nav-tabs.card-header-tabs .nav-link:hover {
+  color: var(--text-dark);
+  border-bottom-color: var(--border-color);
+}
+
+.nav-tabs.card-header-tabs .nav-link.active {
+  color: var(--primary-blue);
+  border-bottom-color: var(--primary-blue);
+  background: transparent;
+}
+
+[data-bs-theme="dark"] .nav-tabs.card-header-tabs .nav-link {
+  color: var(--text-muted);
+}
+
+[data-bs-theme="dark"] .nav-tabs.card-header-tabs .nav-link:hover {
+  color: var(--text-dark);
+}
+
+[data-bs-theme="dark"] .nav-tabs.card-header-tabs .nav-link.active {
+  color: var(--primary-blue) !important;
+  border-bottom-color: var(--primary-blue) !important;
+}
+
+/* === CARD HEADER NO DARK === */
+[data-bs-theme="dark"] .card-header,
+[data-bs-theme="dark"] .card-header.bg-white {
+  background-color: var(--bg-card) !important;
+  border-bottom-color: var(--border-subtle) !important;
+}
+
+/* Ajuste do botão de tema no hover */
+#iconTheme {
+  transition: transform 0.3s ease;
+}
+
+button:hover #iconTheme {
+  transform: rotate(15deg) scale(1.1);
+}
