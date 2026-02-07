@@ -24,35 +24,43 @@ db.connect((err) => {
   
   console.log('✅ Conectado ao MySQL Railway!\n');
   
-  // Ler o arquivo SQL
-  const sql = fs.readFileSync('database_completo.sql', 'utf8');
-  
-  console.log('📤 Executando SQL...\n');
-  
-  // Executar o SQL
-  db.query(sql, (error, results) => {
-    if (error) {
-      console.error('❌ Erro ao executar SQL:', error);
-      db.end();
-      process.exit(1);
+  // PRIMEIRO: Dropar tabela clientes para recriar com UF correto
+  console.log('🗑️  Dropando tabela clientes antiga...\n');
+  db.query('DROP TABLE IF EXISTS clientes', (dropErr) => {
+    if (dropErr) {
+      console.error('⚠️  Aviso ao dropar:', dropErr.message);
     }
     
-    console.log('✅ SUCESSO! Tabelas criadas com sucesso!\n');
-    console.log('📊 Resultados:', results);
+    // DEPOIS: Ler o arquivo SQL
+    const sql = fs.readFileSync('database_completo.sql', 'utf8');
     
-    // Verificar as tabelas criadas
-    db.query('SHOW TABLES', (err, tables) => {
-      if (err) {
-        console.error('Erro ao listar tabelas:', err);
-      } else {
-        console.log('\n📋 Tabelas criadas:');
-        tables.forEach(table => {
-          console.log('  ✓', Object.values(table)[0]);
-        });
+    console.log('📤 Executando SQL...\n');
+    
+    // Executar o SQL
+    db.query(sql, (error, results) => {
+      if (error) {
+        console.error('❌ Erro ao executar SQL:', error);
+        db.end();
+        process.exit(1);
       }
       
-      db.end();
-      console.log('\n✅ Concluído!');
+      console.log('✅ SUCESSO! Tabelas criadas com sucesso!\n');
+      console.log('📊 Resultados:', results);
+      
+      // Verificar as tabelas criadas
+      db.query('SHOW TABLES', (err, tables) => {
+        if (err) {
+          console.error('Erro ao listar tabelas:', err);
+        } else {
+          console.log('\n📋 Tabelas criadas:');
+          tables.forEach(table => {
+            console.log('  ✓', Object.values(table)[0]);
+          });
+        }
+        
+        db.end();
+        console.log('\n✅ Concluído!');
+      });
     });
   });
 });
