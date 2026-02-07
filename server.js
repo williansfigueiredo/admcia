@@ -31,6 +31,14 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// --- SERVIR ARQUIVOS HTML NA RAIZ ---
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/invoice', (req, res) => {
+  res.sendFile(path.join(__dirname, 'invoice.html'));
+});
 
 // --- CONEXÃO COM O BANCO ---
 const db = mysql.createConnection({
