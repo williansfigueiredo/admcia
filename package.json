@@ -9,7 +9,8 @@
     "criar-tabelas": "node criar-tabelas.js",
     "importar-dados": "node importar-dados.js",
     "reimportar": "node reimportar-dados.js",
-    "start": "node criar-tabelas.js && node reimportar-dados.js && node server.js"
+    "corrigir-uf": "node corrigir-uf.js",
+    "start": "node corrigir-uf.js && node criar-tabelas.js && node reimportar-dados.js && node server.js"
   },
   "keywords": [],
   "author": "",
