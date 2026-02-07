@@ -21,34 +21,43 @@ db.connect((err) => {
   
   console.log('✅ Conectado ao Railway MySQL!\n');
   
-  // Ler o arquivo de dados
-  const sql = fs.readFileSync('dados-local.sql', 'utf8');
-  
-  console.log('📤 Inserindo dados...\n');
-  
-  db.query(sql, (error) => {
-    if (error) {
-      console.error('❌ Erro ao importar:', error.message);
+  // Verificar se já tem dados
+  db.query('SELECT COUNT(*) as total FROM clientes', (err, result) => {
+    if (!err && result[0].total > 0) {
+      console.log('⚠️  Banco já contém dados! Pulando importação...\n');
       db.end();
-      process.exit(1);
+      return;
     }
     
-    console.log('✅ DADOS IMPORTADOS COM SUCESSO!\n');
+    // Ler o arquivo de dados
+    const sql = fs.readFileSync('dados-local.sql', 'utf8');
+  
+    console.log('📤 Inserindo dados...\n');
+  
+    db.query(sql, (error) => {
+      if (error) {
+        console.error('❌ Erro ao importar:', error.message);
+        db.end();
+        process.exit(1);
+      }
     
-    // Verificar quantos registros foram inseridos
-    const tabelas = ['clientes', 'funcionarios', 'jobs', 'equipamentos', 'job_itens', 'job_equipe', 'escalas', 'veiculos'];
+      console.log('✅ DADOS IMPORTADOS COM SUCESSO!\n');
     
-    let completed = 0;
-    tabelas.forEach(tabela => {
-      db.query(`SELECT COUNT(*) as total FROM ${tabela}`, (err, result) => {
-        if (!err) {
-          console.log(`   ${tabela}: ${result[0].total} registros`);
-        }
-        completed++;
-        if (completed === tabelas.length) {
-          db.end();
-          console.log('\n🎉 Importação concluída!');
-        }
+      // Verificar quantos registros foram inseridos
+      const tabelas = ['clientes', 'funcionarios', 'jobs', 'equipamentos', 'job_itens', 'job_equipe', 'escalas', 'veiculos'];
+    
+      let completed = 0;
+      tabelas.forEach(tabela => {
+        db.query(`SELECT COUNT(*) as total FROM ${tabela}`, (err, result) => {
+          if (!err) {
+            console.log(`   ${tabela}: ${result[0].total} registros`);
+          }
+          completed++;
+          if (completed === tabelas.length) {
+            db.end();
+            console.log('\n🎉 Importação concluída!');
+          }
+        });
       });
     });
   });
