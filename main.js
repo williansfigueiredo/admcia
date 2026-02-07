@@ -1,7 +1,10 @@
 /* =============================================================
    CONFIGURAÇÕES GERAIS E INICIALIZAÇÃO
    ============================================================= */
-const API_URL = "http://localhost:3000";
+// Detecta automaticamente se está rodando local ou no Railway
+const API_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:3000' 
+  : window.location.origin;
 
 // GARANTIA: Assim que a tela abrir, roda tudo.
 document.addEventListener('DOMContentLoaded', () => {
