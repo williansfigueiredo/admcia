@@ -1,10 +1,14 @@
 /* =============================================================
    CONFIGURAÇÕES GERAIS E INICIALIZAÇÃO
    ============================================================= */
+console.log('🔥 MAIN.JS VERSÃO 2.0 CARREGADO - COM PAGINAÇÃO FUNCIONÁRIOS');
+
 // Detecta automaticamente se está rodando local ou no Railway
-const API_URL = window.location.hostname === 'localhost' 
+const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000' 
   : window.location.origin;
+
+console.log('🌐 API_URL configurada:', API_URL);
 
 // GARANTIA: Assim que a tela abrir, roda tudo.
 document.addEventListener('DOMContentLoaded', () => {
@@ -19,6 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
   atualizarDashboard();
   carregarEstoque();
   window.carregarEquipamentosParaPedido();
+  
+  console.log('🚨 TENTANDO CHAMAR carregarFuncionarios()...');
+  if (typeof window.carregarFuncionarios === 'function') {
+    console.log('✅ Função carregarFuncionarios existe!');
+    window.carregarFuncionarios();
+  } else {
+    console.error('❌ Função carregarFuncionarios NÃO existe!');
+  }
 
   /* =============================================================
      NOVO SISTEMA DE RASTREAMENTO DE ORIGEM E MODO
@@ -1364,6 +1376,15 @@ window.switchView = function (viewId) {
 
   if (viewId === 'clientes') {
     carregarListaClientes();
+    // Restaura a página salva se existir
+    setTimeout(() => {
+      if (window.paginacaoClientes.paginaSalva > 1) {
+        console.log('🔙 Restaurando página:', window.paginacaoClientes.paginaSalva);
+        window.paginacaoClientes.paginaAtual = window.paginacaoClientes.paginaSalva;
+        renderizarPaginaClientes();
+        renderizarBotoesPaginacao();
+      }
+    }, 100);
   }
 
   if (viewId === 'estoque') {
@@ -1440,7 +1461,7 @@ function getPagamentoPill(status) {
    ============================================================= */
 
 let paginaAtual = 1;
-const ITENS_POR_PAGINA = 5; // Mude aqui se quiser 10 ou mais itens
+const ITENS_POR_PAGINA = 6; // Mesmo padrão dos clientes
 let todosOsJobsCache = []; // Guarda os dados para não buscar toda hora
 let jobsFiltrados = []; // <--- NOVA VARIÁVEL
 // --- VARIÁVEIS DE CONTROLE DE ESTADO (SWITCH) ---
@@ -1667,35 +1688,44 @@ function renderizarTabelaContratos(pagina) {
   const tabela = document.getElementById('tabela-contratos');
   const divPaginacao = document.getElementById('paginacao-contratos');
 
-  if (!tabela) return;
+  console.log('📊 renderizarTabelaContratos:', { 
+    pagina, 
+    totalJobs: jobsFiltrados.length, 
+    itensPorPagina: ITENS_POR_PAGINA 
+  });
+
+  if (!tabela) {
+    console.error('❌ Tabela não encontrada!');
+    return;
+  }
 
   tabela.innerHTML = "";
   paginaAtual = pagina;
 
-  // === CORREÇÃO AQUI ===
-  // Removemos a lógica que forçava mostrar tudo se o filtro estivesse vazio.
-  // Agora, se jobsFiltrados estiver vazio (0 resultados), ele vai respeitar isso.
-
-  // Apenas uma segurança básica para garantir que é um array
-  if (!jobsFiltrados) {
+  // Garante que jobsFiltrados existe
+  if (!jobsFiltrados || jobsFiltrados.length === 0) {
     jobsFiltrados = [...todosOsJobsCache];
+    console.log('🔄 Resetou jobsFiltrados:', jobsFiltrados.length);
   }
 
   const inicio = (pagina - 1) * ITENS_POR_PAGINA;
   const fim = inicio + ITENS_POR_PAGINA;
 
-  // Corta a lista (se estiver vazia, vai criar um array vazio)
+  // Corta a lista para a página atual
   const jobsDaPagina = jobsFiltrados.slice(inicio, fim);
+  
+  console.log('📄 Jobs na página:', { inicio, fim, quantidade: jobsDaPagina.length });
 
   // Calcula páginas baseado no filtro atual
   const totalPaginas = Math.ceil(jobsFiltrados.length / ITENS_POR_PAGINA) || 1;
+  
+  console.log('📖 Total de páginas:', totalPaginas);
 
   // === MENSAGEM DE "NADA ENCONTRADO" ===
   if (jobsDaPagina.length === 0) {
-    // Se não tem nada na lista filtrada, mostra o aviso
     tabela.innerHTML = `
             <tr>
-                <td colspan="5" class="text-center py-5">
+                <td colspan="6" class="text-center py-5">
                     <div class="text-muted">
                         <i class="bi bi-search fs-1 d-block mb-2"></i>
                         Nenhum contrato encontrado com esses filtros.
@@ -1767,7 +1797,8 @@ function renderizarTabelaContratos(pagina) {
     });
   }
 
-  renderizarBotoesPaginacao(divPaginacao, pagina, totalPaginas);
+  console.log('✅ Renderizando paginação...');
+  renderizarBotoesPaginacaoContratos(divPaginacao, pagina, totalPaginas);
 }
 
 
@@ -1805,18 +1836,22 @@ function renderizarTabelaContratos(pagina) {
     menu.id = "menu-acoes-flutuante";
     menu.className = "menu-acoes-flutuante";
     menu.innerHTML = `
-  <button type="button" onclick="window.setJobOrigin('contratos'); abrirDetalhesJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
-    👁️&nbsp;&nbsp;Detalhes
+  <button type="button" class="menu-item item-gray" onclick="window.setJobOrigin('contratos'); abrirDetalhesJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
+    <i class="bi bi-eye"></i>
+    <span>Detalhes</span>
   </button>
-  <button type="button" onclick="window.setJobOrigin('contratos'); editarJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
-    ✏️&nbsp;&nbsp;Editar
+  <button type="button" class="menu-item item-blue" onclick="window.setJobOrigin('contratos'); editarJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
+    <i class="bi bi-pencil-square"></i>
+    <span>Editar</span>
   </button>
-  <button type="button" onclick="abrirModalInvoice(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
-    🧾&nbsp;&nbsp;Gerar Invoice
+  <button type="button" class="menu-item item-green" onclick="abrirModalInvoice(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
+    <i class="bi bi-file-earmark-text"></i>
+    <span>Gerar Invoice</span>
   </button>
   <div class="divider"></div>
-  <button type="button" class="danger" onclick="excluirJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
-    🗑️&nbsp;&nbsp;Apagar
+  <button type="button" class="menu-item item-red" onclick="excluirJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
+    <i class="bi bi-trash3"></i>
+    <span>Apagar</span>
   </button>
 `;
 
@@ -1845,30 +1880,81 @@ function renderizarTabelaContratos(pagina) {
 })();
 
 
-// Função auxiliar só para desenhar os botões (para organizar o código)
-function renderizarBotoesPaginacao(div, pagina, total) {
+// Função auxiliar para desenhar os botões de paginação (padrão idêntico aos clientes)
+function renderizarBotoesPaginacaoContratos(div, pagina, total) {
   if (!div) return;
-  div.innerHTML = "";
+  
+  div.innerHTML = '';
 
-  const btnAnt = document.createElement('button');
-  btnAnt.className = `btn btn-sm btn-outline-secondary me-2 ${pagina === 1 ? 'disabled' : ''}`;
-  btnAnt.innerHTML = '<i class="bi bi-chevron-left"></i>';
-  btnAnt.onclick = () => renderizarTabelaContratos(pagina - 1);
-  div.appendChild(btnAnt);
-
-  for (let i = 1; i <= total; i++) {
-    const btn = document.createElement('button');
-    btn.className = `btn btn-sm me-1 ${i === pagina ? 'btn-primary' : 'btn-outline-secondary'}`;
-    btn.innerText = i;
-    btn.onclick = () => renderizarTabelaContratos(i);
-    div.appendChild(btn);
+  // Se houver apenas 1 página, mostra info mas sem botões (igual aos clientes)
+  if (total <= 1) {
+    div.innerHTML = `<div class="text-center text-muted small mt-2">Total: ${jobsFiltrados.length} contrato(s)</div>`;
+    return;
   }
 
-  const btnProx = document.createElement('button');
-  btnProx.className = `btn btn-sm btn-outline-secondary ms-1 ${pagina === total ? 'disabled' : ''}`;
-  btnProx.innerHTML = '<i class="bi bi-chevron-right"></i>';
-  btnProx.onclick = () => renderizarTabelaContratos(pagina + 1);
-  div.appendChild(btnProx);
+  let botoesHTML = '<div class="d-flex justify-content-center align-items-center gap-2">';
+
+  // Botão Anterior
+  const desabilitarAnterior = pagina === 1;
+  botoesHTML += `
+    <button class="btn btn-sm btn-outline-secondary" 
+            onclick="mudarPaginaContratos(${pagina - 1})" 
+            ${desabilitarAnterior ? 'disabled' : ''}>
+      <i class="bi bi-chevron-left"></i> Anterior
+    </button>
+  `;
+
+  // Botões numéricos (máximo 5 páginas visíveis)
+  let paginaInicio = Math.max(1, pagina - 2);
+  let paginaFim = Math.min(total, paginaInicio + 4);
+
+  // Ajusta início se estiver próximo ao fim
+  if (paginaFim - paginaInicio < 4) {
+    paginaInicio = Math.max(1, paginaFim - 4);
+  }
+
+  for (let i = paginaInicio; i <= paginaFim; i++) {
+    const ativo = i === pagina ? 'btn-primary' : 'btn-outline-secondary';
+    botoesHTML += `
+      <button class="btn btn-sm ${ativo}" 
+              onclick="mudarPaginaContratos(${i})" 
+              style="min-width: 40px;">
+        ${i}
+      </button>
+    `;
+  }
+
+  // Botão Próximo
+  const desabilitarProximo = pagina === total;
+  botoesHTML += `
+    <button class="btn btn-sm btn-outline-secondary" 
+            onclick="mudarPaginaContratos(${pagina + 1})" 
+            ${desabilitarProximo ? 'disabled' : ''}>
+      Próximo <i class="bi bi-chevron-right"></i>
+    </button>
+  `;
+
+  botoesHTML += `</div>
+    <div class="text-center text-muted small mt-2">
+      Página ${pagina} de ${total} • Total: ${jobsFiltrados.length} contrato(s)
+    </div>`;
+
+  div.innerHTML = botoesHTML;
+}
+
+// Função para mudar de página nos contratos
+window.mudarPaginaContratos = function(novaPagina) {
+  const totalPaginas = Math.ceil(jobsFiltrados.length / ITENS_POR_PAGINA) || 1;
+
+  if (novaPagina < 1 || novaPagina > totalPaginas) return;
+
+  renderizarTabelaContratos(novaPagina);
+
+  // Scroll suave para o topo da tabela
+  const tabelaContratos = document.getElementById('tabela-contratos');
+  if (tabelaContratos) {
+    tabelaContratos.closest('.table-responsive')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 
@@ -3090,6 +3176,9 @@ window.salvarClienteFull = function () {
 
   // === FUNÇÃO INTERNA: Executa o salvamento ===
   function executarSalvarCliente() {
+    // Coleta os contatos dinâmicos
+    const contatos = coletarContatosDoFormulario();
+    
     const dados = {
       nome: val('cadCliNome'),
       nome_fantasia: val('cadCliFantasia'),
@@ -3103,15 +3192,9 @@ window.salvarClienteFull = function () {
       bairro: val('cadCliBairro'),
       cidade: val('cadCliCidade'),
       uf: val('cadCliUf'),
-      contato1_nome: val('cadCliContato1Nome'),
-      contato1_cargo: val('cadCliContato1Cargo'),
-      contato1_email: val('cadCliContato1Email'),
-      contato1_telefone: val('cadCliContato1Tel'),
-      contato2_nome: val('cadCliContato2Nome'),
-      contato2_cargo: val('cadCliContato2Cargo'),
-      contato2_email: val('cadCliContato2Email'),
-      contato2_telefone: val('cadCliContato2Tel'),
-      observacoes: val('cadCliObs')
+      observacoes: val('cadCliObs'),
+      // Adiciona os contatos dinâmicos
+      contatos: contatos
     };
 
     const url = isEdit ? `${API_URL}/clientes/${window.idClienteEdicao}` : `${API_URL}/clientes`;
@@ -3127,7 +3210,8 @@ window.salvarClienteFull = function () {
         alert(isEdit ? "Cliente atualizado com sucesso!" : "Cliente cadastrado com sucesso!");
         document.getElementById('formClienteFull').reset();
         window.idClienteEdicao = null;
-        switchView('clientes');
+        limparListaContatos();
+        switchView('clientes');  // Vai restaurar a página automaticamente
         carregarListaClientes();
         if (typeof carregarOpcoesDoFormulario === 'function') carregarOpcoesDoFormulario();
       })
@@ -3202,6 +3286,14 @@ window.alternarViewCliente = function (modo) {
 // Variável global para guardar a lista original
 window.cacheClientes = [];
 
+// Variáveis de controle de paginação
+window.paginacaoClientes = {
+  paginaAtual: 1,
+  itensPorPagina: 6,
+  listaTotalFiltrada: [],
+  paginaSalva: 1  // Guarda a página antes de sair da lista
+};
+
 // 1. Função Principal: Busca do Servidor e guarda no Cache
 function carregarListaClientes() {
   fetch(`${API_URL}/clientes`)
@@ -3217,23 +3309,28 @@ function carregarListaClientes() {
       // Guarda na memória para filtrar rápido sem ir no servidor
       window.cacheClientes = clientes;
 
-      // Desenha a tela com todos os clientes
-      renderizarClientes(window.cacheClientes);
+      // Desenha a tela com todos os clientes (COM PAGINAÇÃO)
+      renderizarClientesComPaginacao(window.cacheClientes);
     })
     .catch(err => console.error("Erro ao carregar clientes:", err));
 }
 
 // 2. Função de Filtragem (O que você pediu!)
-// 2. Função de Filtragem (Texto + Tipo PF/PJ)
+// 2. Função de Filtragem (Texto + Tipo PF/PJ + Status)
 window.filtrarClientes = function () {
   // Pega o texto digitado (minúsculo)
   const texto = document.getElementById('inputBuscaCliente').value.toLowerCase().trim();
   // Pega o tipo selecionado no dropdown (PF, PJ ou Vazio)
   const tipoSelecionado = document.getElementById('filtroTipoCliente').value;
+  // Pega o status selecionado (Ativo, Inativo, Bloqueado ou Vazio)
+  const statusSelecionado = document.getElementById('filtroStatusCliente').value;
 
-  // Se não tiver busca nem tipo selecionado, mostra tudo
-  if (texto === "" && tipoSelecionado === "") {
-    renderizarClientes(window.cacheClientes);
+  console.log('🔍 Filtros aplicados:', { texto, tipoSelecionado, statusSelecionado });
+
+  // Se não tiver nenhum filtro, mostra tudo
+  if (texto === "" && tipoSelecionado === "" && statusSelecionado === "") {
+    console.log('📋 Mostrando todos os clientes:', window.cacheClientes.length);
+    renderizarClientesComPaginacao(window.cacheClientes);
     return;
   }
 
@@ -3245,7 +3342,10 @@ window.filtrarClientes = function () {
     if (tipoSelecionado === "PF" && isPJ) return false; // Se quer PF mas é PJ, esconde
     if (tipoSelecionado === "PJ" && !isPJ) return false; // Se quer PJ mas é PF, esconde
 
-    // --- 2. FILTRO DE TEXTO (Nome, Doc, Email, etc) ---
+    // --- 2. FILTRO DE STATUS ---
+    if (statusSelecionado !== "" && cli.status !== statusSelecionado) return false;
+
+    // --- 3. FILTRO DE TEXTO (Nome, Doc, Email, etc) ---
     if (texto !== "") {
       const nomeEmpresa = (cli.nome || "").toLowerCase();
       const nomeFantasia = (cli.nome_fantasia || "").toLowerCase();
@@ -3263,16 +3363,34 @@ window.filtrarClientes = function () {
         email.includes(texto);
     }
 
-    // Se passou pelo filtro de tipo e não tem texto digitado, mostra o cliente
+    // Se passou pelos filtros e não tem texto digitado, mostra o cliente
     return true;
   });
 
-  renderizarClientes(filtrados);
+  console.log('✅ Clientes filtrados:', filtrados.length);
+  renderizarClientesComPaginacao(filtrados);
 }
 
 
-// 3. Função que Desenha a Tela (Cards e Lista)
-function renderizarClientes(lista) {
+// 3. Função que Desenha a Tela COM PAGINAÇÃO (Cards e Lista)
+function renderizarClientesComPaginacao(lista) {
+  console.log('📄 Renderizando com paginação:', lista.length, 'clientes');
+  
+  // Guarda a lista filtrada total
+  window.paginacaoClientes.listaTotalFiltrada = lista;
+  
+  // Renderiza a primeira página
+  window.paginacaoClientes.paginaAtual = 1;
+  renderizarPaginaClientes();
+  renderizarBotoesPaginacao();
+}
+
+// Função auxiliar para renderizar apenas uma página específica
+function renderizarPaginaClientes() {
+  const lista = window.paginacaoClientes.listaTotalFiltrada;
+  const paginaAtual = window.paginacaoClientes.paginaAtual;
+  const itensPorPagina = window.paginacaoClientes.itensPorPagina;
+  
   const containerCards = document.getElementById('lista-clientes-cards');
   const containerLista = document.getElementById('lista-clientes-tabela-body');
 
@@ -3287,7 +3405,12 @@ function renderizarClientes(lista) {
     return;
   }
 
-  lista.forEach(cli => {
+  // Calcula os índices de início e fim da página atual
+  const inicio = (paginaAtual - 1) * itensPorPagina;
+  const fim = inicio + itensPorPagina;
+  const clientesDaPagina = lista.slice(inicio, fim);
+
+  clientesDaPagina.forEach(cli => {
     const isPJ = cli.documento && cli.documento.length > 14;
     const avatarClass = isPJ ? "bg-blue-soft text-blue" : "bg-purple-soft text-purple";
     const icon = isPJ ? "bi-building" : "bi-person";
@@ -3409,6 +3532,106 @@ function renderizarClientes(lista) {
   });
 }
 
+// Função para renderizar os botões de paginação
+function renderizarBotoesPaginacao() {
+  const lista = window.paginacaoClientes.listaTotalFiltrada;
+  const paginaAtual = window.paginacaoClientes.paginaAtual;
+  const itensPorPagina = window.paginacaoClientes.itensPorPagina;
+  
+  const totalPaginas = Math.ceil(lista.length / itensPorPagina);
+  
+  console.log('📖 Paginação:', { total: lista.length, porPagina: itensPorPagina, totalPaginas });
+  
+  // Encontrar container de paginação
+  const containerPaginacao = document.getElementById('paginacao-clientes');
+  if (!containerPaginacao) {
+    console.error('❌ Container de paginação não encontrado!');
+    return;
+  }
+  
+  containerPaginacao.innerHTML = '';
+  
+  if (totalPaginas <= 1) {
+    // Se houver apenas 1 página, mostra info mas sem botões
+    containerPaginacao.innerHTML = `<div class="text-center text-muted small mt-2">Total: ${lista.length} cliente(s)</div>`;
+    return;
+  }
+  
+  let botoesHTML = '<div class="d-flex justify-content-center align-items-center gap-2">';
+  
+  // Botão Anterior
+  const desabilitarAnterior = paginaAtual === 1;
+  botoesHTML += `
+    <button class="btn btn-sm btn-outline-secondary" 
+            onclick="mudarPaginaClientes(${paginaAtual - 1})" 
+            ${desabilitarAnterior ? 'disabled' : ''}>
+      <i class="bi bi-chevron-left"></i> Anterior
+    </button>
+  `;
+  
+  // Botões numéricos (máximo 5 páginas visíveis)
+  let paginaInicio = Math.max(1, paginaAtual - 2);
+  let paginaFim = Math.min(totalPaginas, paginaInicio + 4);
+  
+  // Ajusta início se estiver próximo ao fim
+  if (paginaFim - paginaInicio < 4) {
+    paginaInicio = Math.max(1, paginaFim - 4);
+  }
+  
+  for (let i = paginaInicio; i <= paginaFim; i++) {
+    const ativo = i === paginaAtual ? 'btn-primary' : 'btn-outline-secondary';
+    botoesHTML += `
+      <button class="btn btn-sm ${ativo}" 
+              onclick="mudarPaginaClientes(${i})" 
+              style="min-width: 40px;">
+        ${i}
+      </button>
+    `;
+  }
+  
+  // Botão Próximo
+  const desabilitarProximo = paginaAtual === totalPaginas;
+  botoesHTML += `
+    <button class="btn btn-sm btn-outline-secondary" 
+            onclick="mudarPaginaClientes(${paginaAtual + 1})" 
+            ${desabilitarProximo ? 'disabled' : ''}>
+      Próximo <i class="bi bi-chevron-right"></i>
+    </button>
+  `;
+  
+  botoesHTML += `</div>
+    <div class="text-center text-muted small mt-2">
+      Página ${paginaAtual} de ${totalPaginas} • Total: ${lista.length} cliente(s)
+    </div>`;
+  
+  containerPaginacao.innerHTML = botoesHTML;
+}
+
+// Função para mudar de página
+window.mudarPaginaClientes = function(novaPagina) {
+  const totalPaginas = Math.ceil(window.paginacaoClientes.listaTotalFiltrada.length / window.paginacaoClientes.itensPorPagina);
+  
+  if (novaPagina < 1 || novaPagina > totalPaginas) return;
+  
+  window.paginacaoClientes.paginaAtual = novaPagina;
+  window.paginacaoClientes.paginaSalva = novaPagina;  // Salva automaticamente ao mudar
+  
+  renderizarPaginaClientes();
+  renderizarBotoesPaginacao();
+  
+  // Scroll suave para o topo da lista
+  const listaCards = document.getElementById('lista-clientes-cards');
+  if (listaCards) {
+    listaCards.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// Função para voltar à lista de clientes mantendo a página
+window.voltarParaListaClientes = function() {
+  console.log('🔙 Voltando para lista de clientes...');
+  switchView('clientes');
+}
+
 // --- FUNÇÃO DE EXCLUIR ---
 // --- FUNÇÃO DE EXCLUIR (COM LEITURA DE ERRO) ---
 window.excluirCliente = function (id) {
@@ -3427,7 +3650,15 @@ window.excluirCliente = function (id) {
       .then(() => {
         alert("Cliente excluído com sucesso!");
         // Atualiza a lista sem recarregar a página
+        // Mantém a página atual salva
         carregarListaClientes();
+        setTimeout(() => {
+          if (window.paginacaoClientes.paginaSalva > 1) {
+            window.paginacaoClientes.paginaAtual = window.paginacaoClientes.paginaSalva;
+            renderizarPaginaClientes();
+            renderizarBotoesPaginacao();
+          }
+        }, 100);
       })
       .catch(err => {
         // Mostra o alerta com o motivo do bloqueio
@@ -3438,6 +3669,10 @@ window.excluirCliente = function (id) {
 
 // --- FUNÇÃO DE EDITAR (Carrega dados e abre tela) ---
 window.editarCliente = function (id) {
+  // Salva a página atual antes de sair
+  window.paginacaoClientes.paginaSalva = window.paginacaoClientes.paginaAtual;
+  console.log('💾 Salvando página atual:', window.paginacaoClientes.paginaSalva);
+  
   // 1. Busca os dados do cliente no banco
   fetch(`${API_URL}/clientes/${id}`)
     .then(res => res.json())
@@ -3470,21 +3705,29 @@ window.editarCliente = function (id) {
       setVal('cadCliCidade', cli.cidade);
       setVal('cadCliUf', cli.uf);
 
-      setVal('cadCliContato1Nome', cli.contato1_nome);
-      setVal('cadCliContato1Cargo', cli.contato1_cargo);
-      setVal('cadCliContato1Tel', cli.contato1_telefone);
-      setVal('cadCliContato1Email', cli.contato1_email);
-
-      setVal('cadCliContato2Nome', cli.contato2_nome);
-      setVal('cadCliContato2Cargo', cli.contato2_cargo);
-      setVal('cadCliContato2Tel', cli.contato2_telefone);
-      setVal('cadCliContato2Email', cli.contato2_email);
-
       setVal('cadCliObs', cli.observacoes);
 
       // Muda o texto do botão para indicar edição
       const btnSalvar = document.querySelector('#view-cadastro-cliente .btn-success');
       if (btnSalvar) btnSalvar.innerHTML = '<i class="bi bi-check-lg me-2"></i> Atualizar Cliente';
+      
+      // 5. Carrega os contatos dinâmicos do cliente
+      fetch(`${API_URL}/clientes/${id}/contatos`)
+        .then(res => res.json())
+        .then(contatos => {
+          console.log('📝 Contatos carregados para edição:', contatos);
+          preencherListaContatos(contatos);
+        })
+        .catch(err => {
+          console.error("Erro ao carregar contatos:", err);
+          // Se der erro, adiciona um contato vazio
+          limparListaContatos();
+          adicionarNovoContato();
+        });
+    })
+    .catch(err => {
+      console.error("Erro ao carregar cliente:", err);
+      alert("Erro ao carregar dados do cliente.");
     });
 }
 
@@ -3499,7 +3742,192 @@ window.abrirTelaNovoCliente = function () {
   const btnSalvar = document.querySelector('#view-cadastro-cliente .btn-success');
   if (btnSalvar) btnSalvar.innerHTML = '<i class="bi bi-check-lg me-2"></i> Salvar Cadastro';
 
+  // Limpa e adiciona um contato vazio na lista
+  limparListaContatos();
+  adicionarNovoContato();
+
   switchView('cadastro-cliente');
+}
+
+/* =============================================================
+   GESTÃO DINÂMICA DE CONTATOS
+   ============================================================= */
+
+// Contador global para IDs únicos de contatos
+window.contadorContatos = 0;
+
+// Função para adicionar um novo contato à lista
+window.adicionarNovoContato = function() {
+  const listaContatos = document.getElementById('lista-contatos-dinamica');
+  if (!listaContatos) return;
+  
+  window.contadorContatos++;
+  const idContato = window.contadorContatos;
+  
+  const contatoHTML = `
+    <div class="contato-item mb-3 pb-3 border-bottom" id="contato-${idContato}" data-contato-id="${idContato}">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="small fw-bold text-muted mb-0">
+          <i class="bi bi-person-circle me-1"></i>Contato #${idContato}
+        </h6>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerContato(${idContato})" title="Remover">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+      
+      <div class="mb-2">
+        <label class="small text-muted">Nome Completo</label>
+        <input type="text" class="form-control form-control-sm contato-nome" 
+               placeholder="Ex: João Silva">
+      </div>
+      
+      <div class="mb-2">
+        <label class="small text-muted">Cargo/Departamento</label>
+        <input type="text" class="form-control form-control-sm contato-cargo" 
+               placeholder="Ex: Gerente Comercial">
+      </div>
+      
+      <div class="mb-2">
+        <label class="small text-muted">E-mail</label>
+        <input type="email" class="form-control form-control-sm contato-email" 
+               placeholder="exemplo@email.com">
+      </div>
+      
+      <div class="mb-0">
+        <label class="small text-muted">Telefone/Celular</label>
+        <input type="text" class="form-control form-control-sm contato-telefone" 
+               placeholder="(00) 00000-0000">
+      </div>
+    </div>
+  `;
+  
+  listaContatos.insertAdjacentHTML('beforeend', contatoHTML);
+}
+
+// Função para remover um contato da lista
+window.removerContato = function(idContato) {
+  const contatoElement = document.getElementById(`contato-${idContato}`);
+  if (contatoElement) {
+    contatoElement.remove();
+    
+    // Verifica se ficou sem contatos, adiciona um vazio
+    const listaContatos = document.getElementById('lista-contatos-dinamica');
+    if (listaContatos && listaContatos.children.length === 0) {
+      adicionarNovoContato();
+    }
+  }
+}
+
+// Função para limpar toda a lista de contatos
+function limparListaContatos() {
+  const listaContatos = document.getElementById('lista-contatos-dinamica');
+  if (listaContatos) {
+    listaContatos.innerHTML = '';
+    window.contadorContatos = 0;
+  }
+}
+
+// Função para coletar todos os contatos do formulário
+function coletarContatosDoFormulario() {
+  const listaContatos = document.getElementById('lista-contatos-dinamica');
+  if (!listaContatos) return [];
+  
+  const contatosItens = listaContatos.querySelectorAll('.contato-item');
+  const contatos = [];
+  
+  contatosItens.forEach(item => {
+    const nome = item.querySelector('.contato-nome').value.trim();
+    const cargo = item.querySelector('.contato-cargo').value.trim();
+    const email = item.querySelector('.contato-email').value.trim();
+    const telefone = item.querySelector('.contato-telefone').value.trim();
+    
+    // Só adiciona se tiver pelo menos o nome preenchido
+    if (nome) {
+      contatos.push({
+        nome: nome,
+        cargo: cargo,
+        email: email,
+        telefone: telefone
+      });
+    }
+  });
+  
+  return contatos;
+}
+
+// Função para preencher a lista de contatos (usado na edição)
+function preencherListaContatos(contatos) {
+  limparListaContatos();
+  
+  if (!contatos || contatos.length === 0) {
+    adicionarNovoContato();
+    return;
+  }
+  
+  contatos.forEach(contato => {
+    adicionarNovoContato();
+    
+    // Preenche os campos do último contato adicionado
+    const listaContatos = document.getElementById('lista-contatos-dinamica');
+    const ultimoContato = listaContatos.lastElementChild;
+    
+    if (ultimoContato) {
+      const inputNome = ultimoContato.querySelector('.contato-nome');
+      const inputCargo = ultimoContato.querySelector('.contato-cargo');
+      const inputEmail = ultimoContato.querySelector('.contato-email');
+      const inputTelefone = ultimoContato.querySelector('.contato-telefone');
+      
+      if (inputNome) inputNome.value = contato.nome || '';
+      if (inputCargo) inputCargo.value = contato.cargo || '';
+      if (inputEmail) inputEmail.value = contato.email || '';
+      if (inputTelefone) inputTelefone.value = contato.telefone || '';
+    }
+  });
+}
+
+// Função para exibir contatos no perfil de visualização (somente leitura)
+function exibirContatosPerfil(contatos) {
+  const container = document.getElementById('perfil-lista-contatos');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  if (!contatos || contatos.length === 0) {
+    container.innerHTML = '<div class="col-12 text-muted text-center py-3"><i class="bi bi-info-circle me-2"></i>Nenhum contato cadastrado.</div>';
+    return;
+  }
+  
+  contatos.forEach((contato, index) => {
+    const contatoHTML = `
+      <div class="col-md-6">
+        <div class="p-3 border rounded bg-white h-100">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="badge bg-primary text-white">
+              <i class="bi bi-person-circle me-1"></i>Contato #${index + 1}
+            </div>
+            ${contato.cargo ? `<span class="badge bg-light text-dark border">${contato.cargo}</span>` : ''}
+          </div>
+          
+          <div class="mb-2">
+            <label class="small text-muted fw-bold"><i class="bi bi-person me-1"></i>Nome</label>
+            <div class="form-control form-control-sm bg-light">${contato.nome || 'Não informado'}</div>
+          </div>
+          
+          <div class="mb-2">
+            <label class="small text-muted fw-bold"><i class="bi bi-envelope me-1"></i>E-mail</label>
+            <div class="form-control form-control-sm bg-light">${contato.email || 'Não informado'}</div>
+          </div>
+          
+          <div>
+            <label class="small text-muted fw-bold"><i class="bi bi-telephone me-1"></i>Telefone</label>
+            <div class="form-control form-control-sm bg-light">${contato.telefone || 'Não informado'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', contatoHTML);
+  });
 }
 
 // Função para Excluir Pedido com segurança
@@ -3831,6 +4259,10 @@ window.excluirJob = function (jobId) {
 window.idPerfilAtual = null;
 
 window.abrirPerfilCliente = function (id) {
+  // Salva a página atual antes de sair
+  window.paginacaoClientes.paginaSalva = window.paginacaoClientes.paginaAtual;
+  console.log('💾 Salvando página atual:', window.paginacaoClientes.paginaSalva);
+  
   fetch(`${API_URL}/clientes`)
     .then(res => res.json())
     .then(lista => {
@@ -3876,16 +4308,20 @@ window.abrirPerfilCliente = function (id) {
       setVal('perfil_logradouro', `${cli.logradouro || ''}, ${cli.numero || ''} - ${cli.bairro || ''}`);
       setVal('perfil_cidade_uf', `${cli.cidade || ''}/${cli.uf || ''}`);
 
-      // Contatos
-      setVal('perfil_c1_nome', cli.contato1_nome);
-      setVal('perfil_c1_email', cli.contato1_email || cli.email);
-      setVal('perfil_c1_tel', cli.contato1_telefone || cli.telefone);
-
-      setVal('perfil_c2_nome', cli.contato2_nome);
-      setVal('perfil_c2_email', cli.contato2_email);
-      setVal('perfil_c2_tel', cli.contato2_telefone);
-
       setVal('perfil_obs', cli.observacoes);
+
+      // Carrega os contatos dinâmicos do banco
+      fetch(`${API_URL}/clientes/${id}/contatos`)
+        .then(res => res.json())
+        .then(contatos => {
+          console.log('📞 Contatos carregados do perfil:', contatos);
+          exibirContatosPerfil(contatos);
+        })
+        .catch(err => {
+          console.error("Erro ao carregar contatos do perfil:", err);
+          document.getElementById('perfil-lista-contatos').innerHTML = 
+            '<div class="col-12 text-muted text-center py-3">Nenhum contato cadastrado.</div>';
+        });
 
       // Carrega outras abas
       carregarHistoricoPerfil(id);
@@ -4585,6 +5021,14 @@ function preencherFormularioItem(item) {
 // Variáveis Globais do Estoque
 window.cacheEstoque = [];
 window.modoExibicaoEstoque = 'grid'; // Começa como 'grid' ou 'lista'
+
+// Estado de paginação do Estoque
+window.paginacaoEstoque = {
+  paginaAtual: 1,
+  itensPorPagina: 6,
+  listaTotalFiltrada: [],
+  paginaSalva: null
+};
 window.idItemEditando = null;
 
 // 1. CARREGAR ESTOQUE (Com proteção contra travamento)
@@ -4682,12 +5126,111 @@ window.filtrarEstoque = function () {
     return bateuTexto && bateuCat && bateuStatus;
   });
 
-  // Escolhe qual modo desenhar
+  // Salva lista filtrada e reseta para página 1
+  window.paginacaoEstoque.listaTotalFiltrada = filtrados;
+  window.paginacaoEstoque.paginaAtual = 1;
+
+  // Renderiza primeira página
+  renderizarEstoquePaginado();
+}
+
+// Nova função para renderizar com paginação
+window.renderizarEstoquePaginado = function(pagina = null) {
+  if (pagina) window.paginacaoEstoque.paginaAtual = pagina;
+
+  const { paginaAtual, itensPorPagina, listaTotalFiltrada } = window.paginacaoEstoque;
+  const totalItens = listaTotalFiltrada.length;
+  const totalPaginas = Math.ceil(totalItens / itensPorPagina);
+
+  // Calcula índices da página atual
+  const inicio = (paginaAtual - 1) * itensPorPagina;
+  const fim = inicio + itensPorPagina;
+  const itensPagina = listaTotalFiltrada.slice(inicio, fim);
+
+  // Renderiza a página atual no modo escolhido
   if (window.modoExibicaoEstoque === 'grid') {
-    renderizarEstoqueCards(filtrados);
+    renderizarEstoqueCards(itensPagina);
   } else {
-    renderizarEstoqueLista(filtrados);
+    renderizarEstoqueLista(itensPagina);
   }
+
+  // Renderiza botões de paginação
+  renderizarBotoesPaginacaoEstoque(totalPaginas, totalItens);
+}
+
+// Função para mudar de página
+window.mudarPaginaEstoque = function(novaPagina) {
+  renderizarEstoquePaginado(novaPagina);
+}
+
+// Renderizar botões de paginação (padrão moderno)
+function renderizarBotoesPaginacaoEstoque(totalPaginas, totalItens) {
+  const container = document.getElementById('paginacao-estoque');
+  if (!container) return;
+
+  const paginaAtual = window.paginacaoEstoque.paginaAtual;
+
+  // Se não há itens, não mostra nada
+  if (totalItens === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  // Se só tem 1 página, mostra apenas o total
+  if (totalPaginas <= 1) {
+    container.innerHTML = `<div class="text-center text-muted small mt-2">Total: ${totalItens} item(ns)</div>`;
+    return;
+  }
+
+  // Múltiplas páginas - mostra paginação completa
+  let html = '<div class="d-flex justify-content-center align-items-center gap-2">';
+
+  // Botão Anterior
+  const desabilitarAnterior = paginaAtual === 1;
+  html += `
+    <button class="btn btn-sm btn-outline-secondary" 
+            onclick="mudarPaginaEstoque(${paginaAtual - 1})" 
+            ${desabilitarAnterior ? 'disabled' : ''}>
+      <i class="bi bi-chevron-left"></i> Anterior
+    </button>
+  `;
+
+  // Botões numéricos (máximo 5 páginas visíveis)
+  let paginaInicio = Math.max(1, paginaAtual - 2);
+  let paginaFim = Math.min(totalPaginas, paginaInicio + 4);
+  
+  // Ajusta início se estiver próximo ao fim
+  if (paginaFim - paginaInicio < 4) {
+    paginaInicio = Math.max(1, paginaFim - 4);
+  }
+  
+  for (let i = paginaInicio; i <= paginaFim; i++) {
+    const ativo = i === paginaAtual ? 'btn-primary' : 'btn-outline-secondary';
+    html += `
+      <button class="btn btn-sm ${ativo}" 
+              onclick="mudarPaginaEstoque(${i})" 
+              style="min-width: 40px;">
+        ${i}
+      </button>
+    `;
+  }
+
+  // Botão Próximo
+  const desabilitarProximo = paginaAtual === totalPaginas;
+  html += `
+    <button class="btn btn-sm btn-outline-secondary" 
+            onclick="mudarPaginaEstoque(${paginaAtual + 1})" 
+            ${desabilitarProximo ? 'disabled' : ''}>
+      Próximo <i class="bi bi-chevron-right"></i>
+    </button>
+  `;
+
+  html += `</div>
+    <div class="text-center text-muted small mt-2">
+      Página ${paginaAtual} de ${totalPaginas} • Total: ${totalItens} item(ns)
+    </div>`;
+
+  container.innerHTML = html;
 }
 
 // 4. LIMPAR FILTROS
@@ -4721,7 +5264,8 @@ window.alternarModoEstoque = function (modo) {
     if (btnLista) btnLista.classList.add('active');
   }
 
-  filtrarEstoque(); // Redesenha
+  // Redesenha mantendo a página atual
+  renderizarEstoquePaginado();
 }
 
 // 6. RENDERIZADORES (DESENHAR NA TELA)
@@ -4852,19 +5396,34 @@ function renderizarEstoqueCards(lista) {
         `;
 
     const card = `
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xl-4 col-md-6">
           <div class="card-custom h-100">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 ${areaIconeHTML}
                 
                 <div class="dropdown ms-auto"> 
-                    <button class="btn btn-sm btn-light border-0 rounded-circle" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-sm btn-light border-0 rounded-circle shadow-sm" 
+                            type="button" 
+                            data-bs-toggle="dropdown"
+                            style="width: 32px; height: 32px;">
                         <i class="bi bi-three-dots-vertical text-muted"></i>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                        <li><a class="dropdown-item small" href="#" onclick="visualizarItem(${item.id})">Visualizar</a></li>
-                        <li><a class="dropdown-item small" href="#" onclick="editarItem(${item.id})">Editar</a></li>
-                        <li><a class="dropdown-item small text-danger" href="#" onclick="excluirItem(${item.id})">Excluir</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern">
+                        <li>
+                            <a class="dropdown-item-modern item-gray" href="#" onclick="visualizarItem(${item.id})">
+                                <i class="bi bi-eye"></i> Detalhes
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item-modern item-blue" href="#" onclick="editarItem(${item.id})">
+                                <i class="bi bi-pencil-square"></i> Editar
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item-modern item-red" href="#" onclick="excluirItem(${item.id})">
+                                <i class="bi bi-trash3"></i> Excluir
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -4914,13 +5473,28 @@ function renderizarEstoqueLista(lista) {
     // Menu Ações
     const menuAcoes = `
             <div class="dropdown">
-                <button class="btn btn-sm btn-light border shadow-sm" type="button" data-bs-toggle="dropdown">
+                <button class="btn btn-sm btn-light border-0 rounded-circle shadow-sm" 
+                        type="button" 
+                        data-bs-toggle="dropdown"
+                        style="width: 32px; height: 32px;">
                     <i class="bi bi-three-dots-vertical text-muted"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                    <li><a class="dropdown-item small" href="#" onclick="visualizarItem(${item.id})"><i class="bi bi-eye me-2"></i>Visualizar</a></li>
-                    <li><a class="dropdown-item small" href="#" onclick="editarItem(${item.id})"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                    <li><a class="dropdown-item small text-danger" href="#" onclick="excluirItem(${item.id})"><i class="bi bi-trash me-2"></i>Excluir</a></li>
+                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern">
+                    <li>
+                        <a class="dropdown-item-modern item-gray" href="#" onclick="visualizarItem(${item.id})">
+                            <i class="bi bi-eye"></i> Detalhes
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item-modern item-blue" href="#" onclick="editarItem(${item.id})">
+                            <i class="bi bi-pencil-square"></i> Editar
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item-modern item-red" href="#" onclick="excluirItem(${item.id})">
+                            <i class="bi bi-trash3"></i> Excluir
+                        </a>
+                    </li>
                 </ul>
             </div>`;
 
@@ -5353,14 +5927,26 @@ window.extrairItensComEquipamento = function () {
 
 window.idFuncionarioEditando = null;
 
+// Estado de paginação e cache
+window.cacheFuncionarios = [];
+window.modoExibicaoFuncionarios = 'card'; // 'card' ou 'list'
+
+window.paginacaoFuncionarios = {
+  paginaAtual: 1,
+  itensPorPagina: 6,
+  listaTotalFiltrada: [],
+  paginaSalva: null
+};
+
 // 1. CARREGAR LISTA DE FUNCIONÁRIOS
 window.carregarFuncionarios = function () {
-  const container = document.getElementById('lista-funcionarios-real');
-  if (!container) return;
+  console.log('🔄 Carregando funcionários do servidor...');
 
   fetch(`${API_URL}/funcionarios/completo`)
     .then(res => res.json())
     .then(lista => {
+      console.log('✅ Funcionários carregados:', lista.length, 'items');
+      window.cacheFuncionarios = lista;
 
       // --- CÁLCULO DOS CARDS (ADICIONE ISSO AQUI) ---
       const total = lista.length;
@@ -5375,99 +5961,369 @@ window.carregarFuncionarios = function () {
       if (document.getElementById('kpi-rh-inativos')) document.getElementById('kpi-rh-inativos').innerText = inativos;
       // ----------------------------------------------
 
-      const container = document.getElementById('lista-funcionarios-real');
-
-
-
-      container.innerHTML = "";
-
-      if (lista.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center text-muted py-5">Nenhum funcionário cadastrado.</div>';
-        return;
-      }
-
-      lista.forEach(func => {
-        // Iniciais do Nome (Ex: Roberto Alves -> RA)
-        const iniciais = func.nome.split(" ").map((n, i, a) => i === 0 || i === a.length - 1 ? n[0] : null).join("").toUpperCase().substring(0, 2);
-
-        // Cores por departamento (Visual)
-        let corAvatar = "#0f172a"; // Padrão - Administrativo
-        if (func.departamento === 'Operações') corAvatar = "#299cdb"; // Azul
-        if (func.departamento === 'Vendas' || func.departamento === 'Comercial') corAvatar = "#0ab39c"; // Teal
-        if (func.departamento === 'Logística') corAvatar = "#db2777"; // Rosa
-        if (func.departamento === 'Financeiro') corAvatar = "#10b981"; // Verde
-        if (func.departamento === 'Tecnologia' || func.departamento === 'TI') corAvatar = "#06b6d4"; // Cyan
-        if (func.departamento === 'Produção') corAvatar = "#8b5cf6"; // Roxo
-        if (func.departamento === 'Administrativo') corAvatar = "#f7b84b"; // Amarelo
-
-        // Badge Departamento
-        let badgeClass = "badge-dept badge-admin";
-        if (func.departamento === 'Operações') badgeClass = "badge-dept badge-operacoes";
-        if (func.departamento === 'Logística') badgeClass = "badge-dept badge-logistica";
-        if (func.departamento === 'Vendas' || func.departamento === 'Comercial') badgeClass = "badge-dept badge-comercial";
-        if (func.departamento === 'Financeiro') badgeClass = "badge-dept badge-financeiro";
-        if (func.departamento === 'Administrativo') badgeClass = "badge-dept badge-administrativo";
-        if (func.departamento === 'Tecnologia' || func.departamento === 'TI') badgeClass = "badge-dept badge-tecnologia";
-        if (func.departamento === 'Produção') badgeClass = "badge-dept badge-producao";
-
-        // Status
-        let statusClass = "bg-green-soft text-green";
-        if (func.status === 'Inativo') statusClass = "bg-gray-100 text-muted";
-        if (func.status === 'Férias') statusClass = "bg-orange-soft text-orange";
-
-        const cardHTML = `
-                <div class="col-xl-4 col-md-6">
-                    <div class="card-custom h-100 position-relative">
-                        
-                        <div class="dropdown position-absolute top-0 end-0 mt-3 me-3">
-                            <button class="btn btn-sm btn-light border-0 rounded-circle" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots-vertical text-muted"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                <li><a class="dropdown-item small" href="#" onclick="editarFuncionario(${func.id})"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                <li><a class="dropdown-item small text-danger" href="#" onclick="excluirFuncionario(${func.id})"><i class="bi bi-trash me-2"></i>Excluir</a></li>
-                            </ul>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-square" style="background-color: ${corAvatar}">
-                                    ${iniciais}
-                                </div>
-                                <div>
-                                    <h6 class="fw-bold mb-0 text-dark">${func.nome}</h6>
-                                    <span class="text-muted small">${func.cargo || 'Sem cargo'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-2 mb-3">
-                            <div class="contact-info text-truncate">
-                                <i class="bi bi-envelope"></i> ${func.email || '-'}
-                            </div>
-                            <div class="contact-info">
-                                <i class="bi bi-telephone"></i> ${func.telefone || '-'}
-                            </div>
-                            <div class="contact-info">
-                                <i class="bi bi-calendar"></i> Adm: ${func.data_admissao ? new Date(func.data_admissao).toLocaleDateString('pt-BR') : '-'}
-                            </div>
-                        </div>
-
-                        <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
-                            <span class="${badgeClass}">${func.departamento || 'Geral'}</span>
-                            <span class="status-pill ${statusClass}">${func.status}</span>
-                        </div>
-                    </div>
-                </div>`;
-
-        container.insertAdjacentHTML('beforeend', cardHTML);
-      });
+      // Aplica filtros inicialmente
+      window.filtrarFuncionarios();
     })
     .catch(err => console.error("Erro ao carregar funcionários:", err));
 };
 
+// 2. FILTRAR FUNCIONÁRIOS
+window.filtrarFuncionarios = function() {
+  console.log('🔍 Filtrando funcionários. Cache tem:', window.cacheFuncionarios.length, 'items');
+  
+  const inputBusca = document.getElementById('buscaFuncionarios');
+  const inputStatus = document.getElementById('filtroStatusFuncionario');
+  const inputDepartamento = document.getElementById('filtroDepartamentoFuncionario');
 
-// 3. EDITAR (PREENCHER MODAL)
+  const termo = inputBusca ? inputBusca.value.toLowerCase() : "";
+  const statusFiltro = inputStatus ? inputStatus.value : "";
+  const deptoFiltro = inputDepartamento ? inputDepartamento.value : "";
+
+  console.log('🎯 Filtros aplicados:', { termo, statusFiltro, deptoFiltro });
+
+  const filtrados = window.cacheFuncionarios.filter(func => {
+    const nome = (func.nome || "").toLowerCase();
+    const cargo = (func.cargo || "").toLowerCase();
+    const email = (func.email || "").toLowerCase();
+    const status = (func.status || "");
+    const departamento = (func.departamento || "");
+
+    // Filtro de Texto
+    const bateuTexto = nome.includes(termo) || cargo.includes(termo) || email.includes(termo);
+
+    // Filtro de Status
+    const bateuStatus = statusFiltro === "" || status === statusFiltro;
+
+    // Filtro de Departamento
+    const bateuDepto = deptoFiltro === "" || departamento === deptoFiltro;
+
+    return bateuTexto && bateuStatus && bateuDepto;
+  });
+
+  console.log('✅ Filtrados:', filtrados.length, 'de', window.cacheFuncionarios.length, 'funcionários');
+
+  // Salva lista filtrada e reseta para página 1
+  window.paginacaoFuncionarios.listaTotalFiltrada = filtrados;
+  window.paginacaoFuncionarios.paginaAtual = 1;
+
+  // Renderiza primeira página
+  window.renderizarFuncionariosPaginado();
+};
+
+// 3. RENDERIZAR COM PAGINAÇÃO
+window.renderizarFuncionariosPaginado = function(pagina = null) {
+  if (pagina) window.paginacaoFuncionarios.paginaAtual = pagina;
+
+  const { paginaAtual, itensPorPagina, listaTotalFiltrada } = window.paginacaoFuncionarios;
+  const totalItens = listaTotalFiltrada.length;
+  const totalPaginas = Math.ceil(totalItens / itensPorPagina);
+
+  console.log('📄 Paginação Funcionários:', { paginaAtual, itensPorPagina, totalItens, totalPaginas });
+
+  // Calcula índices da página atual
+  const inicio = (paginaAtual - 1) * itensPorPagina;
+  const fim = inicio + itensPorPagina;
+  const itensPagina = listaTotalFiltrada.slice(inicio, fim);
+
+  console.log('📦 Items carregados:', itensPagina.length, 'de', inicio, 'até', fim);
+
+  // Renderiza a página atual no modo escolhido
+  if (window.modoExibicaoFuncionarios === 'card') {
+    window.renderizarFuncionariosCards(itensPagina);
+  } else {
+    window.renderizarFuncionariosLista(itensPagina);
+  }
+
+  // Renderiza botões de paginação
+  window.renderizarBotoesPaginacaoFuncionarios(totalPaginas, totalItens);
+};
+
+// 4. RENDERIZAR CARDS
+window.renderizarFuncionariosCards = function(lista) {
+  const container = document.getElementById('lista-funcionarios-real');
+  if (!container) {
+    console.error('❌ Container lista-funcionarios-real não encontrado!');
+    return;
+  }
+  container.innerHTML = "";
+
+  console.log('🎴 Renderizando', lista.length, 'cards de funcionários');
+
+  if (lista.length === 0) {
+    container.innerHTML = '<div class="col-12 text-center text-muted py-5">Nenhum funcionário encontrado.</div>';
+    return;
+  }
+
+  lista.forEach(func => {
+    // Iniciais do Nome (Ex: Roberto Alves -> RA)
+    const iniciais = func.nome.split(" ").map((n, i, a) => i === 0 || i === a.length - 1 ? n[0] : null).join("").toUpperCase().substring(0, 2);
+
+    // Cores por departamento (Visual)
+    let corAvatar = "#0f172a"; // Padrão - Administrativo
+    if (func.departamento === 'Operações') corAvatar = "#299cdb"; // Azul
+    if (func.departamento === 'Vendas' || func.departamento === 'Comercial') corAvatar = "#0ab39c"; // Teal
+    if (func.departamento === 'Logística') corAvatar = "#db2777"; // Rosa
+    if (func.departamento === 'Financeiro') corAvatar = "#10b981"; // Verde
+    if (func.departamento === 'Tecnologia' || func.departamento === 'TI') corAvatar = "#06b6d4"; // Cyan
+    if (func.departamento === 'Produção') corAvatar = "#8b5cf6"; // Roxo
+    if (func.departamento === 'Administrativo') corAvatar = "#f7b84b"; // Amarelo
+
+    // Badge Departamento
+    let badgeClass = "badge-dept badge-admin";
+    if (func.departamento === 'Operações') badgeClass = "badge-dept badge-operacoes";
+    if (func.departamento === 'Logística') badgeClass = "badge-dept badge-logistica";
+    if (func.departamento === 'Vendas' || func.departamento === 'Comercial') badgeClass = "badge-dept badge-comercial";
+    if (func.departamento === 'Financeiro') badgeClass = "badge-dept badge-financeiro";
+    if (func.departamento === 'Administrativo') badgeClass = "badge-dept badge-administrativo";
+    if (func.departamento === 'Tecnologia' || func.departamento === 'TI') badgeClass = "badge-dept badge-tecnologia";
+    if (func.departamento === 'Produção') badgeClass = "badge-dept badge-producao";
+
+    // Status
+    let statusClass = "bg-green-soft text-green";
+    if (func.status === 'Inativo') statusClass = "bg-gray-100 text-muted";
+    if (func.status === 'Férias') statusClass = "bg-orange-soft text-orange";
+
+    const cardHTML = `
+            <div class="col-xl-4 col-md-6">
+                <div class="card-custom h-100 position-relative">
+                    
+                    <div class="dropdown position-absolute top-0 end-0 mt-3 me-3">
+                        <button class="btn btn-sm btn-light border-0 rounded-circle shadow-sm" 
+                                type="button" 
+                                data-bs-toggle="dropdown"
+                                style="width: 32px; height: 32px;">
+                            <i class="bi bi-three-dots-vertical text-muted"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern">
+                            <li>
+                                <a class="dropdown-item-modern item-blue" href="#" onclick="editarFuncionario(${func.id})">
+                                    <i class="bi bi-pencil-square"></i> Editar
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item-modern item-red" href="#" onclick="excluirFuncionario(${func.id})">
+                                    <i class="bi bi-trash3"></i> Excluir
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-square" style="background-color: ${corAvatar}">
+                                ${iniciais}
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">${func.nome}</h6>
+                                <span class="text-muted small">${func.cargo || 'Sem cargo'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-2 mb-3">
+                        <div class="contact-info text-truncate">
+                            <i class="bi bi-envelope"></i> ${func.email || '-'}
+                        </div>
+                        <div class="contact-info">
+                            <i class="bi bi-telephone"></i> ${func.telefone || '-'}
+                        </div>
+                        <div class="contact-info">
+                            <i class="bi bi-calendar"></i> Adm: ${func.data_admissao ? new Date(func.data_admissao).toLocaleDateString('pt-BR') : '-'}
+                        </div>
+                    </div>
+
+                    <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                        <span class="${badgeClass}">${func.departamento || 'Geral'}</span>
+                        <span class="status-pill ${statusClass}">${func.status}</span>
+                    </div>
+                </div>
+            </div>`;
+
+    container.insertAdjacentHTML('beforeend', cardHTML);
+  });
+}
+
+// 5. RENDERIZAR LISTA (Tabela)
+window.renderizarFuncionariosLista = function(lista) {
+  console.log('📋 Renderizando lista tabela:', lista.length, 'funcionários');
+  const tbody = document.getElementById('lista-funcionarios-tabela-body');
+  if (!tbody) {
+    console.error('❌ Elemento #lista-funcionarios-tabela-body não encontrado!');
+    return;
+  }
+  tbody.innerHTML = "";
+
+  if (lista.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">Nenhum funcionário encontrado.</td></tr>';
+    return;
+  }
+
+  lista.forEach(func => {
+    // Badge Departamento
+    let badgeClass = "badge-dept badge-admin";
+    if (func.departamento === 'Operações') badgeClass = "badge-dept badge-operacoes";
+    if (func.departamento === 'Logística') badgeClass = "badge-dept badge-logistica";
+    if (func.departamento === 'Vendas' || func.departamento === 'Comercial') badgeClass = "badge-dept badge-comercial";
+    if (func.departamento === 'Financeiro') badgeClass = "badge-dept badge-financeiro";
+    if (func.departamento === 'Administrativo') badgeClass = "badge-dept badge-administrativo";
+    if (func.departamento === 'Tecnologia' || func.departamento === 'TI') badgeClass = "badge-dept badge-tecnologia";
+    if (func.departamento === 'Produção') badgeClass = "badge-dept badge-producao";
+
+    // Status
+    let statusClass = "bg-green-soft text-green";
+    if (func.status === 'Inativo') statusClass = "bg-gray-100 text-muted";
+    if (func.status === 'Férias') statusClass = "bg-orange-soft text-orange";
+
+    const menuDropdownHTML = `
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern">
+                <li>
+                    <a class="dropdown-item-modern item-blue" href="#" onclick="editarFuncionario(${func.id})">
+                        <i class="bi bi-pencil-square"></i> Editar
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item-modern item-red" href="#" onclick="excluirFuncionario(${func.id})">
+                        <i class="bi bi-trash3"></i> Excluir
+                    </a>
+                </li>
+            </ul>`;
+
+    const tr = `
+        <tr>
+            <td class="ps-4">
+                <div class="fw-bold text-dark">${func.nome}</div>
+                <div class="text-muted small">${func.cargo || 'Sem cargo'}</div>
+            </td>
+            <td><span class="${badgeClass}">${func.departamento || 'Geral'}</span></td>
+            <td class="small">
+                <div>${func.email || '-'}</div>
+                <div class="text-muted">${func.telefone || '-'}</div>
+            </td>
+            <td class="small">${func.data_admissao ? new Date(func.data_admissao).toLocaleDateString('pt-BR') : '-'}</td>
+            <td><span class="status-pill ${statusClass}">${func.status}</span></td>
+            <td class="text-end pe-4">
+                <div class="dropdown">
+                    <button class="btn btn-light btn-sm border-0 rounded-circle shadow-sm" 
+                            type="button" 
+                            data-bs-toggle="dropdown"
+                            style="width: 32px; height: 32px;">
+                        <i class="bi bi-three-dots-vertical text-muted"></i>
+                    </button>
+                    ${menuDropdownHTML}
+                </div>
+            </td>
+        </tr>`;
+    tbody.insertAdjacentHTML('beforeend', tr);
+  });
+}
+
+// 6. ALTERNAR VISUALIZAÇÃO (Cards/Lista)
+window.alternarViewFuncionarios = function(modo) {
+  window.modoExibicaoFuncionarios = modo;
+
+  const containerCards = document.getElementById('lista-funcionarios-real');
+  const containerLista = document.getElementById('lista-funcionarios-tabela-container');
+  const btnCard = document.getElementById('btn-view-func-card');
+  const btnList = document.getElementById('btn-view-func-list');
+
+  if (modo === 'card') {
+    if (containerCards) containerCards.classList.remove('d-none');
+    if (containerLista) containerLista.classList.add('d-none');
+    if (btnCard) btnCard.classList.add('active');
+    if (btnList) btnList.classList.remove('active');
+  } else {
+    if (containerCards) containerCards.classList.add('d-none');
+    if (containerLista) containerLista.classList.remove('d-none');
+    if (btnCard) btnCard.classList.remove('active');
+    if (btnList) btnList.classList.add('active');
+  }
+
+  // Redesenha mantendo a página atual
+  window.renderizarFuncionariosPaginado();
+};
+
+// 7. MUDAR DE PÁGINA
+window.mudarPaginaFuncionarios = function(novaPagina) {
+  window.renderizarFuncionariosPaginado(novaPagina);
+};
+
+// 8. RENDERIZAR BOTÕES DE PAGINAÇÃO
+window.renderizarBotoesPaginacaoFuncionarios = function(totalPaginas, totalItens) {
+  const container = document.getElementById('paginacao-funcionarios');
+  if (!container) {
+    console.error('❌ Container paginacao-funcionarios não encontrado!');
+    return;
+  }
+
+  const paginaAtual = window.paginacaoFuncionarios.paginaAtual;
+
+  console.log('📊 Renderizando paginação:', { totalPaginas, totalItens, paginaAtual });
+
+  // Se não há itens, não mostra nada
+  if (totalItens === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  // Se só tem 1 página, mostra apenas o total
+  if (totalPaginas <= 1) {
+    container.innerHTML = `<div class="text-center text-muted small mt-2">Total: ${totalItens} funcionário(s)</div>`;
+    return;
+  }
+
+  // Múltiplas páginas - mostra paginação completa
+  let html = '<div class="d-flex justify-content-center align-items-center gap-2">';
+
+  // Botão Anterior
+  const desabilitarAnterior = paginaAtual === 1;
+  html += `
+    <button class="btn btn-sm btn-outline-secondary" 
+            onclick="mudarPaginaFuncionarios(${paginaAtual - 1})" 
+            ${desabilitarAnterior ? 'disabled' : ''}>
+      <i class="bi bi-chevron-left"></i> Anterior
+    </button>
+  `;
+
+  // Botões numéricos (máximo 5 páginas visíveis)
+  let paginaInicio = Math.max(1, paginaAtual - 2);
+  let paginaFim = Math.min(totalPaginas, paginaInicio + 4);
+  
+  // Ajusta início se estiver próximo ao fim
+  if (paginaFim - paginaInicio < 4) {
+    paginaInicio = Math.max(1, paginaFim - 4);
+  }
+  
+  for (let i = paginaInicio; i <= paginaFim; i++) {
+    const ativo = i === paginaAtual ? 'btn-primary' : 'btn-outline-secondary';
+    html += `
+      <button class="btn btn-sm ${ativo}" 
+              onclick="mudarPaginaFuncionarios(${i})" 
+              style="min-width: 40px;">
+        ${i}
+      </button>
+    `;
+  }
+
+  // Botão Próximo
+  const desabilitarProximo = paginaAtual === totalPaginas;
+  html += `
+    <button class="btn btn-sm btn-outline-secondary" 
+            onclick="mudarPaginaFuncionarios(${paginaAtual + 1})" 
+            ${desabilitarProximo ? 'disabled' : ''}>
+      Próximo <i class="bi bi-chevron-right"></i>
+    </button>
+  `;
+
+  html += `</div>
+    <div class="text-center text-muted small mt-2">
+      Página ${paginaAtual} de ${totalPaginas} • Total: ${totalItens} funcionário(s)
+    </div>`;
+
+  container.innerHTML = html;
+}
+
+
+// 9. EDITAR (PREENCHER MODAL)
 window.editarFuncionario = function (id) {
   // Busca os dados atuais para preencher
   // Como já carregamos a lista, podemos buscar do HTML ou fazer um fetch. 

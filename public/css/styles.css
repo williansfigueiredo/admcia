@@ -614,13 +614,20 @@ body {
 }
 
 .btn-header-dark {
-  background-color: #0f172a;
+  background-color: #299cdb;
   color: white;
   border: none;
   font-weight: 500;
   font-size: 0.9rem;
   padding: 8px 16px;
   border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-header-dark:hover {
+  background-color: #2389c4;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(41, 156, 219, 0.3);
 }
 
 /* --- ESTILOS ESPECÍFICOS: ABA PRINCIPAL --- */
@@ -1043,52 +1050,61 @@ body {
 .pill-green {
   background-color: rgba(10, 179, 156, 0.15);
   color: #0ab39c;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  padding: 5px 25px !important;
+  border-radius: 8px;
+  font-size: 0.8rem !important;
   font-weight: 600;
 }
 
 .pill-yellow {
   background-color: rgba(247, 184, 75, 0.15);
   color: #f7b84b;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  padding: 5px 25px !important;
+  border-radius: 8px;
+  font-size: 0.8rem !important;
   font-weight: 600;
 }
 
 .pill-red {
   background-color: rgba(240, 101, 72, 0.15);
   color: #f06548;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  padding: 5px 25px !important;
+  border-radius: 8px;
+  font-size: 0.8rem !important;
   font-weight: 600;
 }
 
 .pill-blue {
   background-color: rgba(41, 156, 219, 0.15);
   color: #299cdb;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  padding: 5px 25px !important;
+  border-radius: 8px;
+  font-size: 0.8rem !important;
   font-weight: 600;
 }
 
 .pill-teal {
   background-color: rgba(10, 179, 156, 0.15);
   color: #0ab39c;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  padding: 5px 25px !important;
+  border-radius: 8px;
+  font-size: 0.8rem !important;
+  font-weight: 600;
+}
+
+.pill-gray {
+  background-color: rgba(100, 116, 139, 0.15);
+  color: #64748b;
+  padding: 5px 25px !important;
+  border-radius: 8px;
+  font-size: 0.8rem !important;
   font-weight: 600;
 }
 
 .status-pill {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  padding: 5px 25px !important;
+  border-radius: 8px;
+  font-size: 0.8rem !important;
   font-weight: 600;
 }
 
@@ -1991,47 +2007,79 @@ body {
   background: #eef2f7;
 }
 
-/* ===== Menu flutuante das ações (não influencia o layout / sem scroll da página) ===== */
+/* ===== Menu flutuante das ações (ESTILO MODERNO) ===== */
 .menu-acoes-flutuante {
   position: fixed;
   z-index: 99999;
-  min-width: 190px;
+  min-width: 180px;
   background: #fff;
-  border: 1px solid #e5e7eb;
+  border: none;
   border-radius: 12px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .15);
-  padding: 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 8px;
   animation: fadeIn 0.12s ease-out;
+  overflow: hidden;
 }
 
-.menu-acoes-flutuante button {
+/* Borda superior colorida (padrão sistema) */
+.menu-acoes-flutuante::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0ab39c 0%, #299cdb 100%);
+  border-radius: 12px 12px 0 0;
+}
+
+.menu-acoes-flutuante .menu-item {
   width: 100%;
   border: 0;
   background: transparent;
   text-align: left;
   padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 13px;
-  color: #111827;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
 }
 
-.menu-acoes-flutuante button:hover {
-  background: #f3f4f6;
+.menu-acoes-flutuante .menu-item:hover {
+  background-color: #f8fafc;
+  transform: translateX(4px);
+}
+
+.menu-acoes-flutuante .menu-item i {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+/* Cores semânticas */
+.menu-acoes-flutuante .item-gray {
+  color: #64748b;
+}
+
+.menu-acoes-flutuante .item-blue {
+  color: #2563eb;
+}
+
+.menu-acoes-flutuante .item-green {
+  color: #0ab39c;
+}
+
+.menu-acoes-flutuante .item-red {
+  color: #ef4444;
 }
 
 .menu-acoes-flutuante .divider {
   height: 1px;
   background: #e5e7eb;
-  margin: 6px 4px;
-}
-
-.menu-acoes-flutuante button.danger {
-  color: #b91c1c;
-}
-
-.menu-acoes-flutuante button.danger:hover {
-  background: rgba(185, 28, 28, 0.08);
+  margin: 6px 0;
 }
 
 
@@ -2086,6 +2134,20 @@ body {
   border-radius: 12px !important;
   padding: 8px !important;
   min-width: 180px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Borda colorida no topo (padrão da foto) */
+.dropdown-menu-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0ab39c 0%, #299cdb 100%);
+  border-radius: 12px 12px 0 0;
 }
 
 .dropdown-item-modern {
@@ -2564,8 +2626,13 @@ a.fc-daygrid-day-number {
 }
 
 [data-bs-theme="dark"] .btn-header-dark {
-  background-color: var(--primary-blue) !important;
+  background-color: #299cdb !important;
   color: #fff !important;
+}
+
+[data-bs-theme="dark"] .btn-header-dark:hover {
+  background-color: #2389c4 !important;
+  box-shadow: 0 4px 12px rgba(41, 156, 219, 0.4);
 }
 
 [data-bs-theme="dark"] .text-muted {
@@ -2671,14 +2738,14 @@ a.fc-daygrid-day-number {
 [data-bs-theme="dark"] .popover-item,
 [data-bs-theme="dark"] .dropdown-item,
 [data-bs-theme="dark"] .dropdown-item-modern,
-[data-bs-theme="dark"] .menu-acoes-flutuante button {
+[data-bs-theme="dark"] .menu-acoes-flutuante .menu-item {
   color: var(--text-gray) !important;
 }
 
 [data-bs-theme="dark"] .popover-item:hover,
 [data-bs-theme="dark"] .dropdown-item:hover,
 [data-bs-theme="dark"] .dropdown-item-modern:hover,
-[data-bs-theme="dark"] .menu-acoes-flutuante button:hover {
+[data-bs-theme="dark"] .menu-acoes-flutuante .menu-item:hover {
   background-color: var(--bg-hover) !important;
 }
 
@@ -3152,4 +3219,48 @@ a.fc-daygrid-day-number {
 
 button:hover #iconTheme {
   transform: rotate(15deg) scale(1.1);
+}
+
+/* === CUSTOMIZAÇÃO DE BOTÕES - PADRÃO DE CORES ERP === */
+
+/* Botão Success (Salvar) - Cor Teal/Ciano (mesma do Indicadores) */
+.btn-success {
+  background-color: #0ab39c !important;
+  border-color: #0ab39c !important;
+  color: #fff !important;
+}
+
+.btn-success:hover {
+  background-color: #099885 !important;
+  border-color: #099885 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10, 179, 156, 0.3);
+}
+
+.btn-success:active,
+.btn-success:focus {
+  background-color: #088775 !important;
+  border-color: #088775 !important;
+  box-shadow: 0 0 0 0.25rem rgba(10, 179, 156, 0.25) !important;
+}
+
+/* Botão Primary (Novo Cliente/Pedido) - Azul ERP */
+.btn-primary {
+  background-color: #299cdb !important;
+  border-color: #299cdb !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover {
+  background-color: #2389c4 !important;
+  border-color: #2389c4 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(41, 156, 219, 0.3);
+}
+
+.btn-primary:active,
+.btn-primary:focus {
+  background-color: #1e77ad !important;
+  border-color: #1e77ad !important;
+  box-shadow: 0 0 0 0.25rem rgba(41, 156, 219, 0.25) !important;
 }

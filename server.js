@@ -51,7 +51,27 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
   if (err) console.error('Erro ao conectar:', err);
-  else console.log('Sucesso! Conectado ao banco de dados MySQL.');
+  else {
+    console.log('Sucesso! Conectado ao banco de dados MySQL.');
+    
+    // Criar tabela contatos_clientes se não existir
+    const sqlCriarTabela = `
+      CREATE TABLE IF NOT EXISTS contatos_clientes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        cliente_id INT NOT NULL,
+        nome VARCHAR(255),
+        cargo VARCHAR(255),
+        email VARCHAR(255),
+        telefone VARCHAR(50),
+        FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+      )
+    `;
+    
+    db.query(sqlCriarTabela, (err) => {
+      if (err) console.error('Erro ao criar tabela contatos_clientes:', err);
+      else console.log('Tabela contatos_clientes verificada/criada com sucesso.');
+    });
+  }
 });
 
 
@@ -166,27 +186,59 @@ app.put('/clientes/:id', (req, res) => {
   const sql = `
         UPDATE clientes SET
             nome = ?, nome_fantasia = ?, documento = ?, inscricao_estadual = ?,
-            status = ?, site = ?, cep = ?, logradouro = ?, numero = ?, desconto_porcentage = ?
-            bairro = ?, cidade = ?, uf = ?, contato1_nome = ?, contato1_cargo = ?,
-            contato1_email = ?, contato1_telefone = ?, contato2_nome = ?,
-            contato2_cargo = ?, contato2_email = ?, contato2_telefone = ?,
-            observacoes = ?
+            status = ?, site = ?, cep = ?, logradouro = ?, numero = ?,
+            bairro = ?, cidade = ?, uf = ?, observacoes = ?
         WHERE id = ?
     `;
 
   const values = [
     d.nome, d.nome_fantasia, d.documento, d.inscricao_estadual,
     d.status, d.site, d.cep, d.logradouro, d.numero,
-    d.bairro, d.cidade, d.uf, d.contato1_nome, d.contato1_cargo,
-    d.contato1_email, d.contato1_telefone, d.contato2_nome,
-    d.contato2_cargo, d.contato2_email, d.contato2_telefone,
-    d.observacoes,
+    d.bairro, d.cidade, d.uf, d.observacoes,
     id // O ID vai por último no WHERE
   ];
 
   db.query(sql, values, (err, result) => {
     if (err) return res.status(500).json(err);
-    res.json({ success: true, message: "Cliente atualizado!" });
+    
+    // Atualizar contatos: primeiro remove os antigos, depois insere os novos
+    const sqlDeleteContatos = "DELETE FROM contatos_clientes WHERE cliente_id = ?";
+    
+    db.query(sqlDeleteContatos, [id], (err) => {
+      if (err) console.error("Erro ao deletar contatos antigos:", err);
+      
+      // Salvar novos contatos se existirem
+      if (d.contatos && Array.isArray(d.contatos) && d.contatos.length > 0) {
+        const sqlContatos = `
+          INSERT INTO contatos_clientes (cliente_id, nome, cargo, email, telefone)
+          VALUES (?, ?, ?, ?, ?)
+        `;
+        
+        let contatosSalvos = 0;
+        const totalContatos = d.contatos.length;
+        
+        d.contatos.forEach(contato => {
+          db.query(sqlContatos, [
+            id,
+            contato.nome || null,
+            contato.cargo || null,
+            contato.email || null,
+            contato.telefone || null
+          ], (err) => {
+            if (err) console.error("Erro ao salvar contato:", err);
+            
+            contatosSalvos++;
+            
+            // Quando todos os contatos forem processados, retorna a resposta
+            if (contatosSalvos === totalContatos) {
+              res.json({ success: true, message: "Cliente atualizado!" });
+            }
+          });
+        });
+      } else {
+        res.json({ success: true, message: "Cliente atualizado!" });
+      }
+    });
   });
 });
 
@@ -196,6 +248,17 @@ app.get('/clientes', (req, res) => {
   db.query(sql, (err, data) => {
     if (err) return res.json(err);
     return res.json(data);
+  });
+});
+
+// ROTA PARA BUSCAR CONTATOS DE UM CLIENTE
+app.get('/clientes/:id/contatos', (req, res) => {
+  const clienteId = req.params.id;
+  const sql = "SELECT * FROM contatos_clientes WHERE cliente_id = ?";
+  
+  db.query(sql, [clienteId], (err, contatos) => {
+    if (err) return res.status(500).json({ error: err.message });
+    return res.json(contatos);
   });
 });
 // 4. ROTA NOVA: Buscar Lista de FUNCIONÁRIOS
@@ -749,17 +812,8 @@ app.post('/clientes', (req, res) => {
             bairro,
             cidade,
             uf,
-            desconto_porcentage,
-            contato1_nome,
-            contato1_cargo,
-            contato1_email,
-            contato1_telefone,
-            contato2_nome,
-            contato2_cargo,
-            contato2_email,
-            contato2_telefone,
             observacoes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
   const values = [
@@ -775,14 +829,6 @@ app.post('/clientes', (req, res) => {
     d.bairro || null,
     d.cidade || null,
     d.uf || null,
-    d.contato1_nome || null,
-    d.contato1_cargo || null,
-    d.contato1_email || null,
-    d.contato1_telefone || null,
-    d.contato2_nome || null,
-    d.contato2_cargo || null,
-    d.contato2_email || null,
-    d.contato2_telefone || null,
     d.observacoes || null
   ];
 
@@ -793,8 +839,41 @@ app.post('/clientes', (req, res) => {
       console.error("Erro no cadastro:", err);
       return res.status(500).json({ error: err.message });
     }
-    console.log("Cliente cadastrado com ID:", result.insertId);
-    res.json({ message: "Cadastro realizado!", id: result.insertId });
+    
+    const clienteId = result.insertId;
+    console.log("Cliente cadastrado com ID:", clienteId);
+    
+    // Salvar contatos se existirem
+    if (d.contatos && Array.isArray(d.contatos) && d.contatos.length > 0) {
+      const sqlContatos = `
+        INSERT INTO contatos_clientes (cliente_id, nome, cargo, email, telefone)
+        VALUES (?, ?, ?, ?, ?)
+      `;
+      
+      let contatosSalvos = 0;
+      const totalContatos = d.contatos.length;
+      
+      d.contatos.forEach(contato => {
+        db.query(sqlContatos, [
+          clienteId,
+          contato.nome || null,
+          contato.cargo || null,
+          contato.email || null,
+          contato.telefone || null
+        ], (err) => {
+          if (err) console.error("Erro ao salvar contato:", err);
+          
+          contatosSalvos++;
+          
+          // Quando todos os contatos forem processados, retorna a resposta
+          if (contatosSalvos === totalContatos) {
+            res.json({ message: "Cadastro realizado!", id: clienteId });
+          }
+        });
+      });
+    } else {
+      res.json({ message: "Cadastro realizado!", id: clienteId });
+    }
   });
 });
 
