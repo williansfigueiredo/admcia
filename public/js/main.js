@@ -2588,11 +2588,11 @@ async function abrirModalInvoice(jobId) {
 
   try {
     // 1. FAZ AS BUSCAS NECESSÁRIAS (Template + Equipe + Lista de Funcionários para achar o nome do Operador)
-    const [resTemplate, resEquipe, resFuncionarios] = await Promise.all([
-      fetch('invoice.html'),
-      fetch(`${API_URL}/jobs/${id}/equipe`),
-      fetch(`${API_URL}/funcionarios`) // Buscamos a lista para encontrar o nome do Operador pelo ID
-    ]);
+const [resTemplate, resEquipe, resFuncionarios] = await Promise.all([
+  fetch(`${API_URL}/invoice`),    // ← ALTERADA
+  fetch(`${API_URL}/jobs/${id}/equipe`),
+  fetch(`${API_URL}/funcionarios`)
+]);
 
     let template = await resTemplate.text();
     const equipe = await resEquipe.json();
