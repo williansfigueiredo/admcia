@@ -5243,6 +5243,26 @@ window.limparFiltrosEstoque = function () {
   filtrarEstoque();
 }
 
+// LIMPAR FILTROS CLIENTES
+window.limparFiltrosClientes = function () {
+  const ids = ['inputBuscaCliente', 'filtroTipoCliente', 'filtroStatusCliente'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  filtrarClientes();
+}
+
+// LIMPAR FILTROS FUNCIONÁRIOS
+window.limparFiltrosFuncionarios = function () {
+  const ids = ['buscaFuncionarios', 'filtroStatusFuncionario', 'filtroDepartamentoFuncionario'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  filtrarFuncionarios();
+}
+
 // 5. ALTERNAR MODO DE VISUALIZAÇÃO (GRID / LISTA)
 window.alternarModoEstoque = function (modo) {
   window.modoExibicaoEstoque = modo;
@@ -5928,37 +5948,58 @@ window.extrairItensComEquipamento = function () {
 window.idFuncionarioEditando = null;
 
 // Estado de paginação e cache
-window.cacheFuncionarios = [];
-window.modoExibicaoFuncionarios = 'card'; // 'card' ou 'list'
+if (!window.cacheFuncionarios) window.cacheFuncionarios = [];
+if (!window.modoExibicaoFuncionarios) window.modoExibicaoFuncionarios = 'card'; // 'card' ou 'list'
 
-window.paginacaoFuncionarios = {
-  paginaAtual: 1,
-  itensPorPagina: 6,
-  listaTotalFiltrada: [],
-  paginaSalva: null
-};
+if (!window.paginacaoFuncionarios) {
+  window.paginacaoFuncionarios = {
+    paginaAtual: 1,
+    itensPorPagina: 6,
+    listaTotalFiltrada: [],
+    paginaSalva: null
+  };
+}
 
 // 1. CARREGAR LISTA DE FUNCIONÁRIOS
 window.carregarFuncionarios = function () {
   console.log('🔄 Carregando funcionários do servidor...');
 
-  fetch(`${API_URL}/funcionarios/completo`)
+  fetch(`${API_URL}/funcionarios/todos`)
     .then(res => res.json())
     .then(lista => {
       console.log('✅ Funcionários carregados:', lista.length, 'items');
       window.cacheFuncionarios = lista;
 
-      // --- CÁLCULO DOS CARDS (ADICIONE ISSO AQUI) ---
+      // --- CÁLCULO DOS CARDS KPI ---
       const total = lista.length;
       const ativos = lista.filter(f => f.status === 'Ativo').length;
       const ferias = lista.filter(f => f.status === 'Férias').length;
       const inativos = lista.filter(f => f.status === 'Inativo').length;
 
-      // Atualiza o HTML
-      if (document.getElementById('kpi-rh-total')) document.getElementById('kpi-rh-total').innerText = total;
-      if (document.getElementById('kpi-rh-ativos')) document.getElementById('kpi-rh-ativos').innerText = ativos;
-      if (document.getElementById('kpi-rh-ferias')) document.getElementById('kpi-rh-ferias').innerText = ferias;
-      if (document.getElementById('kpi-rh-inativos')) document.getElementById('kpi-rh-inativos').innerText = inativos;
+      console.log('📊 KPIs calculados:', { total, ativos, ferias, inativos });
+
+      // Atualiza o HTML dos Cards
+      const elTotal = document.getElementById('kpi-rh-total');
+      const elAtivos = document.getElementById('kpi-rh-ativos');
+      const elFerias = document.getElementById('kpi-rh-ferias');
+      const elInativos = document.getElementById('kpi-rh-inativos');
+
+      if (elTotal) {
+        elTotal.innerText = total;
+        console.log('✅ KPI Total atualizado:', total);
+      }
+      if (elAtivos) {
+        elAtivos.innerText = ativos;
+        console.log('✅ KPI Ativos atualizado:', ativos);
+      }
+      if (elFerias) {
+        elFerias.innerText = ferias;
+        console.log('✅ KPI Férias atualizado:', ferias);
+      }
+      if (elInativos) {
+        elInativos.innerText = inativos;
+        console.log('✅ KPI Inativos atualizado:', inativos);
+      }
       // ----------------------------------------------
 
       // Aplica filtros inicialmente
@@ -5969,6 +6010,12 @@ window.carregarFuncionarios = function () {
 
 // 2. FILTRAR FUNCIONÁRIOS
 window.filtrarFuncionarios = function() {
+  // Validação: se não tem cache, não faz nada
+  if (!window.cacheFuncionarios || window.cacheFuncionarios.length === 0) {
+    console.warn('⚠️ Cache de funcionários vazio. Aguardando carregamento...');
+    return;
+  }
+  
   console.log('🔍 Filtrando funcionários. Cache tem:', window.cacheFuncionarios.length, 'items');
   
   const inputBusca = document.getElementById('buscaFuncionarios');
@@ -6012,6 +6059,11 @@ window.filtrarFuncionarios = function() {
 
 // 3. RENDERIZAR COM PAGINAÇÃO
 window.renderizarFuncionariosPaginado = function(pagina = null) {
+  if (!window.paginacaoFuncionarios) {
+    console.error('❌ paginacaoFuncionarios não inicializado!');
+    return;
+  }
+  
   if (pagina) window.paginacaoFuncionarios.paginaAtual = pagina;
 
   const { paginaAtual, itensPorPagina, listaTotalFiltrada } = window.paginacaoFuncionarios;
@@ -6045,9 +6097,9 @@ window.renderizarFuncionariosCards = function(lista) {
     console.error('❌ Container lista-funcionarios-real não encontrado!');
     return;
   }
-  container.innerHTML = "";
-
+  
   console.log('🎴 Renderizando', lista.length, 'cards de funcionários');
+  container.innerHTML = "";
 
   if (lista.length === 0) {
     container.innerHTML = '<div class="col-12 text-center text-muted py-5">Nenhum funcionário encontrado.</div>';
@@ -6095,6 +6147,11 @@ window.renderizarFuncionariosCards = function(lista) {
                             <i class="bi bi-three-dots-vertical text-muted"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern">
+                            <li>
+                                <a class="dropdown-item-modern" href="#" onclick="visualizarFuncionario(${func.id})">
+                                    <i class="bi bi-eye"></i> Visualizar
+                                </a>
+                            </li>
                             <li>
                                 <a class="dropdown-item-modern item-blue" href="#" onclick="editarFuncionario(${func.id})">
                                     <i class="bi bi-pencil-square"></i> Editar
@@ -6176,6 +6233,11 @@ window.renderizarFuncionariosLista = function(lista) {
 
     const menuDropdownHTML = `
             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern">
+                <li>
+                    <a class="dropdown-item-modern" href="#" onclick="visualizarFuncionario(${func.id})">
+                        <i class="bi bi-eye"></i> Visualizar
+                    </a>
+                </li>
                 <li>
                     <a class="dropdown-item-modern item-blue" href="#" onclick="editarFuncionario(${func.id})">
                         <i class="bi bi-pencil-square"></i> Editar
@@ -6328,7 +6390,7 @@ window.editarFuncionario = function (id) {
   // Busca os dados atuais para preencher
   // Como já carregamos a lista, podemos buscar do HTML ou fazer um fetch. 
   // Vamos fazer fetch simples para garantir dados frescos.
-  fetch(`${API_URL}/funcionarios/completo`) // Ideal seria /funcionarios/:id mas usamos a lista
+  fetch(`${API_URL}/funcionarios/todos`) // Ideal seria /funcionarios/:id mas usamos a lista
     .then(r => r.json())
     .then(lista => {
       const func = lista.find(f => f.id == id);
@@ -6378,116 +6440,133 @@ document.getElementById('modalNovoFuncionario').addEventListener('hidden.bs.moda
 
 
 /* =============================================================
-   GESTÃO DE RH (FUNCIONÁRIOS) - COMPLETA
+   GESTÃO DE RH - FUNÇÕES DE TELA CHEIA (Editar/Visualizar)
    ============================================================= */
 
-// Variável para saber se estamos editando alguém
-window.idFuncionarioEditando = null;
+// ABRIR TELA DE NOVO CADASTRO
+window.abrirTelaNovoFuncionario = function () {
+  window.idFuncionarioEditando = null;
+  document.getElementById('formFuncionarioFull').reset();
+  document.getElementById('tituloPaginaFuncionario').innerText = "Novo Funcionário";
 
-/* =============================================================
-   GESTÃO DE RH (FUNCIONÁRIOS) - VERSÃO TELA CHEIA
-   ============================================================= */
+  const badge = document.getElementById('badgeModoVisualizacao');
+  if (badge) badge.style.display = 'none';
 
-window.idFuncionarioEditando = null;
+  toggleCamposFuncionario(false);
 
-// 1. CARREGAR LISTA
-window.carregarFuncionarios = function () {
-  const container = document.getElementById('lista-funcionarios-real');
-  if (!container) return;
+  const btn = document.querySelector('#view-cadastro-funcionario .btn-success');
+  if (btn) { btn.style.display = 'inline-block'; btn.innerHTML = 'Salvar Ficha'; }
 
-  container.innerHTML = `
-        <div class="col-12 text-center py-5">
-            <div class="spinner-border text-primary" role="status"></div>
-            <div class="mt-2 text-muted">Atualizando equipe...</div>
-        </div>`;
-
-  fetch(`${API_URL}/funcionarios/completo`)
-    .then(res => res.json())
-    .then(lista => {
-      // Atualiza KPIs
-      if (document.getElementById('kpi-rh-total')) document.getElementById('kpi-rh-total').innerText = lista.length;
-      if (document.getElementById('kpi-rh-ativos')) document.getElementById('kpi-rh-ativos').innerText = lista.filter(f => f.status === 'Ativo').length;
-      if (document.getElementById('kpi-rh-ferias')) document.getElementById('kpi-rh-ferias').innerText = lista.filter(f => f.status === 'Férias').length;
-      if (document.getElementById('kpi-rh-inativos')) document.getElementById('kpi-rh-inativos').innerText = lista.filter(f => f.status === 'Inativo').length;
-
-      container.innerHTML = "";
-
-      if (lista.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center text-muted py-5">Nenhum funcionário cadastrado.</div>';
-        return;
-      }
-
-      lista.forEach(func => {
-        const iniciais = func.nome.split(" ").map((n, i, a) => i === 0 || i === a.length - 1 ? n[0] : null).join("").toUpperCase().substring(0, 2);
-
-        let corAvatar = "#0f172a"; // Padrão
-        if (func.departamento === 'Operações') corAvatar = "#299cdb";
-        if (func.departamento === 'Logística') corAvatar = "#db2777";
-        if (func.departamento === 'Vendas' || func.departamento === 'Comercial') corAvatar = "#0ab39c";
-        if (func.departamento === 'Financeiro') corAvatar = "#10b981";
-        if (func.departamento === 'Administrativo') corAvatar = "#f7b84b";
-        if (func.departamento === 'Tecnologia' || func.departamento === 'TI') corAvatar = "#06b6d4";
-        if (func.departamento === 'Produção') corAvatar = "#8b5cf6";
-
-        let badgeClass = "badge-dept badge-admin";
-        if (func.departamento === 'Operações') badgeClass = "badge-dept badge-operacoes";
-        if (func.departamento === 'Logística') badgeClass = "badge-dept badge-logistica";
-        if (func.departamento === 'Vendas' || func.departamento === 'Comercial') badgeClass = "badge-dept badge-comercial";
-        if (func.departamento === 'Financeiro') badgeClass = "badge-dept badge-financeiro";
-        if (func.departamento === 'Administrativo') badgeClass = "badge-dept badge-administrativo";
-        if (func.departamento === 'Tecnologia' || func.departamento === 'TI') badgeClass = "badge-dept badge-tecnologia";
-        if (func.departamento === 'Produção') badgeClass = "badge-dept badge-producao";
-
-        let statusClass = "bg-green-soft text-green";
-        if (func.status === 'Inativo') statusClass = "bg-gray-100 text-muted";
-        if (func.status === 'Férias') statusClass = "bg-orange-soft text-orange";
-
-        const cardHTML = `
-                <div class="col-xl-4 col-md-6">
-                    <div class="card-custom h-100 position-relative">
-                        <div class="dropdown position-absolute top-0 end-0 mt-3 me-3">
-                            <button class="btn btn-sm btn-light border-0 rounded-circle" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots-vertical text-muted"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                <li><a class="dropdown-item small" href="#" onclick="visualizarFuncionario(${func.id})"><i class="bi bi-eye me-2"></i>Visualizar</a></li>
-                                <li><a class="dropdown-item small" href="#" onclick="editarFuncionario(${func.id})"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item small text-danger" href="#" onclick="excluirFuncionario(${func.id})"><i class="bi bi-trash me-2"></i>Excluir</a></li>
-                            </ul>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-square" style="background-color: ${corAvatar}">
-                                    ${iniciais}
-                                </div>
-                                <div>
-                                    <h6 class="fw-bold mb-0 text-dark">${func.nome}</h6>
-                                    <span class="text-muted small">${func.cargo || 'Sem cargo'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-2 mb-3">
-                            <div class="contact-info text-truncate"><i class="bi bi-envelope"></i> ${func.email || '-'}</div>
-                            <div class="contact-info"><i class="bi bi-telephone"></i> ${func.telefone || '-'}</div>
-                        </div>
-
-                        <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
-                            <span class="${badgeClass}">${func.departamento || 'Geral'}</span>
-                            <span class="status-pill ${statusClass}">${func.status}</span>
-                        </div>
-                    </div>
-                </div>`;
-        container.insertAdjacentHTML('beforeend', cardHTML);
-      });
-    })
-    .catch(err => console.error(err));
+  switchView('cadastro-funcionario');
 };
 
-// 2. ABRIR TELA DE NOVO CADASTRO
-// 1. ABRIR TELA DE NOVO CADASTRO (Esconde a tag)
+// FUNÇÃO AUXILIAR: PREENCHER FORMULÁRIO
+async function preencherFormularioFuncionario(id) {
+  try {
+    const res = await fetch(`${API_URL}/funcionarios/todos?t=${new Date().getTime()}`);
+    const lista = await res.json();
+    const func = lista.find(f => f.id == id);
+
+    if (!func) throw new Error("Funcionário não encontrado.");
+
+    function set(idCampo, valor) {
+      const el = document.getElementById(idCampo);
+      if (el) el.value = valor || '';
+    }
+
+    set('rhNome', func.nome);
+    set('rhCargo', func.cargo);
+    set('rhDepartamento', func.departamento);
+    set('rhEmail', func.email);
+    set('rhTelefone', func.telefone);
+    set('rhCpf', func.cpf);
+    set('rhAdmissao', func.data_admissao ? func.data_admissao.substring(0, 10) : '');
+    set('rhStatus', func.status);
+    set('rhSalario', func.salario);
+    set('rhEndereco', func.endereco);
+
+    return true;
+  } catch (error) {
+    alert(error.message);
+    return false;
+  }
+}
+
+// SALVAR / ATUALIZAR FUNCIONÁRIO
+window.salvarFuncionario = function () {
+  const dados = {
+    nome: document.getElementById('rhNome').value,
+    cargo: document.getElementById('rhCargo').value,
+    departamento: document.getElementById('rhDepartamento').value,
+    email: document.getElementById('rhEmail').value,
+    telefone: document.getElementById('rhTelefone').value,
+    cpf: document.getElementById('rhCpf').value,
+    data_admissao: document.getElementById('rhAdmissao').value,
+    status: document.getElementById('rhStatus').value,
+    salario: document.getElementById('rhSalario').value || null,
+    endereco: document.getElementById('rhEndereco').value
+  };
+
+  if (!dados.nome || !dados.cargo) {
+    alert("Preencha Nome e Cargo obrigatórios.");
+    return;
+  }
+
+  const url = window.idFuncionarioEditando
+    ? `${API_URL}/funcionarios/${window.idFuncionarioEditando}`
+    : `${API_URL}/funcionarios`;
+
+  const method = window.idFuncionarioEditando ? 'PUT' : 'POST';
+
+  fetch(url, {
+    method: method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados)
+  })
+    .then(() => {
+      alert("Funcionário salvo com sucesso!");
+      switchView('funcionarios');
+      carregarFuncionarios();
+    })
+    .catch(err => alert("Erro ao salvar: " + err));
+};
+
+// VER DETALHES E HISTÓRICO DO FUNCIONÁRIO
+async function verDetalhesFuncionario(id) {
+  const container = document.getElementById('historico-funcionario-body');
+  if (!container) return;
+
+  container.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+
+  try {
+    const res = await fetch(`${API_URL}/funcionarios/${id}/historico`);
+    const historico = await res.json();
+
+    container.innerHTML = '';
+
+    if (!historico || historico.length === 0) {
+      container.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum job executado ainda.</td></tr>';
+      return;
+    }
+
+    historico.forEach(job => {
+      const tr = `
+        <tr>
+          <td class="small fw-bold text-primary">#${job.id}</td>
+          <td class="small">${job.nome_cliente || 'N/A'}</td>
+          <td class="small">${job.equipamento || 'N/A'}</td>
+          <td class="small">${job.data_job ? new Date(job.data_job).toLocaleDateString('pt-BR') : '-'}</td>
+          <td class="small"><span class="badge bg-${job.status === 'Finalizado' ? 'success' : 'warning'}">${job.status}</span></td>
+          <td class="small text-end fw-bold">R$ ${parseFloat(job.valor || 0).toFixed(2)}</td>
+        </tr>`;
+      container.insertAdjacentHTML('beforeend', tr);
+    });
+  } catch (err) {
+    container.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Erro ao carregar histórico.</td></tr>`;
+  }
+}
+
+// ABRIR TELA DE NOVO CADASTRO
 window.abrirTelaNovoFuncionario = function () {
   window.idFuncionarioEditando = null;
   document.getElementById('formFuncionarioFull').reset();
@@ -6550,7 +6629,7 @@ async function preencherFormularioFuncionario(id) {
   try {
     // 1. Busca a lista atualizada do servidor
     // Usamos ?t=... para evitar cache e pegar dados frescos
-    const res = await fetch(`${API_URL}/funcionarios/completo?t=${new Date().getTime()}`);
+    const res = await fetch(`${API_URL}/funcionarios/todos?t=${new Date().getTime()}`);
     const lista = await res.json();
 
     // 2. Encontra o funcionário clicado
@@ -6682,7 +6761,7 @@ function toggleCamposFuncionario(bloquear) {
 // 2. FUNÇÃO AUXILIAR: PREENCHER FORMULÁRIO (Usada no Editar e Visualizar)
 async function preencherModalFuncionario(id) {
   try {
-    const res = await fetch(`${API_URL}/funcionarios/completo`);
+    const res = await fetch(`${API_URL}/funcionarios/todos`);
     const lista = await res.json();
     const func = lista.find(f => f.id == id);
 
@@ -6824,20 +6903,30 @@ window.initCalendar = function () {
   // Detecta se é celular (tela menor que 768px)
   const isMobile = window.innerWidth < 768;
 
-  console.log("📅 Inicializando FullCalendar (Modo Rolagem Infinita)...");
+  console.log("📅 Inicializando FullCalendar...");
 
   calendar = new FullCalendar.Calendar(calendarEl, {
-    // === MUDANÇAS PARA ROLAGEM INFINITA ===
     initialView: 'dayGridMonth',
     locale: 'pt-br',
+    
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,listMonth'
+      right: 'dayGridMonth,listYear'
     },
-    buttonText: { today: 'Hoje', month: 'Mês', list: 'Lista' },
-    height: 450, // Altura // Altura fixa para caber na aba
-    locale: 'pt-br',
+    
+    buttonText: { 
+      today: 'Hoje', 
+      month: 'Mês',
+      year: 'Lista'
+    },
+    
+    height: 'auto',
+    
+    firstDay: 0,
+    navLinks: true,
+    editable: false,
+    dayMaxEvents: 3,
 
 
     // 🎨 EVENTOS VÊM DO SERVIDOR (SUA LÓGICA MANTIDA)
@@ -6862,7 +6951,9 @@ window.initCalendar = function () {
               localizacao: e.localizacao,
               status: e.description,
               tipo: e.tipo_evento,
-              operador_id: e.operador_id
+              operador_id: e.operador_id,
+              data_inicio_real: e.data_inicio_real,
+              data_fim_real: e.data_fim_real
             }
           }));
 
@@ -6874,7 +6965,7 @@ window.initCalendar = function () {
         });
     },
 
-    // 📍 AO CLICAR EM UM EVENTO (SUA LÓGICA MANTIDA EXATAMENTE IGUAL)
+    // 📍 AO CLICAR EM UM EVENTO
     eventClick: function (info) {
       const dados = info.event.extendedProps;
       const status = dados.status || 'Sem status';
@@ -6882,27 +6973,77 @@ window.initCalendar = function () {
       const localizacao = dados.localizacao || 'Não informado';
       const tipo = dados.tipo === 'job' ? '📋 PEDIDO DE SERVIÇO' : '📅 ESCALA MANUAL';
 
-      // 📅 Formata as datas corretamente
-      const dataInicio = info.event.start ? new Date(info.event.start).toLocaleDateString('pt-BR', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-      }) : 'Não informado';
+      // 📅 Usa datas reais do job (se for pedido) ou datas do evento (se for escala)
+      let dataInicio, dataFim;
+      
+      if (dados.tipo === 'job' && dados.data_inicio_real) {
+        // Para jobs, usa o período completo original
+        const dtInicio = new Date(dados.data_inicio_real + ' 00:00:00');
+        const dtFim = new Date(dados.data_fim_real + ' 00:00:00');
+        
+        dataInicio = dtInicio.toLocaleDateString('pt-BR', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+        dataFim = dtFim.toLocaleDateString('pt-BR', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+      } else {
+        // Para escalas, usa a data do evento clicado
+        dataInicio = info.event.start ? new Date(info.event.start).toLocaleDateString('pt-BR', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        }) : 'Não informado';
+        dataFim = info.event.end ? new Date(new Date(info.event.end).getTime() - 86400000).toLocaleDateString('pt-BR', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        }) : dataInicio;
+      }
 
-      const dataFim = info.event.end ? new Date(new Date(info.event.end).getTime() - 86400000).toLocaleDateString('pt-BR', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-      }) : dataInicio;
+      // Monta o conteúdo HTML do modal
+      const conteudo = `
+        <div class="mb-3 p-3 rounded" style="background: rgba(99, 102, 241, 0.1); border-left: 4px solid #6366f1;">
+          <h6 class="mb-0 fw-bold text-primary">${tipo}</h6>
+        </div>
+        <div class="mb-2">
+          <small class="text-muted d-block mb-1">📝 Serviço</small>
+          <div class="fw-semibold">${info.event.title}</div>
+        </div>
+        <div class="mb-2">
+          <small class="text-muted d-block mb-1">🎯 Status</small>
+          <div>${status}</div>
+        </div>
+        <div class="mb-2">
+          <small class="text-muted d-block mb-1">👤 Operador</small>
+          <div>${operador}</div>
+        </div>
+        <div class="mb-2">
+          <small class="text-muted d-block mb-1">📍 Local</small>
+          <div>${localizacao}</div>
+        </div>
+        <div class="row">
+          <div class="col-6 mb-2">
+            <small class="text-muted d-block mb-1">📅 Início</small>
+            <div class="small">${dataInicio}</div>
+          </div>
+          <div class="col-6 mb-2">
+            <small class="text-muted d-block mb-1">📅 Fim</small>
+            <div class="small">${dataFim}</div>
+          </div>
+        </div>
+      `;
 
-      let mensagem = `${tipo}\n`;
-      mensagem += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-      mensagem += `📝 Serviço: ${info.event.title}\n`;
-      mensagem += `🎯 Status: ${status}\n`;
-      mensagem += `👤 Operador: ${operador}\n`;
-      mensagem += `📍 Local: ${localizacao}\n`;
-      mensagem += `📅 Início: ${dataInicio}\n`;
-      mensagem += `📅 Fim: ${dataFim}\n`;
-      mensagem += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-
-      alert(mensagem);
-
+      // Preenche e exibe o modal
+      const modalElemento = document.getElementById('modalEventoConteudo');
+      const modalContainer = document.getElementById('modalDetalhesEvento');
+      
+      if (modalElemento && modalContainer) {
+        // Se o modal existe, usa ele
+        modalElemento.innerHTML = conteudo;
+        const modal = new bootstrap.Modal(modalContainer);
+        modal.show();
+      } else {
+        // Fallback: usa alert se o modal não existir (cache antigo)
+        const mensagem = `${tipo}\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📝 Serviço: ${info.event.title}\n🎯 Status: ${status}\n👤 Operador: ${operador}\n📍 Local: ${localizacao}\n📅 Início: ${dataInicio}\n📅 Fim: ${dataFim}\n━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+        alert(mensagem);
+      }
     }
   });
 
@@ -6953,7 +7094,7 @@ window.abrirModalEscalaManual = function (data) {
   const select = document.getElementById('escalaFuncionario');
   select.innerHTML = '<option>Carregando...</option>';
 
-  fetch(`${API_URL}/funcionarios/completo`)
+  fetch(`${API_URL}/funcionarios/todos`)
     .then(r => r.json())
     .then(lista => {
       select.innerHTML = '';
@@ -7355,10 +7496,43 @@ function renderizarCalendarioFuncionario(listaJobs) {
     if (job.status === 'Confirmado') cor = '#ffc107'; // Amarelo
     if (job.status === 'Cancelado') cor = '#dc3545'; // Vermelho
 
+    // Função para combinar data e hora
+    const combinarDataHora = (data, hora) => {
+      if (!data) return null;
+      if (!hora) return data; // Se não tem hora, retorna só a data (all-day)
+      
+      // Pega só os primeiros 5 caracteres da hora (HH:MM)
+      const horaFormatada = hora.substring(0, 5);
+      return `${data}T${horaFormatada}:00`; // Formato ISO com segundos
+    };
+
+    // Calcula data/hora início
+    const dataHoraInicio = combinarDataHora(job.data_inicio, job.hora_inicio_evento);
+    
+    // Calcula data/hora fim
+    let dataHoraFim = null;
+    if (job.data_fim) {
+      if (job.hora_fim_evento) {
+        // Se existe hora fim, usa diretamente
+        dataHoraFim = combinarDataHora(job.data_fim, job.hora_fim_evento);
+      } else if (job.hora_inicio_evento) {
+        // Se só tem hora início, assume mesmo dia
+        dataHoraFim = combinarDataHora(job.data_fim, job.hora_inicio_evento);
+      } else {
+        // Se não tem hora, adiciona 1 dia (comportamento all-day do FullCalendar)
+        dataHoraFim = new Date(new Date(job.data_fim).getTime() + 86400000).toISOString().split('T')[0];
+      }
+    }
+
+    // Determina se é evento de dia inteiro
+    const isAllDay = !job.hora_inicio_evento && !job.hora_fim_evento;
+
     return {
       id: job.id,
       title: `Job #${job.id} - ${job.descricao}`,
-      start: job.data_inicio, // Precisa ser YYYY-MM-DD
+      start: dataHoraInicio,
+      end: dataHoraFim,
+      allDay: isAllDay, // Explicitly set allDay property
       backgroundColor: cor,
       borderColor: cor,
       extendedProps: {
@@ -7371,13 +7545,24 @@ function renderizarCalendarioFuncionario(listaJobs) {
   calendarFuncionarioInstance = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     locale: 'pt-br',
+    
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,listMonth'
+      right: 'dayGridMonth,listYear'
     },
-    buttonText: { today: 'Hoje', month: 'Mês', list: 'Lista' },
-    height: 450, // Altura fixa para caber na aba
+    
+    buttonText: { 
+      today: 'Hoje', 
+      month: 'Mês',
+      year: 'Lista'
+    },
+    
+    height: 'auto',
+    
+    navLinks: true,
+    editable: false,
+    dayMaxEvents: 3,
     events: eventos,
 
     // AÇÃO AO CLICAR NO CALENDÁRIO

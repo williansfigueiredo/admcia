@@ -262,10 +262,23 @@ app.get('/clientes/:id/contatos', (req, res) => {
   });
 });
 // 4. ROTA NOVA: Buscar Lista de FUNCIONÁRIOS
+// Rota simplificada para dropdowns (apenas ativos)
 app.get('/funcionarios', (req, res) => {
   const sql = "SELECT id, nome FROM funcionarios WHERE status = 'Ativo'";
   db.query(sql, (err, data) => {
     if (err) return res.json(err);
+    return res.json(data);
+  });
+});
+
+// Rota completa para a tela de gestão (todos os funcionários com todos os campos)
+app.get('/funcionarios/todos', (req, res) => {
+  const sql = "SELECT * FROM funcionarios ORDER BY status ASC, nome ASC";
+  db.query(sql, (err, data) => {
+    if (err) {
+      console.error("Erro ao buscar funcionários:", err);
+      return res.status(500).json(err);
+    }
     return res.json(data);
   });
 });
@@ -385,25 +398,7 @@ app.post('/jobs', (req, res) => {
         else console.log("✅ Equipe inserida com sucesso.");
       });
 
-      // B. === AUTOMÁTICO: GRAVAR NA TABELA ESCALAS ===
-      // Usa a data de início do Job. Se não tiver, usa a data de hoje.
-      const dataParaEscala = data.data_inicio ? data.data_inicio.split('T')[0] : new Date().toISOString().split('T')[0];
-      const obsEscala = `Job #${novoId} - ${data.descricao || 'Sem descrição'}`;
-
-      const sqlEscala = "INSERT INTO escalas (funcionario_id, job_id, data_escala, tipo, observacao) VALUES ?";
-      // Mapeia os mesmos funcionários para a tabela de escalas
-      const valoresEscala = data.equipe.map(m => [
-        m.funcionario_id,
-        novoId,
-        dataParaEscala,
-        'Trabalho', // Define como trabalho automaticamente
-        obsEscala
-      ]);
-
-      db.query(sqlEscala, [valoresEscala], (errEsc) => {
-        if (errEsc) console.error("❌ Erro ao inserir na tabela ESCALAS:", errEsc);
-        else console.log("✅ Escalas geradas automaticamente para a equipe.");
-      });
+      // Escalas não são mais criadas automaticamente - removido
 
     }
     // MANTIVE O SEU CÓDIGO ANTIGO COMO FALLBACK (caso não venha a lista 'equipe')
@@ -414,12 +409,7 @@ app.post('/jobs', (req, res) => {
         else console.log("✅ Operador inserido na equipe do Job:", novoId);
       });
 
-      // Também gera escala para o operador único se for o caso
-      const dataParaEscala = data.data_inicio ? data.data_inicio.split('T')[0] : new Date().toISOString().split('T')[0];
-      const sqlEscalaUnica = "INSERT INTO escalas (funcionario_id, job_id, data_escala, tipo, observacao) VALUES (?, ?, ?, ?, ?)";
-      db.query(sqlEscalaUnica, [data.operador_id, novoId, dataParaEscala, 'Trabalho', `Job #${novoId} (Operador)`], (errEsc) => {
-        if (errEsc) console.error("Erro escala operador unico:", errEsc);
-      });
+      // Escalas não são mais criadas automaticamente - removido
     }
 
     // Processamento de itens (MANTIDO EXATAMENTE IGUAL)
@@ -549,23 +539,7 @@ app.put('/jobs/:id', (req, res) => {
             if (errInsEq) console.error("Erro ao inserir nova equipe:", errInsEq);
           });
 
-          // 2. === AUTOMÁTICO: INSERE NA TABELA ESCALAS ===
-          const dataParaEscala = data.data_inicio ? data.data_inicio.split('T')[0] : new Date().toISOString().split('T')[0];
-          const obsEscala = `Job #${id} - ${data.descricao || 'Atualizado'}`;
-
-          const sqlEscala = "INSERT INTO escalas (funcionario_id, job_id, data_escala, tipo, observacao) VALUES ?";
-          const valoresEscala = data.equipe.map(m => [
-            m.funcionario_id,
-            id,
-            dataParaEscala,
-            'Trabalho',
-            obsEscala
-          ]);
-
-          db.query(sqlEscala, [valoresEscala], (errInsEsc) => {
-            if (errInsEsc) console.error("❌ Erro ao atualizar escalas:", errInsEsc);
-            else console.log("✅ Escalas atualizadas com sucesso!");
-          });
+          // Escalas não são mais criadas automaticamente - removido
         }
       });
     });
@@ -1555,64 +1529,127 @@ app.get('/jobs/:jobId/itens', (req, res) => {
 // Busca TUDO (Escalas Manuais + Jobs com Cores IGUAIS aos Pills)
 
 app.get('/agenda', (req, res) => {
-  const sql = `
-        SELECT 
-            CONCAT('escala-', e.id) as id,
-            e.data_escala as start, 
-            e.data_escala as end, 
-            CONCAT(f.nome, ' | Escala') as title,
-            e.tipo as description,
-            f.id as operador_id,
-            f.nome as operador_nome,
-            '' as localizacao,
-            '#3b82f6' as backgroundColor,
-            '#3b82f6' as borderColor,
-            'escala' as tipo_evento
-        FROM escalas e
-        JOIN funcionarios f ON e.funcionario_id = f.id
-        
-        UNION ALL
-        
-        SELECT 
-            CONCAT('job-', j.id) as id,
-            j.data_inicio as start, 
-            j.data_fim as end, 
-            CONCAT(j.descricao, ' | ', f.nome) as title,
-            j.status as description,
-            f.id as operador_id,
-            f.nome as operador_nome,
-            CONCAT(j.logradouro, ', ', j.numero, ' - ', j.bairro, ', ', j.cidade) as localizacao,
-            CASE 
-                WHEN j.status = 'Agendado' THEN '#0284c7'      -- Azul VIVO
-                WHEN j.status = 'Em Andamento' THEN '#16a34a'  -- Verde VIVO
-                WHEN j.status = 'Confirmado' THEN '#d97706'    -- Laranja VIVO
-                WHEN j.status = 'Finalizado' THEN '#64748b'    -- Cinza escuro VIVO
-                WHEN j.status = 'Cancelado' THEN '#dc2626'     -- Vermelho VIVO
-                ELSE '#475569'                                 -- Cinza padrão
-            END as backgroundColor,
-            CASE 
-                WHEN j.status = 'Agendado' THEN '#0284c7'      -- Azul VIVO
-                WHEN j.status = 'Em Andamento' THEN '#16a34a'  -- Verde VIVO
-                WHEN j.status = 'Confirmado' THEN '#d97706'    -- Laranja VIVO
-                WHEN j.status = 'Finalizado' THEN '#64748b'    -- Cinza escuro VIVO
-                WHEN j.status = 'Cancelado' THEN '#dc2626'     -- Vermelho VIVO
-                ELSE '#475569'                                 -- Cinza padrão
-            END as borderColor,
-            'job' as tipo_evento
-        FROM jobs j
-        LEFT JOIN funcionarios f ON j.operador_id = f.id
-        WHERE j.data_inicio IS NOT NULL
-    `;
+  // Primeiro busca escalas
+  const sqlEscalas = `
+    SELECT 
+      CONCAT('escala-', e.id) as id,
+      CONCAT(e.data_escala, ' 08:00:00') as start, 
+      CONCAT(e.data_escala, ' 17:00:00') as end, 
+      CONCAT('📅 ', f.nome, ' - Escala Manual') as title,
+      e.tipo as description,
+      f.id as operador_id,
+      f.nome as operador_nome,
+      '' as localizacao,
+      '#3b82f6' as backgroundColor,
+      '#3b82f6' as borderColor,
+      'escala' as tipo_evento
+    FROM escalas e
+    JOIN funcionarios f ON e.funcionario_id = f.id
+  `;
 
-  db.query(sql, (err, results) => {
+  // Depois busca jobs: operador principal + equipe adicional
+  const sqlJobs = `
+    SELECT 
+      j.id as job_id,
+      j.data_inicio,
+      j.data_fim,
+      j.hora_chegada_prevista,
+      j.hora_fim_evento,
+      j.descricao,
+      j.status,
+      j.logradouro,
+      j.numero,
+      j.bairro,
+      j.cidade,
+      j.operador_id as funcionario_id,
+      f.nome as funcionario_nome
+    FROM jobs j
+    LEFT JOIN funcionarios f ON j.operador_id = f.id
+    WHERE j.data_inicio IS NOT NULL AND j.operador_id IS NOT NULL
+    
+    UNION ALL
+    
+    SELECT 
+      j.id as job_id,
+      j.data_inicio,
+      j.data_fim,
+      j.hora_chegada_prevista,
+      j.hora_fim_evento,
+      j.descricao,
+      j.status,
+      j.logradouro,
+      j.numero,
+      j.bairro,
+      j.cidade,
+      je.funcionario_id,
+      f.nome as funcionario_nome
+    FROM jobs j
+    INNER JOIN job_equipe je ON j.id = je.job_id
+    INNER JOIN funcionarios f ON je.funcionario_id = f.id
+    WHERE j.data_inicio IS NOT NULL
+  `;
+
+  db.query(sqlEscalas, (err, escalas) => {
     if (err) {
-      console.error("❌ Erro ao buscar agenda:", err);
+      console.error("❌ Erro ao buscar escalas:", err);
       return res.status(500).json({ error: err.message });
     }
 
-    console.log(`✅ Agenda retornou ${results.length} eventos`);
+    db.query(sqlJobs, (err, jobs) => {
+      if (err) {
+        console.error("❌ Erro ao buscar jobs:", err);
+        return res.status(500).json({ error: err.message });
+      }
 
-    res.json(results);
+      // Expande jobs para todos os dias e membros da equipe
+      const eventosJobs = [];
+      jobs.forEach(job => {
+        const inicio = new Date(job.data_inicio);
+        const fim = job.data_fim ? new Date(job.data_fim) : inicio;
+        
+        // Formata datas originais como strings YYYY-MM-DD
+        const dataInicioOriginal = inicio.toISOString().split('T')[0];
+        const dataFimOriginal = fim.toISOString().split('T')[0];
+        
+        // Para cada dia entre início e fim
+        for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
+          const dataStr = d.toISOString().split('T')[0];
+          
+          // ⏰ Usa horário cadastrado ou padrão 08:00 se estiver NULL/vazio
+          const horaChegada = job.hora_chegada_prevista || '08:00:00';
+          const horaFim = job.hora_fim_evento || '18:00:00';
+          
+          let cor = '#475569';
+          if (job.status === 'Agendado') cor = '#0284c7';
+          else if (job.status === 'Em Andamento') cor = '#16a34a';
+          else if (job.status === 'Confirmado') cor = '#d97706';
+          else if (job.status === 'Finalizado') cor = '#64748b';
+          else if (job.status === 'Cancelado') cor = '#dc2626';
+
+          eventosJobs.push({
+            id: `job-${job.job_id}-${job.funcionario_id}-${dataStr}`,
+            start: `${dataStr} ${horaChegada}`,
+            end: `${dataStr} ${horaFim}`,
+            title: `📋 ${job.funcionario_nome} - ${job.descricao}`, // 📋 Indica Pedido
+            description: job.status,
+            operador_id: job.funcionario_id,
+            operador_nome: job.funcionario_nome,
+            localizacao: `${job.logradouro || ''}, ${job.numero || ''} - ${job.bairro || ''}, ${job.cidade || ''}`,
+            backgroundColor: cor,
+            borderColor: cor,
+            tipo_evento: 'job',
+            // 📅 Datas reais do job (período completo) em formato string
+            data_inicio_real: dataInicioOriginal,
+            data_fim_real: dataFimOriginal
+          });
+        }
+      });
+
+      const todosEventos = [...escalas, ...eventosJobs];
+      console.log(`✅ Agenda retornou ${todosEventos.length} eventos (${escalas.length} escalas, ${eventosJobs.length} jobs)`);
+      
+      res.json(todosEventos);
+    });
   });
 });
 
@@ -1694,7 +1731,7 @@ app.get('/funcionarios/:id/historico', (req, res) => {
 
   const sql = `
         /* 1. Busca se ele está na lista de EQUIPE (Tabela Nova) */
-        SELECT j.id, j.descricao, j.data_inicio, j.status, je.funcao
+        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, je.funcao
         FROM jobs j
         JOIN job_equipe je ON j.id = je.job_id
         WHERE je.funcionario_id = ?
@@ -1702,7 +1739,7 @@ app.get('/funcionarios/:id/historico', (req, res) => {
         UNION ALL
 
         /* 2. Busca se ele é o OPERADOR PRINCIPAL (Tabela Antiga/Dropdown) */
-        SELECT j.id, j.descricao, j.data_inicio, j.status, 'Operador Principal' as funcao
+        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, 'Operador Principal' as funcao
         FROM jobs j
         WHERE j.operador_id = ?
 

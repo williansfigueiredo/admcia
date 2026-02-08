@@ -5243,6 +5243,26 @@ window.limparFiltrosEstoque = function () {
   filtrarEstoque();
 }
 
+// LIMPAR FILTROS CLIENTES
+window.limparFiltrosClientes = function () {
+  const ids = ['inputBuscaCliente', 'filtroTipoCliente', 'filtroStatusCliente'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  filtrarClientes();
+}
+
+// LIMPAR FILTROS FUNCIONÁRIOS
+window.limparFiltrosFuncionarios = function () {
+  const ids = ['buscaFuncionarios', 'filtroStatusFuncionario', 'filtroDepartamentoFuncionario'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  filtrarFuncionarios();
+}
+
 // 5. ALTERNAR MODO DE VISUALIZAÇÃO (GRID / LISTA)
 window.alternarModoEstoque = function (modo) {
   window.modoExibicaoEstoque = modo;
@@ -7355,10 +7375,43 @@ function renderizarCalendarioFuncionario(listaJobs) {
     if (job.status === 'Confirmado') cor = '#ffc107'; // Amarelo
     if (job.status === 'Cancelado') cor = '#dc3545'; // Vermelho
 
+    // Função para combinar data e hora
+    const combinarDataHora = (data, hora) => {
+      if (!data) return null;
+      if (!hora) return data; // Se não tem hora, retorna só a data (all-day)
+      
+      // Pega só os primeiros 5 caracteres da hora (HH:MM)
+      const horaFormatada = hora.substring(0, 5);
+      return `${data}T${horaFormatada}:00`; // Formato ISO com segundos
+    };
+
+    // Calcula data/hora início
+    const dataHoraInicio = combinarDataHora(job.data_inicio, job.hora_inicio_evento);
+    
+    // Calcula data/hora fim
+    let dataHoraFim = null;
+    if (job.data_fim) {
+      if (job.hora_fim_evento) {
+        // Se existe hora fim, usa diretamente
+        dataHoraFim = combinarDataHora(job.data_fim, job.hora_fim_evento);
+      } else if (job.hora_inicio_evento) {
+        // Se só tem hora início, assume mesmo dia
+        dataHoraFim = combinarDataHora(job.data_fim, job.hora_inicio_evento);
+      } else {
+        // Se não tem hora, adiciona 1 dia (comportamento all-day do FullCalendar)
+        dataHoraFim = new Date(new Date(job.data_fim).getTime() + 86400000).toISOString().split('T')[0];
+      }
+    }
+
+    // Determina se é evento de dia inteiro
+    const isAllDay = !job.hora_inicio_evento && !job.hora_fim_evento;
+
     return {
       id: job.id,
       title: `Job #${job.id} - ${job.descricao}`,
-      start: job.data_inicio, // Precisa ser YYYY-MM-DD
+      start: dataHoraInicio,
+      end: dataHoraFim,
+      allDay: isAllDay, // Explicitly set allDay property
       backgroundColor: cor,
       borderColor: cor,
       extendedProps: {

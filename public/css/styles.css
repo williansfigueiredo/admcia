@@ -76,6 +76,9 @@ h3 {
   margin-bottom: 2px;
   transition: all 0.3s ease;
   font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .sidebar .nav-link:hover {
@@ -91,11 +94,15 @@ h3 {
   font-weight: 500;
 }
 
-.sidebar .nav-link i {
-  font-size: 1.1rem;
-  margin-right: 10px;
-  width: 20px;
-  text-align: center;
+.nav-arrow {
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.nav-link[aria-expanded="true"] .nav-arrow {
+  transform: rotate(180deg);
 }
 
 /* --- CARDS & METRICS --- */
@@ -396,7 +403,7 @@ body {
 
 .sidebar.collapsed .nav-link {
   justify-content: center;
-  padding: 14px 0;
+
 }
 
 .sidebar.collapsed .nav-link .d-flex {
@@ -433,16 +440,22 @@ body {
 /* Estilos do nav-icon */
 .nav-icon {
   font-size: 1.1rem;
-  margin-right: 10px;
+  margin-right: 12px;
   width: 20px;
   text-align: center;
   flex-shrink: 0;
-  transition: margin 0.3s, font-size 0.3s;
 }
 
 .nav-text {
-  transition: opacity 0.2s, width 0.3s;
+  flex: 1;
   white-space: nowrap;
+}
+
+.nav-link>.d-flex {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 0;
 }
 
 .brand-logo {
@@ -451,9 +464,9 @@ body {
   font-size: 1.1rem;
   display: flex;
   align-items: center;
-  gap: 10px;
   white-space: nowrap;
   overflow: hidden;
+  padding-left: 8px !important;
 }
 
 .brand-logo i {
@@ -463,6 +476,7 @@ body {
 
 .brand-text {
   transition: opacity 0.2s, width 0.3s;
+  padding-left: 8px;
 }
 
 .menu-label {
@@ -473,6 +487,7 @@ body {
   padding: 20px 24px 10px 24px;
   transition: opacity 0.2s;
   white-space: nowrap;
+  letter-spacing: 0.5px;
 }
 
 .nav-link {
@@ -487,6 +502,7 @@ body {
   text-decoration: none;
   border-left: 3px solid transparent;
   transition: all 0.2s;
+  gap: 0;
 }
 
 .nav-link:hover {
@@ -507,10 +523,19 @@ body {
   color: #94a3b8;
   padding-top: 8px;
   padding-bottom: 8px;
-  display: block;
+  display: flex;
+  align-items: center;
   text-decoration: none;
   cursor: pointer;
   transition: color 0.2s;
+}
+
+.submenu-link i {
+  margin-right: 8px;
+  font-size: 0.9rem;
+  width: 16px;
+  min-width: 16px;
+  flex-shrink: 0;
 }
 
 .submenu-link:hover {
@@ -592,9 +617,8 @@ body {
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 20px -4px rgba(0, 0, 0, 0.08),
-    0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 20px rgba(56, 65, 74, 0.1);
 }
 
 [data-bs-theme="dark"] .stat-card:hover {
@@ -614,7 +638,7 @@ body {
 }
 
 .btn-header-dark {
-  background-color: #299cdb;
+  background-color: #00a5ff;
   color: white;
   border: none;
   font-weight: 500;
@@ -625,7 +649,7 @@ body {
 }
 
 .btn-header-dark:hover {
-  background-color: #2389c4;
+  background-color: #00a5ff;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(41, 156, 219, 0.3);
 }
@@ -1235,14 +1259,12 @@ body {
 }
 
 .card-stat-func:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 20px -4px rgba(0, 0, 0, 0.08),
-    0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 20px rgba(56, 65, 74, 0.1);
 }
 
 [data-bs-theme="dark"] .card-stat-func:hover {
-  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.35),
-    0 4px 8px -2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
 }
 
 .icon-soft-box {
@@ -1784,13 +1806,12 @@ body {
 /* Remove o lápis e deixa o cursor de clique */
 .cursor-pointer {
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .cursor-pointer:hover {
-  transform: scale(1.05);
-  /* Leve efeito de zoom ao passar o mouse */
-  opacity: 0.9;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 20px rgba(56, 65, 74, 0.1);
 }
 
 /* Menu Flutuante - Correção de Rolagem */
@@ -1939,7 +1960,6 @@ body {
 .form-select {
   border-color: #e2e8f0;
   /* Topo | Direita (40px pra seta) | Baixo | Esquerda */
-  padding: 10px 40px 10px 15px;
   font-size: 0.9rem;
   border-radius: 8px;
   transition: all 0.2s;
@@ -2177,6 +2197,11 @@ body {
 }
 
 /* Azul para Editar */
+.item-green {
+  color: #16a34a !important;
+}
+
+/* Verde para Visualizar */
 .item-red {
   color: #ef4444 !important;
 }
@@ -2327,7 +2352,15 @@ body {
   background-color: #ffffff;
   padding: 20px;
   border-radius: 16px;
-  /* Sombra suave e difusa igual ao Schedule-X */
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 700px;
+}
+
+#calendarFuncionario {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
   box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
   font-family: 'Inter', -apple-system, sans-serif;
   min-height: 700px;
@@ -2377,6 +2410,15 @@ body {
 .fc-theme-standard th {
   border-color: #f3f4f6 !important;
   /* Linhas quase invisíveis */
+}
+
+/* Ajuste geral de padding para elementos do calendário */
+.fc .fc-list-day-cushion,
+.fc .fc-list-table td,
+.fc td,
+.fc th {
+  padding: 4px;
+  vertical-align: middle;
 }
 
 .fc-col-header-cell-cushion {
@@ -2463,24 +2505,100 @@ a.fc-daygrid-day-number {
 }
 
 /* Deixa o calendário multi-mês mais delicado/compacto */
-.fc-multimonth {
-  font-size: 0.85rem;
-  /* Diminui a fonte geral */
-}
-
-.fc-multimonth-title {
-  font-size: 1rem !important;
-  /* Título do mês menor */
-  padding-bottom: 5px !important;
-}
-
 .fc-daygrid-day-frame {
   min-height: auto !important;
-  /* Remove altura mínima excessiva dos dias */
 }
 
+/* === ESTILOS PARA LIST VIEW === */
+.fc-scroller {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scroll-behavior: smooth;
+}
 
+.fc-scroller::-webkit-scrollbar {
+  width: 8px;
+}
 
+.fc-scroller::-webkit-scrollbar-track {
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* List view styling */
+.fc-list {
+  border: none !important;
+}
+
+.fc-list-day-cushion {
+  background-color: #f9fafb !important;
+  padding: 12px 16px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  border-top: 2px solid #e5e7eb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.fc-list-event {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.fc-list-event:hover {
+  background-color: #f9fafb !important;
+}
+
+.fc-list-event-dot {
+  border-radius: 50% !important;
+  margin: 0 !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-width: 4px !important;
+  border-style: solid !important;
+}
+
+/* Remove linhas ao redor da bolinha */
+.fc-list-event-graphic {
+  padding: 4px 8px !important;
+  width: auto !important;
+  min-width: 16px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.fc-list-event-time,
+.fc-list-event-graphic,
+.fc-list-event-title {
+  border-left: none !important;
+  border-right: none !important;
+}
+
+.fc-list-event-title {
+  font-weight: 500;
+  color: #111827;
+}
+
+.fc-list-event-time {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Loading indicator */
+.fc-list-empty {
+  padding: 40px 20px !important;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.95rem;
+}
 
 
 
@@ -3263,4 +3381,265 @@ button:hover #iconTheme {
   background-color: #1e77ad !important;
   border-color: #1e77ad !important;
   box-shadow: 0 0 0 0.25rem rgba(41, 156, 219, 0.25) !important;
+}
+
+/* === MODAL DETALHES EVENTO - SEM BARRA DE ROLAGEM === */
+#modalDetalhesEvento .modal-dialog {
+  overflow: hidden !important;
+}
+
+#modalDetalhesEvento .modal-content {
+  overflow: hidden !important;
+}
+
+#modalDetalhesEvento .modal-body {
+  overflow: hidden !important;
+  max-height: none !important;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+}
+
+#modalDetalhesEvento .modal-body::-webkit-scrollbar {
+  display: none !important;
+  /* Chrome, Safari, Opera */
+}
+
+#modalEventoConteudo {
+  overflow: hidden !important;
+  max-height: none !important;
+}
+
+/* =============================================================
+   LEGENDA DO CALENDÁRIO
+   ============================================================= */
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  margin-top: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+/* Modo Dark para a Legenda */
+[data-bs-theme="dark"] .calendar-legend {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+.calendar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #495057;
+  font-weight: 500;
+}
+
+/* Texto branco no modo dark */
+[data-bs-theme="dark"] .calendar-legend-item {
+  color: #ffffff;
+}
+
+.calendar-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Ajuste das letras do FullCalendar para branco no dark */
+[data-bs-theme="dark"] .fc {
+  color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .fc-daygrid-day-number,
+[data-bs-theme="dark"] .fc-col-header-cell-cushion,
+[data-bs-theme="dark"] .fc-list-day-text,
+[data-bs-theme="dark"] .fc-list-day-side-text {
+  color: #ffffff !important;
+}
+
+/* Cabeçalhos dos dias da semana (DOM, SEG, TER, etc.) */
+[data-bs-theme="dark"] .fc-col-header-cell,
+[data-bs-theme="dark"] .fc-col-header-cell-cushion,
+[data-bs-theme="dark"] .fc-scrollgrid-sync-inner {
+  color: #ffffff !important;
+}
+
+/* Números dos dias */
+[data-bs-theme="dark"] .fc-daygrid-day-top,
+[data-bs-theme="dark"] .fc-daygrid-day-number,
+[data-bs-theme="dark"] .fc-daygrid-day-frame {
+  color: #ffffff !important;
+}
+
+/* Todos os links dentro do calendário */
+[data-bs-theme="dark"] .fc a {
+  color: #ffffff !important;
+}
+
+/* Ajuste dos eventos na lista para modo dark */
+[data-bs-theme="dark"] .fc-list-event-title a,
+[data-bs-theme="dark"] .fc-list-event-title,
+[data-bs-theme="dark"] .fc-list-event-time {
+  color: #ffffff !important;
+}
+
+/* Ajuste do cabeçalho das datas na lista */
+[data-bs-theme="dark"] .fc-list-day-cushion {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .fc-list-day-cushion a {
+  color: #22d3ee !important;
+}
+
+/* Background dos eventos na lista */
+[data-bs-theme="dark"] .fc-list-event:hover td {
+  background-color: #334155 !important;
+}
+
+/* Remove linhas ao redor da bolinha no modo dark */
+[data-bs-theme="dark"] .fc-list-event-graphic {
+  background: transparent !important;
+}
+
+/* Garante que as bolinhas fiquem visíveis no modo dark */
+[data-bs-theme="dark"] .fc-list-event-dot {
+  opacity: 1 !important;
+}
+
+[data-bs-theme="dark"] .fc-list-event-time,
+[data-bs-theme="dark"] .fc-list-event-graphic,
+[data-bs-theme="dark"] .fc-list-event-title {
+  border-left: none !important;
+  border-right: none !important;
+}
+
+/* Linhas de separação na lista */
+[data-bs-theme="dark"] .fc-list-event td {
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .fc-list-table td,
+[data-bs-theme="dark"] .fc-list-table th {
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .fc-list-day-frame {
+  border-color: #334155 !important;
+}
+
+/* Background do calendário no modo dark */
+[data-bs-theme="dark"] .fc-theme-standard td,
+[data-bs-theme="dark"] .fc-theme-standard th {
+  border-color: #334155 !important;
+}
+
+/* Todas as bordas do scrollgrid */
+[data-bs-theme="dark"] .fc-scrollgrid,
+[data-bs-theme="dark"] .fc-scrollgrid-section,
+[data-bs-theme="dark"] .fc-scrollgrid-section>td {
+  border-color: #334155 !important;
+}
+
+/* Bordas horizontais das células */
+[data-bs-theme="dark"] .fc-daygrid-body,
+[data-bs-theme="dark"] .fc-scrollgrid-sync-table,
+[data-bs-theme="dark"] tbody,
+[data-bs-theme="dark"] thead {
+  border-color: #334155 !important;
+}
+
+/* Remove qualquer borda branca remanescente */
+[data-bs-theme="dark"] .fc table {
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .fc tr {
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .fc-col-header,
+[data-bs-theme="dark"] .fc-daygrid-body,
+[data-bs-theme="dark"] .fc-scrollgrid-section-body>td {
+  border-color: #334155 !important;
+}
+
+/* Fundo geral do calendário */
+[data-bs-theme="dark"] .fc,
+[data-bs-theme="dark"] .fc-view-harness,
+[data-bs-theme="dark"] .fc-scrollgrid,
+[data-bs-theme="dark"] .fc-theme-standard {
+  background-color: transparent !important;
+}
+
+/* Células do calendário */
+[data-bs-theme="dark"] .fc-daygrid-day,
+[data-bs-theme="dark"] .fc-daygrid-day-frame,
+[data-bs-theme="dark"] .fc-scrollgrid-sync-table {
+  background-color: #1e293b !important;
+}
+
+/* Cabeçalho do calendário */
+[data-bs-theme="dark"] .fc-col-header-cell {
+  background-color: #1e293b !important;
+}
+
+/* Toolbar do calendário */
+[data-bs-theme="dark"] .fc-toolbar {
+  background-color: transparent !important;
+}
+
+[data-bs-theme="dark"] .fc-toolbar-title {
+  color: #ffffff !important;
+}
+
+/* Card que envolve o calendário do funcionário */
+[data-bs-theme="dark"] #containerHistoricoCalendario .card {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+/* Container principal do calendário */
+[data-bs-theme="dark"] #container-calendario {
+  background-color: #1e293b !important;
+}
+
+/* =============================================================
+   SEPARAÇÃO DOS BOTÕES DO CALENDÁRIO
+   ============================================================= */
+.fc .fc-button-group>.fc-button {
+  margin-left: 4px !important;
+  margin-right: 4px !important;
+}
+
+.fc .fc-button-group>.fc-button:first-child {
+  margin-left: 0 !important;
+  border-radius: 6px !important;
+}
+
+.fc .fc-button-group>.fc-button:last-child {
+  margin-right: 0 !important;
+  border-radius: 6px !important;
+}
+
+.fc .fc-button {
+  border-radius: 6px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.2s ease !important;
+}
+
+.fc .fc-button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
 }

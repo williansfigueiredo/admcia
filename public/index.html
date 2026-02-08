@@ -172,12 +172,6 @@
             Monitoramento de Jobs e Equipe Externa
           </p>
         </div>
-        <div class="d-flex gap-2">
-          <button class="btn-header-outline">
-            <i class="bi bi-file-earmark-spreadsheet me-2"></i>Relatório
-            Diário
-          </button>
-        </div>
       </div>
 
       <div class="row g-4 mb-4">
@@ -870,7 +864,13 @@
             </select>
           </div>
 
-          <div class="col-md-3 text-end">
+          <div class="col-md-1 text-center">
+            <button class="btn btn-outline-secondary px-3" onclick="limparFiltrosClientes()" title="Limpar filtros">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <div class="col-md-2 text-end">
             <div class="btn-group" role="group">
               <button type="button" class="btn btn-outline-secondary active" id="btn-view-card"
                 onclick="alternarViewCliente('card')" title="Visualização em Cards">
@@ -2214,7 +2214,13 @@
               </select>
             </div>
 
-            <div class="col-md-3 text-end">
+            <div class="col-md-1 text-center">
+              <button class="btn btn-outline-secondary px-3" onclick="limparFiltrosFuncionarios()" title="Limpar filtros">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <div class="col-md-2 text-end">
               <div class="btn-group" role="group">
                 <button type="button" class="btn btn-outline-secondary active" id="btn-view-func-card"
                   onclick="alternarViewFuncionarios('card')" title="Visualização em Cards">
@@ -2266,6 +2272,52 @@
       <div id="container-calendario" class="card-custom" style="margin: 24px; margin-top: 0; display: none">
         <div class="p-3">
           <div id="calendar"></div>
+          
+          <!-- Legenda do Calendário -->
+          <div class="calendar-legend">
+            <div class="calendar-legend-item">
+              <span class="calendar-legend-dot" style="background-color: #0d6efd;"></span>
+              <span>Agendado</span>
+            </div>
+            <div class="calendar-legend-item">
+              <span class="calendar-legend-dot" style="background-color: #198754;"></span>
+              <span>Em Andamento</span>
+            </div>
+            <div class="calendar-legend-item">
+              <span class="calendar-legend-dot" style="background-color: #d97706;"></span>
+              <span>Confirmado</span>
+            </div>
+            <div class="calendar-legend-item">
+              <span class="calendar-legend-dot" style="background-color: #64748b;"></span>
+              <span>Finalizado</span>
+            </div>
+            <div class="calendar-legend-item">
+              <span class="calendar-legend-dot" style="background-color: #dc2626;"></span>
+              <span>Cancelado</span>
+            </div>
+            <div class="calendar-legend-item">
+              <span class="calendar-legend-dot" style="background-color: #3b82f6;"></span>
+              <span>Escala Manual</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Detalhes do Evento -->
+      <div class="modal fade" id="modalDetalhesEvento" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+              <h5 class="modal-title fw-bold" id="modalEventoTitulo">Detalhes do Evento</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-2" style="max-height: none; overflow: hidden;">
+              <div id="modalEventoConteudo"></div>
+            </div>
+            <div class="modal-footer border-0">
+              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2457,6 +2509,30 @@
     <div id="containerHistoricoCalendario" class="d-none">
         <div class="card p-3 border shadow-sm">
             <div id="calendarFuncionario"></div>
+            
+            <!-- Legenda do Calendário do Funcionário -->
+            <div class="calendar-legend">
+              <div class="calendar-legend-item">
+                <span class="calendar-legend-dot" style="background-color: #0d6efd;"></span>
+                <span>Agendado</span>
+              </div>
+              <div class="calendar-legend-item">
+                <span class="calendar-legend-dot" style="background-color: #198754;"></span>
+                <span>Em Andamento</span>
+              </div>
+              <div class="calendar-legend-item">
+                <span class="calendar-legend-dot" style="background-color: #ffc107;"></span>
+                <span>Confirmado</span>
+              </div>
+              <div class="calendar-legend-item">
+                <span class="calendar-legend-dot" style="background-color: #dc3545;"></span>
+                <span>Cancelado</span>
+              </div>
+              <div class="calendar-legend-item">
+                <span class="calendar-legend-dot" style="background-color: #6c757d;"></span>
+                <span>Finalizado</span>
+              </div>
+            </div>
         </div>
     </div>
 
