@@ -212,19 +212,20 @@ h3 {
 
 /* === PADRONIZAÇÃO BOTÕES DE VISUALIZAÇÃO === */
 .btn-group .btn {
-  min-width: 40px;
-  min-height: 44px;
-  padding: 10px 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  height: 44px !important;
+  min-width: 44px;
+  padding: 0 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
 }
 
 .btn-group .btn i {
   font-size: 16px;
 }
 
-/* Botões de visualização específicos */
+/* Botões de visualização específicos (X, card, lista) */
 #btn-view-card,
 #btn-view-list,
 #btn-view-grid,
@@ -232,14 +233,16 @@ h3 {
 #btn-view-func-card,
 #btn-view-func-list,
 .btn-group .btn-outline-secondary {
+  width: 44px !important;
+  height: 44px !important;
   min-width: 44px !important;
   min-height: 44px !important;
-  width: 44px;
-  height: 44px;
   padding: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
 }
 
 :root {
@@ -7357,4 +7360,25 @@ button:hover #iconTheme {
     max-width: 100% !important;
     margin-bottom: 8px;
   }
+}
+
+/* === FORÇAR ALTURA UNIFORME DOS BOTÕES DE FILTRO === */
+.btn-group > .btn.btn-outline-secondary,
+.btn-group > button.btn.btn-outline-secondary,
+#btn-view-card,
+#btn-view-list,
+#btn-view-grid,
+#btn-view-lista,
+#btn-view-func-card,
+#btn-view-func-list {
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
 }

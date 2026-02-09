@@ -5,7 +5,7 @@ console.log('🔥 MAIN.JS VERSÃO 2.0 CARREGADO - COM PAGINAÇÃO FUNCIONÁRIOS'
 
 // Detecta automaticamente se está rodando local ou no Railway
 const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://localhost:3000' 
+  ? 'http://localhost:3000'
   : window.location.origin;
 
 console.log('🌐 API_URL configurada:', API_URL);
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   atualizarDashboard();
   carregarEstoque();
   window.carregarEquipamentosParaPedido();
-  
+
   console.log('🚨 TENTANDO CHAMAR carregarFuncionarios()...');
   if (typeof window.carregarFuncionarios === 'function') {
     console.log('✅ Função carregarFuncionarios existe!');
@@ -279,37 +279,37 @@ function atualizarCardClientes() {
     .then(clientes => {
       // Total de clientes ativos
       const clientesAtivos = clientes.filter(c => c.status === 'Ativo').length;
-      
+
       // Clientes cadastrados no mês atual
       const hoje = new Date();
       const mesAtual = hoje.getMonth();
       const anoAtual = hoje.getFullYear();
-      
+
       const clientesMesAtual = clientes.filter(c => {
         if (!c.data_cadastro) return false;
         const dataCadastro = new Date(c.data_cadastro);
         return dataCadastro.getMonth() === mesAtual && dataCadastro.getFullYear() === anoAtual;
       }).length;
-      
+
       // Clientes cadastrados no mês anterior
       const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
       const anoMesAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
-      
+
       const clientesMesAnterior = clientes.filter(c => {
         if (!c.data_cadastro) return false;
         const dataCadastro = new Date(c.data_cadastro);
         return dataCadastro.getMonth() === mesAnterior && dataCadastro.getFullYear() === anoMesAnterior;
       }).length;
-      
+
       // Calcula percentual de crescimento
       let percentual = 0;
       let sinal = '';
       let corTexto = 'text-muted';
       let icone = 'bi-dash';
-      
+
       if (clientesMesAnterior > 0) {
         percentual = Math.round(((clientesMesAtual - clientesMesAnterior) / clientesMesAnterior) * 100);
-        
+
         if (percentual > 0) {
           sinal = '+';
           corTexto = 'text-green';
@@ -326,11 +326,11 @@ function atualizarCardClientes() {
         corTexto = 'text-green';
         icone = 'bi-arrow-up';
       }
-      
+
       // Atualiza o número principal
       const elValor = document.getElementById('kpi-clientes-valor');
       if (elValor) elValor.innerText = clientesAtivos;
-      
+
       // Atualiza o status com percentual
       const elStatus = document.getElementById('kpi-clientes-status');
       if (elStatus) {
@@ -341,11 +341,11 @@ function atualizarCardClientes() {
           <div class="text-muted small" style="font-size: 11px;">${clientesMesAtual} novos em ${getMesNome(mesAtual)}</div>
         `;
       }
-      
+
       // Ícone sempre ciano (azul claro)
       const elIconBg = document.getElementById('kpi-clientes-icon');
       if (elIconBg) elIconBg.className = "kpi-icon-circle bg-cyan-soft text-cyan";
-      
+
     })
     .catch(err => console.error("Erro ao carregar clientes:", err));
 }
@@ -1422,19 +1422,19 @@ function renderizarGraficoStatusJobs() {
       const mesAtual = hoje.getMonth();
       const anoAtual = hoje.getFullYear();
       const nomeMes = getMesNome(mesAtual);
-      
+
       // Atualiza o subtítulo com o mês de referência
       const subtituloEl = document.querySelector('#cardStatusJobs .text-muted.small');
       if (subtituloEl) {
         subtituloEl.textContent = `${nomeMes}/${anoAtual}`;
       }
-      
+
       const jobsMesAtual = jobs.filter(job => {
         if (!job.data_job) return false;
         const dataJob = new Date(job.data_job);
         return dataJob.getMonth() === mesAtual && dataJob.getFullYear() === anoAtual;
       });
-      
+
       // Conta jobs por status (do mês atual)
       const agendados = jobsMesAtual.filter(j => j.status === 'Agendado').length;
       const emAndamento = jobsMesAtual.filter(j => j.status === 'Em Andamento').length;
@@ -1497,7 +1497,7 @@ function renderizarGraficoStatusJobs() {
               borderColor: 'rgba(255, 255, 255, 0.2)',
               borderWidth: 1,
               callbacks: {
-                label: function(context) {
+                label: function (context) {
                   return context.parsed.x + ' jobs';
                 }
               }
@@ -1505,7 +1505,7 @@ function renderizarGraficoStatusJobs() {
             datalabels: {
               anchor: 'end',
               align: 'end',
-              color: function(context) {
+              color: function (context) {
                 // Cor baseada no tema (light/dark)
                 const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
                 return isDark ? '#e5e7eb' : '#1f2937';
@@ -1514,7 +1514,7 @@ function renderizarGraficoStatusJobs() {
                 size: 13,
                 weight: 'bold'
               },
-              formatter: function(value) {
+              formatter: function (value) {
                 return value;
               }
             }
@@ -1522,14 +1522,14 @@ function renderizarGraficoStatusJobs() {
           scales: {
             x: {
               beginAtZero: true,
-              max: function(context) {
+              max: function (context) {
                 // Define o máximo como 120% do maior valor para dar espaço aos labels
                 const maxValue = Math.max(...context.chart.data.datasets[0].data);
                 return Math.ceil(maxValue * 1.15);
               },
               ticks: {
                 stepSize: 15,
-                color: function() {
+                color: function () {
                   const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
                   return isDark ? '#6b7280' : '#9ca3af';
                 },
@@ -1538,7 +1538,7 @@ function renderizarGraficoStatusJobs() {
                 }
               },
               grid: {
-                color: function() {
+                color: function () {
                   const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
                   return isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
                 },
@@ -1547,7 +1547,7 @@ function renderizarGraficoStatusJobs() {
             },
             y: {
               ticks: {
-                color: function() {
+                color: function () {
                   const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
                   return isDark ? '#d1d5db' : '#374151';
                 },
@@ -1576,23 +1576,23 @@ function renderizarGraficoStatusJobs() {
           id: 'customLabels',
           afterDatasetsDraw(chart) {
             const { ctx, data, scales: { x, y } } = chart;
-            
+
             ctx.save();
             ctx.font = 'bold 13px Inter, sans-serif';
-            
+
             const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
             ctx.fillStyle = isDark ? '#e5e7eb' : '#1f2937';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            
+
             data.datasets[0].data.forEach((value, index) => {
               const barEnd = x.getPixelForValue(value);
               const yPos = y.getPixelForValue(index);
-              
+
               // Desenha o valor ao final da barra com um pequeno offset
               ctx.fillText(value, barEnd + 8, yPos);
             });
-            
+
             ctx.restore();
           }
         }]
@@ -1647,10 +1647,10 @@ function iniciarSidebar() {
     sidebar.addEventListener('click', (e) => {
       // Verificar se clicou em um link do menu em dispositivo móvel
       if (window.innerWidth < 992) {
-        const isMenuLink = e.target.closest('.submenu-link') || 
-                          e.target.closest('.nav-link:not([data-bs-toggle])') ||
-                          (e.target.closest('.nav-link') && !e.target.closest('[data-bs-toggle]'));
-        
+        const isMenuLink = e.target.closest('.submenu-link') ||
+          e.target.closest('.nav-link:not([data-bs-toggle])') ||
+          (e.target.closest('.nav-link') && !e.target.closest('[data-bs-toggle]'));
+
         if (isMenuLink) {
           // Pequeno delay para permitir que a ação seja executada primeiro
           setTimeout(() => {
@@ -2018,10 +2018,10 @@ function renderizarTabelaContratos(pagina) {
   const divPaginacao = document.getElementById('paginacao-contratos');
   const mobileContainer = document.getElementById('contratos-mobile-cards');
 
-  console.log('📊 renderizarTabelaContratos:', { 
-    pagina, 
-    totalJobs: jobsFiltrados.length, 
-    itensPorPagina: ITENS_POR_PAGINA 
+  console.log('📊 renderizarTabelaContratos:', {
+    pagina,
+    totalJobs: jobsFiltrados.length,
+    itensPorPagina: ITENS_POR_PAGINA
   });
 
   if (!tabela) {
@@ -2044,12 +2044,12 @@ function renderizarTabelaContratos(pagina) {
 
   // Corta a lista para a página atual
   const jobsDaPagina = jobsFiltrados.slice(inicio, fim);
-  
+
   console.log('📄 Jobs na página:', { inicio, fim, quantidade: jobsDaPagina.length });
 
   // Calcula páginas baseado no filtro atual
   const totalPaginas = Math.ceil(jobsFiltrados.length / ITENS_POR_PAGINA) || 1;
-  
+
   console.log('📖 Total de páginas:', totalPaginas);
 
   // === MENSAGEM DE "NADA ENCONTRADO" ===
@@ -2246,7 +2246,7 @@ function renderizarTabelaContratos(pagina) {
 // Função auxiliar para desenhar os botões de paginação (padrão idêntico aos clientes)
 function renderizarBotoesPaginacaoContratos(div, pagina, total) {
   if (!div) return;
-  
+
   div.innerHTML = '';
 
   // Se houver apenas 1 página, mostra info mas sem botões (igual aos clientes)
@@ -2306,7 +2306,7 @@ function renderizarBotoesPaginacaoContratos(div, pagina, total) {
 }
 
 // Função para mudar de página nos contratos
-window.mudarPaginaContratos = function(novaPagina) {
+window.mudarPaginaContratos = function (novaPagina) {
   const totalPaginas = Math.ceil(jobsFiltrados.length / ITENS_POR_PAGINA) || 1;
 
   if (novaPagina < 1 || novaPagina > totalPaginas) return;
@@ -2952,7 +2952,7 @@ async function abrirModalInvoice(jobId) {
   try {
     // 1. FAZ AS BUSCAS NECESSÁRIAS (Template + Equipe + Lista de Funcionários para achar o nome do Operador)
     const [resTemplate, resEquipe, resFuncionarios] = await Promise.all([
-      fetch(`${API_URL}/invoice`), 
+      fetch(`${API_URL}/invoice`),
       fetch(`${API_URL}/jobs/${id}/equipe`),
       fetch(`${API_URL}/funcionarios`) // Buscamos a lista para encontrar o nome do Operador pelo ID
     ]);
@@ -3541,7 +3541,7 @@ window.salvarClienteFull = function () {
   function executarSalvarCliente() {
     // Coleta os contatos dinâmicos
     const contatos = coletarContatosDoFormulario();
-    
+
     const dados = {
       nome: val('cadCliNome'),
       nome_fantasia: val('cadCliFantasia'),
@@ -3620,11 +3620,11 @@ window.buscarCepGenerico = function (cep, prefixo) {
 window.alternarViewCliente = function (modo) {
   const containerCards = document.getElementById('lista-clientes-cards');
   const containerLista = document.getElementById('lista-clientes-tabela-container');
-  
+
   // Botões desktop
   const btnCard = document.getElementById('btn-view-card');
   const btnList = document.getElementById('btn-view-list');
-  
+
   // Botões mobile
   const btnCardMobile = document.getElementById('btn-view-card-mobile');
   const btnListMobile = document.getElementById('btn-view-list-mobile');
@@ -3632,39 +3632,39 @@ window.alternarViewCliente = function (modo) {
   if (modo === 'card') {
     containerCards.classList.remove('d-none');
     containerLista.classList.add('d-none');
-    
+
     // Desktop
     if (btnCard && btnList) {
       btnCard.classList.add('active');
       btnList.classList.remove('active');
     }
-    
+
     // Mobile
     if (btnCardMobile && btnListMobile) {
       btnCardMobile.classList.add('active');
       btnListMobile.classList.remove('active');
     }
-    
+
   } else {
     containerCards.classList.add('d-none');
     containerLista.classList.remove('d-none');
-    
+
     // Desktop
     if (btnCard && btnList) {
       btnCard.classList.remove('active');
       btnList.classList.add('active');
     }
-    
+
     // Mobile
     if (btnCardMobile && btnListMobile) {
       btnCardMobile.classList.remove('active');
       btnListMobile.classList.add('active');
     }
-    
+
     // Re-renderizar imediatamente se estiver em mobile para garantir que apareça
     const isMobile = window.innerWidth <= 767.98;
     console.log('📱 Alternando para lista - Mobile detectado:', isMobile);
-    
+
     if (isMobile && window.paginacaoClientes && window.paginacaoClientes.listaTotalFiltrada && window.paginacaoClientes.listaTotalFiltrada.length > 0) {
       console.log('🔄 Renderizando lista mobile...');
       setTimeout(() => {
@@ -3682,11 +3682,11 @@ window.alternarViewCliente = function (modo) {
 }
 
 // Listener para redimensionamento da janela
-window.addEventListener('resize', function() {
+window.addEventListener('resize', function () {
   // Re-renderizar apenas se estivermos na visualização de lista
   const containerLista = document.getElementById('lista-clientes-tabela-container');
   const isListView = !containerLista.classList.contains('d-none');
-  
+
   if (isListView && window.paginacaoClientes && window.paginacaoClientes.listaTotalFiltrada && window.paginacaoClientes.listaTotalFiltrada.length > 0) {
     // Aguardar um pouco para a transição de tamanho terminar
     setTimeout(() => {
@@ -3797,10 +3797,10 @@ window.filtrarClientes = function () {
 // 3. Função que Desenha a Tela COM PAGINAÇÃO (Cards e Lista)
 function renderizarClientesComPaginacao(lista) {
   console.log('📄 Renderizando com paginação:', lista.length, 'clientes');
-  
+
   // Guarda a lista filtrada total
   window.paginacaoClientes.listaTotalFiltrada = lista;
-  
+
   // Renderiza a primeira página
   window.paginacaoClientes.paginaAtual = 1;
   renderizarPaginaClientes();
@@ -3812,7 +3812,7 @@ function renderizarPaginaClientes() {
   const lista = window.paginacaoClientes.listaTotalFiltrada;
   const paginaAtual = window.paginacaoClientes.paginaAtual;
   const itensPorPagina = window.paginacaoClientes.itensPorPagina;
-  
+
   const containerCards = document.getElementById('lista-clientes-cards');
   const containerLista = document.getElementById('lista-clientes-tabela-body');
 
@@ -3823,7 +3823,7 @@ function renderizarPaginaClientes() {
 
   if (lista.length === 0) {
     containerCards.innerHTML = '<div class="col-12 text-center text-muted py-5">Nenhum cliente encontrado com esse filtro.</div>';
-    
+
     // Verificar se é mobile para a mensagem da lista
     const isMobile = window.innerWidth <= 767.98;
     if (isMobile) {
@@ -3920,11 +3920,11 @@ function renderizarPaginaClientes() {
     containerCards.insertAdjacentHTML('beforeend', cardHTML);
 
     // --- RENDERIZAÇÃO DA LISTA (TABELA) ---
-    
+
     // Verificar se é mobile
     const isMobile = window.innerWidth <= 767.98;
     console.log('📱 Mobile detectado:', isMobile, 'Largura:', window.innerWidth);
-    
+
     if (isMobile) {
       // Renderizar cards lineares para mobile
       const cardLinearHTML = `
@@ -3967,17 +3967,17 @@ function renderizarPaginaClientes() {
             </div>
           </div>
         </div>`;
-      
+
       containerLista.insertAdjacentHTML('beforeend', cardLinearHTML);
       console.log('✅ Card linear adicionado para:', cli.nome);
-      
+
       // Garantir que o container esteja visível
       const container = document.getElementById('lista-clientes-tabela-container');
       if (container) {
         container.style.display = 'block';
         container.classList.remove('d-none');
       }
-      
+
     } else {
       // Renderizar tabela tradicional para desktop
       const rowHTML = `
@@ -4028,28 +4028,28 @@ function renderizarBotoesPaginacao() {
   const lista = window.paginacaoClientes.listaTotalFiltrada;
   const paginaAtual = window.paginacaoClientes.paginaAtual;
   const itensPorPagina = window.paginacaoClientes.itensPorPagina;
-  
+
   const totalPaginas = Math.ceil(lista.length / itensPorPagina);
-  
+
   console.log('📖 Paginação:', { total: lista.length, porPagina: itensPorPagina, totalPaginas });
-  
+
   // Encontrar container de paginação
   const containerPaginacao = document.getElementById('paginacao-clientes');
   if (!containerPaginacao) {
     console.error('❌ Container de paginação não encontrado!');
     return;
   }
-  
+
   containerPaginacao.innerHTML = '';
-  
+
   if (totalPaginas <= 1) {
     // Se houver apenas 1 página, mostra info mas sem botões
     containerPaginacao.innerHTML = `<div class="text-center text-muted small mt-2">Total: ${lista.length} cliente(s)</div>`;
     return;
   }
-  
+
   let botoesHTML = '<div class="d-flex justify-content-center align-items-center gap-2">';
-  
+
   // Botão Anterior
   const desabilitarAnterior = paginaAtual === 1;
   botoesHTML += `
@@ -4059,16 +4059,16 @@ function renderizarBotoesPaginacao() {
       <i class="bi bi-chevron-left"></i> Anterior
     </button>
   `;
-  
+
   // Botões numéricos (máximo 5 páginas visíveis)
   let paginaInicio = Math.max(1, paginaAtual - 2);
   let paginaFim = Math.min(totalPaginas, paginaInicio + 4);
-  
+
   // Ajusta início se estiver próximo ao fim
   if (paginaFim - paginaInicio < 4) {
     paginaInicio = Math.max(1, paginaFim - 4);
   }
-  
+
   for (let i = paginaInicio; i <= paginaFim; i++) {
     const ativo = i === paginaAtual ? 'btn-primary' : 'btn-outline-secondary';
     botoesHTML += `
@@ -4079,7 +4079,7 @@ function renderizarBotoesPaginacao() {
       </button>
     `;
   }
-  
+
   // Botão Próximo
   const desabilitarProximo = paginaAtual === totalPaginas;
   botoesHTML += `
@@ -4089,27 +4089,27 @@ function renderizarBotoesPaginacao() {
       Próximo <i class="bi bi-chevron-right"></i>
     </button>
   `;
-  
+
   botoesHTML += `</div>
     <div class="text-center text-muted small mt-2">
       Página ${paginaAtual} de ${totalPaginas} • Total: ${lista.length} cliente(s)
     </div>`;
-  
+
   containerPaginacao.innerHTML = botoesHTML;
 }
 
 // Função para mudar de página
-window.mudarPaginaClientes = function(novaPagina) {
+window.mudarPaginaClientes = function (novaPagina) {
   const totalPaginas = Math.ceil(window.paginacaoClientes.listaTotalFiltrada.length / window.paginacaoClientes.itensPorPagina);
-  
+
   if (novaPagina < 1 || novaPagina > totalPaginas) return;
-  
+
   window.paginacaoClientes.paginaAtual = novaPagina;
   window.paginacaoClientes.paginaSalva = novaPagina;  // Salva automaticamente ao mudar
-  
+
   renderizarPaginaClientes();
   renderizarBotoesPaginacao();
-  
+
   // Scroll suave para o topo da lista
   const listaCards = document.getElementById('lista-clientes-cards');
   if (listaCards) {
@@ -4118,7 +4118,7 @@ window.mudarPaginaClientes = function(novaPagina) {
 }
 
 // Função para voltar à lista de clientes mantendo a página
-window.voltarParaListaClientes = function() {
+window.voltarParaListaClientes = function () {
   console.log('🔙 Voltando para lista de clientes...');
   switchView('clientes');
 }
@@ -4163,7 +4163,7 @@ window.editarCliente = function (id) {
   // Salva a página atual antes de sair
   window.paginacaoClientes.paginaSalva = window.paginacaoClientes.paginaAtual;
   console.log('💾 Salvando página atual:', window.paginacaoClientes.paginaSalva);
-  
+
   // 1. Busca os dados do cliente no banco
   fetch(`${API_URL}/clientes/${id}`)
     .then(res => res.json())
@@ -4201,7 +4201,7 @@ window.editarCliente = function (id) {
       // Muda o texto do botão para indicar edição
       const btnSalvar = document.querySelector('#view-cadastro-cliente .btn-success');
       if (btnSalvar) btnSalvar.innerHTML = '<i class="bi bi-check-lg me-2"></i> Atualizar Cliente';
-      
+
       // 5. Carrega os contatos dinâmicos do cliente
       fetch(`${API_URL}/clientes/${id}/contatos`)
         .then(res => res.json())
@@ -4248,13 +4248,13 @@ window.abrirTelaNovoCliente = function () {
 window.contadorContatos = 0;
 
 // Função para adicionar um novo contato à lista
-window.adicionarNovoContato = function() {
+window.adicionarNovoContato = function () {
   const listaContatos = document.getElementById('lista-contatos-dinamica');
   if (!listaContatos) return;
-  
+
   window.contadorContatos++;
   const idContato = window.contadorContatos;
-  
+
   const contatoHTML = `
     <div class="contato-item mb-3 pb-3 border-bottom" id="contato-${idContato}" data-contato-id="${idContato}">
       <div class="d-flex justify-content-between align-items-center mb-2">
@@ -4291,16 +4291,16 @@ window.adicionarNovoContato = function() {
       </div>
     </div>
   `;
-  
+
   listaContatos.insertAdjacentHTML('beforeend', contatoHTML);
 }
 
 // Função para remover um contato da lista
-window.removerContato = function(idContato) {
+window.removerContato = function (idContato) {
   const contatoElement = document.getElementById(`contato-${idContato}`);
   if (contatoElement) {
     contatoElement.remove();
-    
+
     // Verifica se ficou sem contatos, adiciona um vazio
     const listaContatos = document.getElementById('lista-contatos-dinamica');
     if (listaContatos && listaContatos.children.length === 0) {
@@ -4322,16 +4322,16 @@ function limparListaContatos() {
 function coletarContatosDoFormulario() {
   const listaContatos = document.getElementById('lista-contatos-dinamica');
   if (!listaContatos) return [];
-  
+
   const contatosItens = listaContatos.querySelectorAll('.contato-item');
   const contatos = [];
-  
+
   contatosItens.forEach(item => {
     const nome = item.querySelector('.contato-nome').value.trim();
     const cargo = item.querySelector('.contato-cargo').value.trim();
     const email = item.querySelector('.contato-email').value.trim();
     const telefone = item.querySelector('.contato-telefone').value.trim();
-    
+
     // Só adiciona se tiver pelo menos o nome preenchido
     if (nome) {
       contatos.push({
@@ -4342,32 +4342,32 @@ function coletarContatosDoFormulario() {
       });
     }
   });
-  
+
   return contatos;
 }
 
 // Função para preencher a lista de contatos (usado na edição)
 function preencherListaContatos(contatos) {
   limparListaContatos();
-  
+
   if (!contatos || contatos.length === 0) {
     adicionarNovoContato();
     return;
   }
-  
+
   contatos.forEach(contato => {
     adicionarNovoContato();
-    
+
     // Preenche os campos do último contato adicionado
     const listaContatos = document.getElementById('lista-contatos-dinamica');
     const ultimoContato = listaContatos.lastElementChild;
-    
+
     if (ultimoContato) {
       const inputNome = ultimoContato.querySelector('.contato-nome');
       const inputCargo = ultimoContato.querySelector('.contato-cargo');
       const inputEmail = ultimoContato.querySelector('.contato-email');
       const inputTelefone = ultimoContato.querySelector('.contato-telefone');
-      
+
       if (inputNome) inputNome.value = contato.nome || '';
       if (inputCargo) inputCargo.value = contato.cargo || '';
       if (inputEmail) inputEmail.value = contato.email || '';
@@ -4380,14 +4380,14 @@ function preencherListaContatos(contatos) {
 function exibirContatosPerfil(contatos) {
   const container = document.getElementById('perfil-lista-contatos');
   if (!container) return;
-  
+
   container.innerHTML = '';
-  
+
   if (!contatos || contatos.length === 0) {
     container.innerHTML = '<div class="col-12 text-muted text-center py-3"><i class="bi bi-info-circle me-2"></i>Nenhum contato cadastrado.</div>';
     return;
   }
-  
+
   contatos.forEach((contato, index) => {
     const contatoHTML = `
       <div class="col-md-6">
@@ -4416,7 +4416,7 @@ function exibirContatosPerfil(contatos) {
         </div>
       </div>
     `;
-    
+
     container.insertAdjacentHTML('beforeend', contatoHTML);
   });
 }
@@ -4753,7 +4753,7 @@ window.abrirPerfilCliente = function (id) {
   // Salva a página atual antes de sair
   window.paginacaoClientes.paginaSalva = window.paginacaoClientes.paginaAtual;
   console.log('💾 Salvando página atual:', window.paginacaoClientes.paginaSalva);
-  
+
   fetch(`${API_URL}/clientes`)
     .then(res => res.json())
     .then(lista => {
@@ -4810,7 +4810,7 @@ window.abrirPerfilCliente = function (id) {
         })
         .catch(err => {
           console.error("Erro ao carregar contatos do perfil:", err);
-          document.getElementById('perfil-lista-contatos').innerHTML = 
+          document.getElementById('perfil-lista-contatos').innerHTML =
             '<div class="col-12 text-muted text-center py-3">Nenhum contato cadastrado.</div>';
         });
 
@@ -5652,7 +5652,7 @@ window.filtrarEstoque = function () {
 }
 
 // Nova função para renderizar com paginação
-window.renderizarEstoquePaginado = function(pagina = null) {
+window.renderizarEstoquePaginado = function (pagina = null) {
   if (pagina) window.paginacaoEstoque.paginaAtual = pagina;
 
   const { paginaAtual, itensPorPagina, listaTotalFiltrada } = window.paginacaoEstoque;
@@ -5676,7 +5676,7 @@ window.renderizarEstoquePaginado = function(pagina = null) {
 }
 
 // Função para mudar de página
-window.mudarPaginaEstoque = function(novaPagina) {
+window.mudarPaginaEstoque = function (novaPagina) {
   renderizarEstoquePaginado(novaPagina);
 }
 
@@ -5715,12 +5715,12 @@ function renderizarBotoesPaginacaoEstoque(totalPaginas, totalItens) {
   // Botões numéricos (máximo 5 páginas visíveis)
   let paginaInicio = Math.max(1, paginaAtual - 2);
   let paginaFim = Math.min(totalPaginas, paginaInicio + 4);
-  
+
   // Ajusta início se estiver próximo ao fim
   if (paginaFim - paginaInicio < 4) {
     paginaInicio = Math.max(1, paginaFim - 4);
   }
-  
+
   for (let i = paginaInicio; i <= paginaFim; i++) {
     const ativo = i === paginaAtual ? 'btn-primary' : 'btn-outline-secondary';
     html += `
@@ -6526,15 +6526,15 @@ window.carregarFuncionarios = function () {
 };
 
 // 2. FILTRAR FUNCIONÁRIOS
-window.filtrarFuncionarios = function() {
+window.filtrarFuncionarios = function () {
   // Validação: se não tem cache, não faz nada
   if (!window.cacheFuncionarios || window.cacheFuncionarios.length === 0) {
     console.warn('⚠️ Cache de funcionários vazio. Aguardando carregamento...');
     return;
   }
-  
+
   console.log('🔍 Filtrando funcionários. Cache tem:', window.cacheFuncionarios.length, 'items');
-  
+
   const inputBusca = document.getElementById('buscaFuncionarios');
   const inputStatus = document.getElementById('filtroStatusFuncionario');
   const inputDepartamento = document.getElementById('filtroDepartamentoFuncionario');
@@ -6575,12 +6575,12 @@ window.filtrarFuncionarios = function() {
 };
 
 // 3. RENDERIZAR COM PAGINAÇÃO
-window.renderizarFuncionariosPaginado = function(pagina = null) {
+window.renderizarFuncionariosPaginado = function (pagina = null) {
   if (!window.paginacaoFuncionarios) {
     console.error('❌ paginacaoFuncionarios não inicializado!');
     return;
   }
-  
+
   if (pagina) window.paginacaoFuncionarios.paginaAtual = pagina;
 
   const { paginaAtual, itensPorPagina, listaTotalFiltrada } = window.paginacaoFuncionarios;
@@ -6608,13 +6608,13 @@ window.renderizarFuncionariosPaginado = function(pagina = null) {
 };
 
 // 4. RENDERIZAR CARDS
-window.renderizarFuncionariosCards = function(lista) {
+window.renderizarFuncionariosCards = function (lista) {
   const container = document.getElementById('lista-funcionarios-real');
   if (!container) {
     console.error('❌ Container lista-funcionarios-real não encontrado!');
     return;
   }
-  
+
   console.log('🎴 Renderizando', lista.length, 'cards de funcionários');
   container.innerHTML = "";
 
@@ -6718,7 +6718,7 @@ window.renderizarFuncionariosCards = function(lista) {
 }
 
 // 5. RENDERIZAR LISTA (Tabela)
-window.renderizarFuncionariosLista = function(lista) {
+window.renderizarFuncionariosLista = function (lista) {
   console.log('📋 Renderizando lista tabela:', lista.length, 'funcionários');
   const tbody = document.getElementById('lista-funcionarios-tabela-body');
   if (!tbody) {
@@ -6797,7 +6797,7 @@ window.renderizarFuncionariosLista = function(lista) {
 }
 
 // 6. ALTERNAR VISUALIZAÇÃO (Cards/Lista)
-window.alternarViewFuncionarios = function(modo) {
+window.alternarViewFuncionarios = function (modo) {
   window.modoExibicaoFuncionarios = modo;
 
   const containerCards = document.getElementById('lista-funcionarios-real');
@@ -6822,12 +6822,12 @@ window.alternarViewFuncionarios = function(modo) {
 };
 
 // 7. MUDAR DE PÁGINA
-window.mudarPaginaFuncionarios = function(novaPagina) {
+window.mudarPaginaFuncionarios = function (novaPagina) {
   window.renderizarFuncionariosPaginado(novaPagina);
 };
 
 // 8. RENDERIZAR BOTÕES DE PAGINAÇÃO
-window.renderizarBotoesPaginacaoFuncionarios = function(totalPaginas, totalItens) {
+window.renderizarBotoesPaginacaoFuncionarios = function (totalPaginas, totalItens) {
   const container = document.getElementById('paginacao-funcionarios');
   if (!container) {
     console.error('❌ Container paginacao-funcionarios não encontrado!');
@@ -6866,12 +6866,12 @@ window.renderizarBotoesPaginacaoFuncionarios = function(totalPaginas, totalItens
   // Botões numéricos (máximo 5 páginas visíveis)
   let paginaInicio = Math.max(1, paginaAtual - 2);
   let paginaFim = Math.min(totalPaginas, paginaInicio + 4);
-  
+
   // Ajusta início se estiver próximo ao fim
   if (paginaFim - paginaInicio < 4) {
     paginaInicio = Math.max(1, paginaFim - 4);
   }
-  
+
   for (let i = paginaInicio; i <= paginaFim; i++) {
     const ativo = i === paginaAtual ? 'btn-primary' : 'btn-outline-secondary';
     html += `
@@ -7425,21 +7425,21 @@ window.initCalendar = function () {
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     locale: 'pt-br',
-    
+
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
       right: 'dayGridMonth,listYear'
     },
-    
-    buttonText: { 
-      today: 'Hoje', 
+
+    buttonText: {
+      today: 'Hoje',
       month: 'Mês',
       year: 'Lista'
     },
-    
+
     height: 'auto',
-    
+
     firstDay: 0,
     navLinks: true,
     editable: false,
@@ -7492,12 +7492,12 @@ window.initCalendar = function () {
 
       // 📅 Usa datas reais do job (se for pedido) ou datas do evento (se for escala)
       let dataInicio, dataFim;
-      
+
       if (dados.tipo === 'job' && dados.data_inicio_real) {
         // Para jobs, usa o período completo original
         const dtInicio = new Date(dados.data_inicio_real + ' 00:00:00');
         const dtFim = new Date(dados.data_fim_real + ' 00:00:00');
-        
+
         dataInicio = dtInicio.toLocaleDateString('pt-BR', {
           weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
@@ -7550,7 +7550,7 @@ window.initCalendar = function () {
       // Preenche e exibe o modal
       const modalElemento = document.getElementById('modalEventoConteudo');
       const modalContainer = document.getElementById('modalDetalhesEvento');
-      
+
       if (modalElemento && modalContainer) {
         // Se o modal existe, usa ele
         modalElemento.innerHTML = conteudo;
@@ -8017,7 +8017,7 @@ function renderizarCalendarioFuncionario(listaJobs) {
     const combinarDataHora = (data, hora) => {
       if (!data) return null;
       if (!hora) return data; // Se não tem hora, retorna só a data (all-day)
-      
+
       // Pega só os primeiros 5 caracteres da hora (HH:MM)
       const horaFormatada = hora.substring(0, 5);
       return `${data}T${horaFormatada}:00`; // Formato ISO com segundos
@@ -8025,7 +8025,7 @@ function renderizarCalendarioFuncionario(listaJobs) {
 
     // Calcula data/hora início
     const dataHoraInicio = combinarDataHora(job.data_inicio, job.hora_inicio_evento);
-    
+
     // Calcula data/hora fim
     let dataHoraFim = null;
     if (job.data_fim) {
@@ -8062,21 +8062,21 @@ function renderizarCalendarioFuncionario(listaJobs) {
   calendarFuncionarioInstance = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     locale: 'pt-br',
-    
+
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
       right: 'dayGridMonth,listYear'
     },
-    
-    buttonText: { 
-      today: 'Hoje', 
+
+    buttonText: {
+      today: 'Hoje',
       month: 'Mês',
       year: 'Lista'
     },
-    
+
     height: 'auto',
-    
+
     navLinks: true,
     editable: false,
     dayMaxEvents: 3,
