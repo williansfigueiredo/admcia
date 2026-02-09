@@ -151,8 +151,25 @@ function handleProfileMenuClick(action, event) {
       break;
 
     case 'settings':
-      // TODO: Implementar configurações
-      alert('🔧 Funcionalidade "Configurações" em desenvolvimento');
+      // Navega para página de Configurações
+      console.log('🔍 Iniciando navegação para Configurações...');
+
+      // Esconde todas as seções
+      document.querySelectorAll('.view-section').forEach(view => {
+        view.classList.remove('active');
+      });
+
+      // Mostra Configurações
+      const viewConfiguracoes = document.getElementById('view-configuracoes');
+      if (viewConfiguracoes) {
+        viewConfiguracoes.classList.add('active');
+        console.log('✅ Configurações exibida com sucesso!');
+      } else {
+        console.error('❌ Elemento #view-configuracoes não encontrado!');
+      }
+
+      // Remove ativo do menu lateral
+      document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
       break;
 
     case 'support':
@@ -1804,19 +1821,6 @@ function renderizarGraficoStatusJobs() {
       const confirmados = jobsMesAtual.filter(j => j.status === 'Confirmado').length;
       const finalizados = jobsMesAtual.filter(j => j.status === 'Finalizado').length;
       const cancelados = jobsMesAtual.filter(j => j.status === 'Cancelado').length;
-
-      // Atualiza a legenda
-      const elAgendados = document.getElementById('legend-agendados');
-      const elAndamento = document.getElementById('legend-andamento');
-      const elConfirmados = document.getElementById('legend-confirmados');
-      const elFinalizados = document.getElementById('legend-finalizados');
-      const elCancelados = document.getElementById('legend-cancelados');
-
-      if (elAgendados) elAgendados.innerText = agendados;
-      if (elAndamento) elAndamento.innerText = emAndamento;
-      if (elConfirmados) elConfirmados.innerText = confirmados;
-      if (elFinalizados) elFinalizados.innerText = finalizados;
-      if (elCancelados) elCancelados.innerText = cancelados;
 
       // Destroi gráfico anterior se existir
       if (chartStatusJobsInstance) {

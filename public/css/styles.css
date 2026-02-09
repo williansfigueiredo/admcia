@@ -597,7 +597,7 @@ body {
 }
 
 .view-section.active {
-  display: block;
+  display: block !important;
 }
 
 @keyframes fadeIn {
@@ -8037,4 +8037,218 @@ button:hover #iconTheme {
 
 .user-profile-overlay.show {
   display: block;
+}
+
+/* ============================================
+   PÁGINA DE CONFIGURAÇÕES
+   ============================================ */
+
+/* Avatar Preview (Perfil) */
+.config-avatar-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
+
+.config-avatar-initials {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+}
+
+/* Logo Preview (Empresa) */
+.config-logo-preview {
+  width: 150px;
+  height: 150px;
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  background-color: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Favicon Preview */
+.config-favicon-preview {
+  width: 64px;
+  height: 64px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  overflow: hidden;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Opções de Tema */
+.config-theme-option {
+  flex: 1;
+}
+
+.config-theme-option label {
+  width: 100%;
+  text-align: center;
+  padding: 1rem;
+  cursor: pointer;
+}
+
+.config-theme-option .btn-check:checked + label {
+  background-color: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+
+/* Sessões Ativas - Cards */
+.config-session-card {
+  transition: all 0.2s ease;
+}
+
+.config-session-card:hover {
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+/* Tab Navigation especial para Configurações */
+#abasConfiguracoes .nav-link {
+  color: #6c757d;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.75rem 1.25rem;
+  transition: all 0.2s ease;
+}
+
+#abasConfiguracoes .nav-link:hover {
+  color: #0d6efd;
+  background-color: #f8f9fa;
+}
+
+#abasConfiguracoes .nav-link.active {
+  color: #0d6efd;
+  background-color: transparent;
+  border-bottom-color: #0d6efd;
+}
+
+/* Form Switches maiores para configurações */
+.form-check-input {
+  cursor: pointer;
+}
+
+.form-check-label {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Cards de Alertas nas Configurações */
+.card.border-danger {
+  background-color: #fff5f5;
+}
+
+[data-bs-theme="dark"] .card.border-danger {
+  background-color: #3a1414;
+}
+
+/* Inputs de Cor personalizados */
+.form-control-color {
+  border: 2px solid #dee2e6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-control-color:hover {
+  border-color: #0d6efd;
+}
+
+/* ============================================
+   DARK MODE - CONFIGURAÇÕES
+   ============================================ */
+
+[data-bs-theme="dark"] .config-avatar-preview {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+[data-bs-theme="dark"] .config-logo-preview {
+  background-color: #2b3035;
+  border-color: #495057;
+}
+
+[data-bs-theme="dark"] .config-favicon-preview {
+  background-color: #2b3035;
+  border-color: #495057;
+}
+
+[data-bs-theme="dark"] #abasConfiguracoes .nav-link {
+  color: #adb5bd;
+}
+
+[data-bs-theme="dark"] #abasConfiguracoes .nav-link:hover {
+  color: #0d6efd;
+  background-color: #2b3035;
+}
+
+[data-bs-theme="dark"] #abasConfiguracoes .nav-link.active {
+  color: #0d6efd;
+  background-color: transparent;
+}
+
+[data-bs-theme="dark"] .config-theme-option .btn-outline-primary {
+  border-color: #495057;
+  color: #adb5bd;
+}
+
+[data-bs-theme="dark"] .config-theme-option .btn-check:checked + label {
+  background-color: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+
+[data-bs-theme="dark"] .form-control-color {
+  border-color: #495057;
+}
+
+/* ============================================
+   RESPONSIVE - CONFIGURAÇÕES
+   ============================================ */
+
+@media (max-width: 767.98px) {
+  .config-avatar-preview,
+  .config-logo-preview {
+    width: 100px;
+    height: 100px;
+  }
+
+  .config-avatar-initials {
+    font-size: 2rem;
+  }
+
+  .config-theme-option label {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  #abasConfiguracoes .nav-link {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  #abasConfiguracoes .nav-link i {
+    display: none;
+  }
 }
