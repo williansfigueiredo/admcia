@@ -210,6 +210,38 @@ h3 {
   cursor: pointer;
 }
 
+/* === PADRONIZAÇÃO BOTÕES DE VISUALIZAÇÃO === */
+.btn-group .btn {
+  min-width: 40px;
+  min-height: 44px;
+  padding: 10px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-group .btn i {
+  font-size: 16px;
+}
+
+/* Botões de visualização específicos */
+#btn-view-card,
+#btn-view-list,
+#btn-view-grid,
+#btn-view-lista,
+#btn-view-func-card,
+#btn-view-func-list,
+.btn-group .btn-outline-secondary {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  width: 44px;
+  height: 44px;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 :root {
   /* ========================================
      MODO LIGHT - Paleta ERP (Cores claras)
@@ -1911,6 +1943,7 @@ body {
     font-size: 16px; /* Evita zoom no iOS */
     padding: 12px 15px;
     min-height: 44px;
+    border: 1px solid #e2e8f0 !important;
   }
   
   /* Headers proporcionais */
@@ -2756,6 +2789,7 @@ body {
   .input-group .form-select {
     flex: 1 1 100%;
     margin-bottom: 10px;
+    border: 1px solid #e2e8f0 !important;
   }
   
   .input-group .btn {
@@ -3412,14 +3446,15 @@ body {
 
 .input-group-text {
   background-color: #f8fafc;
-  border-color: #e2e8f0;
+  border: 1px solid #e2e8f0;
   color: #64748b;
 }
 
 /* INPUTS NORMAIS (TEXTO, DATA, ETC) */
 .form-control {
-  border-color: #e2e8f0;
+  border: 1px solid #e2e8f0;
   padding: 10px 15px;
+  min-height: 44px;
   font-size: 0.9rem;
   border-radius: 8px;
   transition: all 0.2s;
@@ -3427,7 +3462,9 @@ body {
 
 /* SELECTS (DROPDOWNS) - PRECISAM DE MAIS ESPAÇO NA DIREITA */
 .form-select {
-  border-color: #e2e8f0;
+  border: 1px solid #e2e8f0;
+  padding: 10px 15px;
+  min-height: 44px;
   /* Topo | Direita (40px pra seta) | Baixo | Esquerda */
   font-size: 0.9rem;
   border-radius: 8px;
@@ -4722,7 +4759,8 @@ a.fc-daygrid-day-number {
   background-color: #fff;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 10px 12px;
+  min-height: 44px;
   transition: all 0.2s;
 }
 

@@ -238,6 +238,7 @@
                 "></div>
           </div>
         </div>
+        <!-- CARD VEÍCULOS ATIVOS - COMENTADO
         <div class="col-xl-3 col-md-6">
           <div class="card-custom stat-card">
             <div class="d-flex justify-content-between align-items-start">
@@ -252,6 +253,28 @@
 
               <div class="kpi-icon-circle bg-purple-soft text-purple" id="kpi-frota-icon">
                 <i class="bi bi-truck"></i>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        -->
+
+        <!-- CARD CLIENTES ATIVOS - NOVO -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card-custom stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="kpi-title">CLIENTES ATIVOS</div>
+                <div class="kpi-value" id="kpi-clientes-valor">0</div>
+
+                <div class="mt-2" id="kpi-clientes-status">
+                  <span class="text-muted small">Carregando...</span>
+                </div>
+              </div>
+
+              <div class="kpi-icon-circle bg-cyan-soft text-cyan" id="kpi-clientes-icon">
+                <i class="bi bi-people-fill"></i>
               </div>
 
             </div>
@@ -279,7 +302,7 @@
       </div>
 
       <div class="row g-4 mb-4">
-        <div class="col-lg-8">
+        <div class="col-xl-6 col-lg-6">
           <div class="card-custom">
             <div class="d-flex justify-content-between align-items-center mb-4">
               <div>
@@ -299,6 +322,7 @@
             </div>
           </div>
         </div>
+        <!-- CARD STATUS DA OPERAÇÃO - COMENTADO
         <div class="col-lg-4">
           <div class="card-custom">
             <h5 class="fw-bold mb-4">Status da Operação</h5>
@@ -340,6 +364,47 @@
                 </div>
               </div>
               <div class="fs-4 fw-bold text-orange">1</div>
+            </div>
+          </div>
+        </div>
+        -->
+
+        <!-- CARD STATUS DOS JOBS - NOVO -->
+        <div class="col-xl-6 col-lg-6">
+          <div class="card-custom" id="cardStatusJobs">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold mb-1">Status dos Jobs</h5>
+                <p class="text-muted small mb-0">Carregando...</p>
+              </div>
+            </div>
+            
+            <div style="height: 280px; position: relative;">
+              <canvas id="chartStatusJobs"></canvas>
+            </div>
+            
+            <!-- Legenda -->
+            <div class="d-flex flex-wrap gap-2 mt-3 justify-content-center" id="legendaStatusJobs" style="font-size: 0.85rem;">
+              <div class="d-flex align-items-center gap-2">
+                <span class="dot" style="background-color: #3b82f6; width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span>
+                <span class="small text-muted">Agendado: <strong id="legend-agendados">0</strong></span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="dot" style="background-color: #10b981; width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span>
+                <span class="small text-muted">Em Andamento: <strong id="legend-andamento">0</strong></span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="dot" style="background-color: #f59e0b; width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span>
+                <span class="small text-muted">Confirmado: <strong id="legend-confirmados">0</strong></span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="dot" style="background-color: #6b7280; width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span>
+                <span class="small text-muted">Finalizado: <strong id="legend-finalizados">0</strong></span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="dot" style="background-color: #ef4444; width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span>
+                <span class="small text-muted">Cancelado: <strong id="legend-cancelados">0</strong></span>
+              </div>
             </div>
           </div>
         </div>
@@ -852,7 +917,7 @@
 
       <div class="card-custom mb-4 p-3">
         <div class="row align-items-center">
-          <div class="col-md-5">
+          <div class="col-md-6">
             <div class="search-box">
               <i class="bi bi-search text-muted me-2"></i>
               <input type="text" id="inputBuscaCliente"
@@ -877,14 +942,11 @@
             </select>
           </div>
 
-          <div class="col-md-1 text-center d-none d-md-flex">
-            <button class="btn btn-outline-secondary px-3" onclick="limparFiltrosClientes()" title="Limpar filtros">
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </div>
-
-          <div class="col-md-2 text-end d-none d-md-flex">
+          <div class="col-md-2 text-end d-none d-md-flex justify-content-end">
             <div class="btn-group" role="group">
+              <button class="btn btn-outline-secondary" onclick="limparFiltrosClientes()" title="Limpar filtros">
+                <i class="bi bi-x-lg"></i>
+              </button>
               <button type="button" class="btn btn-outline-secondary active" id="btn-view-card"
                 onclick="alternarViewCliente('card')" title="Visualização em Cards">
                 <i class="bi bi-grid-fill"></i>
@@ -1929,7 +1991,7 @@
       <!-- Filtros Padronizados -->
       <div class="card-custom mb-4 p-3">
         <div class="row g-2 align-items-center">
-          <div class="col-md-4">
+          <div class="col-md-5">
             <div class="search-box">
               <i class="bi bi-search text-muted me-2"></i>
               <input type="text" id="buscaEstoque" onkeyup="filtrarEstoque()"
@@ -1937,7 +1999,7 @@
             </div>
           </div>
 
-          <div class="col-md-3">
+          <div class="col-md-2">
             <select class="form-select bg-light" id="filtroCategoriaEstoque"
               onchange="filtrarEstoque()">
               <option value="">Todas Categorias</option>
@@ -1949,7 +2011,7 @@
             </select>
           </div>
 
-          <div class="col-md-2">
+          <div class="col-md-3">
             <select class="form-select bg-light" id="filtroStatusEstoque"
               onchange="filtrarEstoque()">
               <option value="">Status: Todos</option>
@@ -1959,15 +2021,12 @@
             </select>
           </div>
 
-          <div class="col-md-1 text-center">
-            <button class="btn btn-outline-secondary px-3" onclick="limparFiltrosEstoque()"
-              title="Limpar filtros">
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </div>
-
-          <div class="col-md-2 text-end">
+          <div class="col-md-2 text-end d-none d-md-flex justify-content-end">
             <div class="btn-group" role="group">
+              <button class="btn btn-outline-secondary" onclick="limparFiltrosEstoque()"
+                title="Limpar filtros">
+                <i class="bi bi-x-lg"></i>
+              </button>
               <button type="button" class="btn btn-outline-secondary active" id="btn-view-grid"
                 onclick="alternarModoEstoque('grid')" title="Visualizar em cards">
                 <i class="bi bi-grid-fill"></i>
@@ -2216,7 +2275,7 @@
       <div id="container-lista">
         <div class="card-custom mb-4 p-3">
           <div class="row g-2 align-items-center">
-            <div class="col-md-5">
+            <div class="col-md-6">
               <div class="search-box">
                 <i class="bi bi-search text-muted me-2"></i>
                 <input type="text" id="buscaFuncionarios" onkeyup="filtrarFuncionarios()"
@@ -2248,14 +2307,11 @@
               </select>
             </div>
 
-            <div class="col-md-1 text-center">
-              <button class="btn btn-outline-secondary px-3" onclick="limparFiltrosFuncionarios()" title="Limpar filtros">
-                <i class="bi bi-x-lg"></i>
-              </button>
-            </div>
-
-            <div class="col-md-2 text-end">
+            <div class="col-md-2 text-end d-none d-md-flex justify-content-end">
               <div class="btn-group" role="group">
+                <button class="btn btn-outline-secondary" onclick="limparFiltrosFuncionarios()" title="Limpar filtros">
+                  <i class="bi bi-x-lg"></i>
+                </button>
                 <button type="button" class="btn btn-outline-secondary active" id="btn-view-func-card"
                   onclick="alternarViewFuncionarios('card')" title="Visualização em Cards">
                   <i class="bi bi-grid-fill"></i>

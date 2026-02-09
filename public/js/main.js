@@ -162,7 +162,9 @@ function atualizarDashboard() {
 
   // 1. Chama as funções dos outros cards
   iniciarGraficos();
-  atualizarCardFrota();
+  renderizarGraficoStatusJobs(); // NOVO - Gráfico de Status dos Jobs
+  // atualizarCardFrota(); // COMENTADO - Card de Veículos removido
+  atualizarCardClientes(); // NOVO - Card de Clientes Ativos
   atualizarCardEquipamentos();
 
   // 2. Card Faturamento (Valor Monetário)
@@ -221,6 +223,7 @@ function atualizarDashboard() {
 // --- FUNÇÕES SEPARADAS (FORA DO ATUALIZARDASHBOARD) ---
 
 // Função do Card de Veículos
+/* CARD VEÍCULOS ATIVOS - COMENTADO
 function atualizarCardFrota() {
   fetch(`${API_URL}/veiculos`)
     .then(res => res.json())
@@ -266,6 +269,91 @@ function atualizarCardFrota() {
       }
     })
     .catch(err => console.error("Erro ao carregar frota:", err));
+}
+*/
+
+// ===== CARD CLIENTES ATIVOS - NOVO =====
+function atualizarCardClientes() {
+  fetch(`${API_URL}/clientes`)
+    .then(res => res.json())
+    .then(clientes => {
+      // Total de clientes ativos
+      const clientesAtivos = clientes.filter(c => c.status === 'Ativo').length;
+      
+      // Clientes cadastrados no mês atual
+      const hoje = new Date();
+      const mesAtual = hoje.getMonth();
+      const anoAtual = hoje.getFullYear();
+      
+      const clientesMesAtual = clientes.filter(c => {
+        if (!c.data_cadastro) return false;
+        const dataCadastro = new Date(c.data_cadastro);
+        return dataCadastro.getMonth() === mesAtual && dataCadastro.getFullYear() === anoAtual;
+      }).length;
+      
+      // Clientes cadastrados no mês anterior
+      const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+      const anoMesAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
+      
+      const clientesMesAnterior = clientes.filter(c => {
+        if (!c.data_cadastro) return false;
+        const dataCadastro = new Date(c.data_cadastro);
+        return dataCadastro.getMonth() === mesAnterior && dataCadastro.getFullYear() === anoMesAnterior;
+      }).length;
+      
+      // Calcula percentual de crescimento
+      let percentual = 0;
+      let sinal = '';
+      let corTexto = 'text-muted';
+      let icone = 'bi-dash';
+      
+      if (clientesMesAnterior > 0) {
+        percentual = Math.round(((clientesMesAtual - clientesMesAnterior) / clientesMesAnterior) * 100);
+        
+        if (percentual > 0) {
+          sinal = '+';
+          corTexto = 'text-green';
+          icone = 'bi-arrow-up';
+        } else if (percentual < 0) {
+          sinal = '';
+          corTexto = 'text-red';
+          icone = 'bi-arrow-down';
+        }
+      } else if (clientesMesAtual > 0) {
+        // Primeiro mês com clientes
+        percentual = 100;
+        sinal = '+';
+        corTexto = 'text-green';
+        icone = 'bi-arrow-up';
+      }
+      
+      // Atualiza o número principal
+      const elValor = document.getElementById('kpi-clientes-valor');
+      if (elValor) elValor.innerText = clientesAtivos;
+      
+      // Atualiza o status com percentual
+      const elStatus = document.getElementById('kpi-clientes-status');
+      if (elStatus) {
+        elStatus.innerHTML = `
+          <div class="${corTexto} small fw-bold">
+            <i class="bi ${icone}"></i> ${sinal}${percentual}% este mês
+          </div>
+          <div class="text-muted small" style="font-size: 11px;">${clientesMesAtual} novos em ${getMesNome(mesAtual)}</div>
+        `;
+      }
+      
+      // Ícone sempre ciano (azul claro)
+      const elIconBg = document.getElementById('kpi-clientes-icon');
+      if (elIconBg) elIconBg.className = "kpi-icon-circle bg-cyan-soft text-cyan";
+      
+    })
+    .catch(err => console.error("Erro ao carregar clientes:", err));
+}
+
+// Função auxiliar para nome do mês
+function getMesNome(mes) {
+  const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  return meses[mes];
 }
 
 // Função do Card de Manutenção (Equipamentos)
@@ -1317,6 +1405,200 @@ function atualizarPorcentagem(valorAtual, valorAnterior) {
     pctElement.innerText = `${novaPct.toFixed(1)}%`;
     if (iconElement) iconElement.className = `bi ${novoIcone}`;
   }
+}
+
+// ===== GRÁFICO DE STATUS DOS JOBS - NOVO =====
+let chartStatusJobsInstance = null; // Armazena a instância do gráfico para evitar duplicação
+
+function renderizarGraficoStatusJobs() {
+  const canvas = document.getElementById('chartStatusJobs');
+  if (!canvas) return;
+
+  fetch(`${API_URL}/jobs`)
+    .then(res => res.json())
+    .then(jobs => {
+      // Filtra jobs do mês atual
+      const hoje = new Date();
+      const mesAtual = hoje.getMonth();
+      const anoAtual = hoje.getFullYear();
+      const nomeMes = getMesNome(mesAtual);
+      
+      // Atualiza o subtítulo com o mês de referência
+      const subtituloEl = document.querySelector('#cardStatusJobs .text-muted.small');
+      if (subtituloEl) {
+        subtituloEl.textContent = `${nomeMes}/${anoAtual}`;
+      }
+      
+      const jobsMesAtual = jobs.filter(job => {
+        if (!job.data_job) return false;
+        const dataJob = new Date(job.data_job);
+        return dataJob.getMonth() === mesAtual && dataJob.getFullYear() === anoAtual;
+      });
+      
+      // Conta jobs por status (do mês atual)
+      const agendados = jobsMesAtual.filter(j => j.status === 'Agendado').length;
+      const emAndamento = jobsMesAtual.filter(j => j.status === 'Em Andamento').length;
+      const confirmados = jobsMesAtual.filter(j => j.status === 'Confirmado').length;
+      const finalizados = jobsMesAtual.filter(j => j.status === 'Finalizado').length;
+      const cancelados = jobsMesAtual.filter(j => j.status === 'Cancelado').length;
+
+      // Atualiza a legenda
+      const elAgendados = document.getElementById('legend-agendados');
+      const elAndamento = document.getElementById('legend-andamento');
+      const elConfirmados = document.getElementById('legend-confirmados');
+      const elFinalizados = document.getElementById('legend-finalizados');
+      const elCancelados = document.getElementById('legend-cancelados');
+
+      if (elAgendados) elAgendados.innerText = agendados;
+      if (elAndamento) elAndamento.innerText = emAndamento;
+      if (elConfirmados) elConfirmados.innerText = confirmados;
+      if (elFinalizados) elFinalizados.innerText = finalizados;
+      if (elCancelados) elCancelados.innerText = cancelados;
+
+      // Destroi gráfico anterior se existir
+      if (chartStatusJobsInstance) {
+        chartStatusJobsInstance.destroy();
+      }
+
+      // Cria o gráfico de barras horizontais
+      const ctx = canvas.getContext('2d');
+      chartStatusJobsInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Agendado', 'Em Andamento', 'Confirmado', 'Finalizado', 'Cancelado'],
+          datasets: [{
+            label: 'Quantidade',
+            data: [agendados, emAndamento, confirmados, finalizados, cancelados],
+            backgroundColor: [
+              '#3b82f6',  // Azul (Agendado)
+              '#10b981',  // Verde (Em Andamento)
+              '#f59e0b',  // Laranja (Confirmado)
+              '#6b7280',  // Cinza (Finalizado)
+              '#ef4444'   // Vermelho (Cancelado)
+            ],
+            borderRadius: 6,
+            barThickness: 28
+          }]
+        },
+        options: {
+          indexAxis: 'y', // Barras horizontais
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: true,
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: 12,
+              titleColor: '#fff',
+              bodyColor: '#fff',
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  return context.parsed.x + ' jobs';
+                }
+              }
+            },
+            datalabels: {
+              anchor: 'end',
+              align: 'end',
+              color: function(context) {
+                // Cor baseada no tema (light/dark)
+                const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                return isDark ? '#e5e7eb' : '#1f2937';
+              },
+              font: {
+                size: 13,
+                weight: 'bold'
+              },
+              formatter: function(value) {
+                return value;
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              max: function(context) {
+                // Define o máximo como 120% do maior valor para dar espaço aos labels
+                const maxValue = Math.max(...context.chart.data.datasets[0].data);
+                return Math.ceil(maxValue * 1.15);
+              },
+              ticks: {
+                stepSize: 15,
+                color: function() {
+                  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                  return isDark ? '#6b7280' : '#9ca3af';
+                },
+                font: {
+                  size: 11
+                }
+              },
+              grid: {
+                color: function() {
+                  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                  return isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+                },
+                drawBorder: false
+              }
+            },
+            y: {
+              ticks: {
+                color: function() {
+                  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                  return isDark ? '#d1d5db' : '#374151';
+                },
+                font: {
+                  size: 13,
+                  weight: '500'
+                },
+                padding: 10
+              },
+              grid: {
+                display: false
+              }
+            }
+          },
+          layout: {
+            padding: {
+              left: 0,
+              right: 30,
+              top: 10,
+              bottom: 10
+            }
+          }
+        },
+        plugins: [{
+          // Plugin customizado para desenhar os valores no final das barras
+          id: 'customLabels',
+          afterDatasetsDraw(chart) {
+            const { ctx, data, scales: { x, y } } = chart;
+            
+            ctx.save();
+            ctx.font = 'bold 13px Inter, sans-serif';
+            
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            ctx.fillStyle = isDark ? '#e5e7eb' : '#1f2937';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            
+            data.datasets[0].data.forEach((value, index) => {
+              const barEnd = x.getPixelForValue(value);
+              const yPos = y.getPixelForValue(index);
+              
+              // Desenha o valor ao final da barra com um pequeno offset
+              ctx.fillText(value, barEnd + 8, yPos);
+            });
+            
+            ctx.restore();
+          }
+        }]
+      });
+    })
+    .catch(err => console.error('Erro ao carregar status dos jobs:', err));
 }
 
 /* =============================================================
