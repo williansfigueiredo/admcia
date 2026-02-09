@@ -71,7 +71,62 @@ db.connect((err) => {
       if (err) console.error('Erro ao criar tabela contatos_clientes:', err);
       else console.log('Tabela contatos_clientes verificada/criada com sucesso.');
     });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Migração: Adicionar coluna avatar na tabela funcionarios (se não existir)
+    const sqlAdicionarAvatar = `
+      ALTER TABLE funcionarios 
+      ADD COLUMN IF NOT EXISTS avatar VARCHAR(255)
+    `;
+    
+    db.query(sqlAdicionarAvatar, (err) => {
+      if (err) {
+        // Ignora erro se coluna já existe (MySQL < 8.0 não suporta IF NOT EXISTS no ALTER)
+        if (err.code !== 'ER_DUP_FIELDNAME') {
+          console.error('⚠️ Erro ao adicionar coluna avatar:', err.message);
+        } else {
+          console.log('✅ Coluna avatar já existe na tabela funcionarios.');
+        }
+      } else {
+        console.log('✅ Coluna avatar verificada/criada com sucesso na tabela funcionarios.');
+      }
+    });
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 });
 
 
@@ -1499,6 +1554,92 @@ app.delete('/funcionarios/:id', (req, res) => {
     res.json({ message: "Funcionário excluído!" });
   });
 });
+
+
+
+
+
+
+
+
+
+
+// 5. UPLOAD DE AVATAR DO FUNCIONÁRIO
+// Configuração específica para avatars
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'uploads/avatars/';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'avatar-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadAvatar = multer({ 
+  storage: avatarStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Apenas imagens são permitidas!'));
+    }
+  }
+});
+
+app.post('/funcionarios/:id/avatar', uploadAvatar.single('avatar'), (req, res) => {
+  const funcionarioId = req.params.id;
+  
+  if (!req.file) {
+    return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+  }
+  
+  const avatarUrl = '/uploads/avatars/' + req.file.filename;
+  
+  // Atualiza o caminho do avatar no banco
+  const sql = 'UPDATE funcionarios SET avatar = ? WHERE id = ?';
+  
+  db.query(sql, [avatarUrl, funcionarioId], (err, result) => {
+    if (err) {
+      console.error('Erro ao salvar avatar:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    
+    console.log('✅ Avatar salvo:', avatarUrl);
+    res.json({ 
+      success: true, 
+      avatarUrl: avatarUrl,
+      message: 'Avatar atualizado com sucesso!' 
+    });
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // Buscar itens de um Job (para cancelar / devolver estoque com segurança)

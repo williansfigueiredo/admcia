@@ -1,4 +1,350 @@
 /* =============================================================
+   GLOBAL SKELETON LOADER SYSTEM
+   ============================================================= */
+
+// Variáveis de controle do skeleton loader
+let skeletonStartTime = null;
+const SKELETON_MIN_DISPLAY_TIME = 2000; // Tempo mínimo de exibição (2000ms = 2 segundos)
+
+/**
+ * Exibe o skeleton loader global
+ * @param {boolean} forceImmediate - Se true, mostra imediatamente sem delay
+ */
+function showGlobalSkeleton(forceImmediate = false) {
+  const skeleton = document.getElementById('global-skeleton');
+  if (!skeleton) return;
+
+  skeletonStartTime = Date.now();
+  skeleton.classList.remove('hidden');
+
+  // Previne scroll do body quando skeleton está ativo
+  document.body.style.overflow = 'hidden';
+
+  console.log('🔄 Skeleton loader ativado');
+}
+
+/**
+ * Oculta o skeleton loader global com tempo mínimo de exibição
+ * @returns {Promise} Promise que resolve quando o skeleton é ocultado
+ */
+async function hideGlobalSkeleton() {
+  const skeleton = document.getElementById('global-skeleton');
+  if (!skeleton || skeleton.classList.contains('hidden')) return;
+
+  const elapsedTime = Date.now() - skeletonStartTime;
+  const remainingTime = Math.max(0, SKELETON_MIN_DISPLAY_TIME - elapsedTime);
+
+  // Aguarda o tempo mínimo antes de ocultar
+  if (remainingTime > 0) {
+    await new Promise(resolve => setTimeout(resolve, remainingTime));
+  }
+
+  skeleton.classList.add('hidden');
+  document.body.style.overflow = '';
+
+  console.log('✅ Skeleton loader desativado');
+}
+
+/**
+ * Wrapper para operações assíncronas com skeleton loader
+ * @param {Function} asyncFunction - Função assíncrona a ser executada
+ * @param {Object} options - Opções de configuração
+ * @returns {Promise} Resultado da função assíncrona
+ */
+async function withSkeletonLoader(asyncFunction, options = {}) {
+  const { showSkeleton = true } = options;
+
+  try {
+    if (showSkeleton) {
+      showGlobalSkeleton();
+    }
+
+    const result = await asyncFunction();
+    return result;
+  } catch (error) {
+    console.error('❌ Erro durante operação com skeleton:', error);
+    throw error;
+  } finally {
+    if (showSkeleton) {
+      await hideGlobalSkeleton();
+    }
+  }
+}
+
+/* =============================================================
+   USER PROFILE DROPDOWN MENU SYSTEM
+   ============================================================= */
+
+/**
+ * Abre/fecha o menu dropdown de perfil do usuário
+ */
+function toggleUserProfileMenu() {
+  const dropdown = document.getElementById('userProfileDropdown');
+  const overlay = document.getElementById('userProfileOverlay');
+
+  if (!dropdown || !overlay) return;
+
+  const isOpen = dropdown.classList.contains('show');
+
+  if (isOpen) {
+    closeUserProfileMenu();
+  } else {
+    openUserProfileMenu();
+  }
+}
+
+/**
+ * Abre o menu dropdown de perfil
+ */
+function openUserProfileMenu() {
+  const dropdown = document.getElementById('userProfileDropdown');
+  const overlay = document.getElementById('userProfileOverlay');
+
+  if (!dropdown || !overlay) return;
+
+  dropdown.classList.add('show');
+  overlay.classList.add('show');
+
+  console.log('📋 Menu de perfil aberto');
+}
+
+/**
+ * Fecha o menu dropdown de perfil
+ */
+function closeUserProfileMenu() {
+  const dropdown = document.getElementById('userProfileDropdown');
+  const overlay = document.getElementById('userProfileOverlay');
+
+  if (!dropdown || !overlay) return;
+
+  dropdown.classList.remove('show');
+  overlay.classList.remove('show');
+
+  console.log('📋 Menu de perfil fechado');
+}
+
+/**
+ * Handler para itens do menu de perfil
+ * @param {string} action - Ação a ser executada
+ * @param {Event} event - Evento do click
+ */
+function handleProfileMenuClick(action, event) {
+  event.preventDefault();
+  closeUserProfileMenu();
+
+  console.log('🔧 Ação do menu:', action);
+
+  switch (action) {
+    case 'account':
+      // TODO: Implementar página/modal de edição de perfil
+      alert('🔧 Funcionalidade "Conta" em desenvolvimento');
+      break;
+
+    case 'manage-users':
+      // TODO: Implementar gerenciamento de usuários
+      alert('🔧 Funcionalidade "Gerenciar Usuários" em desenvolvimento');
+      break;
+
+    case 'invoices':
+      // TODO: Implementar resumo de faturas
+      alert('🔧 Funcionalidade "Resumo de Faturas" em desenvolvimento');
+      break;
+
+    case 'settings':
+      // TODO: Implementar configurações
+      alert('🔧 Funcionalidade "Configurações" em desenvolvimento');
+      break;
+
+    case 'support':
+      // TODO: Implementar suporte
+      alert('🔧 Funcionalidade "Suporte" em desenvolvimento');
+      break;
+
+    default:
+      console.warn('Ação desconhecida:', action);
+  }
+}
+
+/**
+ * Abre o file input para selecionar foto de avatar
+ */
+function triggerAvatarUpload() {
+  const input = document.getElementById('avatarUploadInput');
+  if (input) {
+    input.click();
+  }
+}
+
+/**
+ * Processa o upload da foto de avatar
+ * @param {Event} event - Evento do input file
+ */
+function handleAvatarUpload(event) {
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  // Valida se é imagem
+  if (!file.type.startsWith('image/')) {
+    alert('⚠️ Por favor, selecione apenas arquivos de imagem (JPG, PNG, etc.)');
+    return;
+  }
+
+  // Valida tamanho (max 5MB)
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    alert('⚠️ A imagem deve ter no máximo 5MB');
+    return;
+  }
+
+  // Cria preview da imagem
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    const imageUrl = e.target.result;
+
+    // Atualiza avatar no header
+    const headerAvatar = document.getElementById('userAvatarHeader');
+    if (headerAvatar) {
+      headerAvatar.style.backgroundImage = `url(${imageUrl})`;
+      headerAvatar.style.backgroundSize = 'cover';
+      headerAvatar.style.backgroundPosition = 'center';
+      headerAvatar.textContent = '';
+    }
+
+    // Atualiza avatar no dropdown
+    const dropdownAvatar = document.getElementById('userAvatarDropdown');
+    if (dropdownAvatar) {
+      dropdownAvatar.style.backgroundImage = `url(${imageUrl})`;
+      dropdownAvatar.style.backgroundSize = 'cover';
+      dropdownAvatar.style.backgroundPosition = 'center';
+      dropdownAvatar.textContent = '';
+    }
+
+    console.log('📸 Foto de perfil atualizada (preview)');
+
+    // TODO: Enviar imagem para o servidor
+    // uploadAvatarToServer(file);
+  };
+
+  reader.readAsDataURL(file);
+}
+
+/**
+ * Envia a foto para o servidor (para implementação futura)
+ * @param {File} file - Arquivo de imagem
+ */
+async function uploadAvatarToServer(file) {
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await fetch(`${API_URL}/usuario/avatar`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Avatar salvo no servidor:', data);
+      alert('✅ Foto de perfil atualizada com sucesso!');
+    } else {
+      throw new Error('Erro ao salvar avatar');
+    }
+  } catch (error) {
+    console.error('❌ Erro ao fazer upload do avatar:', error);
+    alert('❌ Erro ao salvar foto. Tente novamente.');
+  }
+}
+
+/**
+ * Handler para logout
+ */
+function handleLogout() {
+  closeUserProfileMenu();
+
+  // TODO: Implementar lógica real de logout (limpar sessão, redirect, etc)
+  if (confirm('Tem certeza que deseja sair do sistema?')) {
+    console.log('🚪 Logout realizado');
+    alert('🚪 Logout realizado com sucesso!\n\n(Em produção, redirecionaria para tela de login)');
+    // window.location.href = '/login'; // Descomentar quando tiver rota de login
+  }
+}
+
+/**
+ * Carrega dados do usuário logado do servidor/localStorage
+ */
+function loadUserProfileData() {
+  // TODO: Substituir por dados reais do backend/sessão
+  const userData = {
+    name: 'Patrícia',
+    email: 'patricia@empresa.com',
+    role: 'Diretora Comercial',
+    avatar: 'P', // Pode ser URL de imagem ou inicial
+    avatarUrl: null // URL da foto se existir
+  };
+
+  // Atualiza header
+  const headerName = document.getElementById('userNameHeader');
+  const headerRole = document.getElementById('userRoleHeader');
+  const headerAvatar = document.getElementById('userAvatarHeader');
+
+  if (headerName) headerName.textContent = userData.name;
+  if (headerRole) headerRole.textContent = userData.role;
+  if (headerAvatar) {
+    if (userData.avatarUrl) {
+      headerAvatar.style.backgroundImage = `url(${userData.avatarUrl})`;
+      headerAvatar.style.backgroundSize = 'cover';
+      headerAvatar.textContent = '';
+    } else {
+      headerAvatar.textContent = userData.avatar;
+    }
+  }
+
+  // Atualiza dropdown
+  const dropdownName = document.getElementById('userNameDropdown');
+  const dropdownEmail = document.getElementById('userEmailDropdown');
+  const dropdownAvatar = document.getElementById('userAvatarDropdown');
+
+  if (dropdownName) dropdownName.textContent = userData.name;
+  if (dropdownEmail) dropdownEmail.textContent = userData.email;
+  if (dropdownAvatar) {
+    if (userData.avatarUrl) {
+      dropdownAvatar.style.backgroundImage = `url(${userData.avatarUrl})`;
+      dropdownAvatar.style.backgroundSize = 'cover';
+      dropdownAvatar.textContent = '';
+    } else {
+      dropdownAvatar.textContent = userData.avatar;
+    }
+  }
+
+  console.log('👤 Dados do usuário carregados:', userData);
+}
+
+// Event listeners para fechar dropdown
+document.addEventListener('DOMContentLoaded', function () {
+  // Carrega dados do usuário
+  loadUserProfileData();
+
+  // Fecha dropdown ao pressionar ESC
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      closeUserProfileMenu();
+    }
+  });
+
+  // Fecha dropdown ao rolar a página
+  let scrollTimeout;
+  window.addEventListener('scroll', function () {
+    const dropdown = document.getElementById('userProfileDropdown');
+    if (dropdown && dropdown.classList.contains('show')) {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(closeUserProfileMenu, 150);
+    }
+  });
+});
+
+/* =============================================================
    CONFIGURAÇÕES GERAIS E INICIALIZAÇÃO
    ============================================================= */
 console.log('🔥 MAIN.JS VERSÃO 2.0 CARREGADO - COM PAGINAÇÃO FUNCIONÁRIOS');
@@ -10,26 +356,45 @@ const API_URL = (window.location.hostname === 'localhost' || window.location.hos
 
 console.log('🌐 API_URL configurada:', API_URL);
 
-// GARANTIA: Assim que a tela abrir, roda tudo.
-document.addEventListener('DOMContentLoaded', () => {
+// GARANTIA: Assim que a tela abrir, roda tudo com skeleton loader
+document.addEventListener('DOMContentLoaded', async () => {
   console.log("Sistema Iniciado 🚀");
 
-  iniciarSidebar();
-  iniciarMapa();
-  carregarGestaoContratos();
-  carregarOpcoesDoFormulario();
-  window.idClienteEdicao = null;
-  // 2. Busca Dados e Atualiza Dashboards
-  atualizarDashboard();
-  carregarEstoque();
-  window.carregarEquipamentosParaPedido();
+  // Mostra skeleton loader durante carregamento inicial
+  showGlobalSkeleton();
 
-  console.log('🚨 TENTANDO CHAMAR carregarFuncionarios()...');
-  if (typeof window.carregarFuncionarios === 'function') {
-    console.log('✅ Função carregarFuncionarios existe!');
-    window.carregarFuncionarios();
-  } else {
-    console.error('❌ Função carregarFuncionarios NÃO existe!');
+  try {
+    // Operações de inicialização síncronas
+    iniciarSidebar();
+    iniciarMapa();
+    carregarOpcoesDoFormulario();
+    window.idClienteEdicao = null;
+
+    // Operações assíncronas de carregamento
+    await Promise.all([
+      atualizarDashboard(),
+      carregarGestaoContratos(),
+      carregarEstoque()
+    ]);
+
+    // Carrega equipamentos para pedido
+    if (typeof window.carregarEquipamentosParaPedido === 'function') {
+      window.carregarEquipamentosParaPedido();
+    }
+
+    // Carrega funcionários
+    console.log('🚨 TENTANDO CHAMAR carregarFuncionarios()...');
+    if (typeof window.carregarFuncionarios === 'function') {
+      console.log('✅ Função carregarFuncionarios existe!');
+      window.carregarFuncionarios();
+    } else {
+      console.error('❌ Função carregarFuncionarios NÃO existe!');
+    }
+  } catch (error) {
+    console.error('❌ Erro durante inicialização:', error);
+  } finally {
+    // Oculta skeleton loader após carregamento
+    await hideGlobalSkeleton();
   }
 
   /* =============================================================
@@ -158,66 +523,64 @@ document.addEventListener('DOMContentLoaded', () => {
    ============================================================= */
 
 // Função Principal: Atualiza KPI Cards, Tabela e Gráficos
-function atualizarDashboard() {
+async function atualizarDashboard() {
+  try {
+    // 1. Chama as funções dos outros cards
+    iniciarGraficos();
+    renderizarGraficoStatusJobs(); // NOVO - Gráfico de Status dos Jobs
+    // atualizarCardFrota(); // COMENTADO - Card de Veículos removido
+    atualizarCardClientes(); // NOVO - Card de Clientes Ativos
+    atualizarCardEquipamentos();
 
-  // 1. Chama as funções dos outros cards
-  iniciarGraficos();
-  renderizarGraficoStatusJobs(); // NOVO - Gráfico de Status dos Jobs
-  // atualizarCardFrota(); // COMENTADO - Card de Veículos removido
-  atualizarCardClientes(); // NOVO - Card de Clientes Ativos
-  atualizarCardEquipamentos();
+    // 2. Card Faturamento (Valor Monetário)
+    const resFaturamento = await fetch(`${API_URL}/dashboard/faturamento`);
+    const dataFaturamento = await resFaturamento.json();
+    const el = document.getElementById('kpi-faturamento');
+    if (el) el.innerText = formatarMoedaK(dataFaturamento.total || 0);
 
-  // 2. Card Faturamento (Valor Monetário)
-  fetch(`${API_URL}/dashboard/faturamento`)
-    .then(res => res.json())
-    .then(data => {
-      const el = document.getElementById('kpi-faturamento');
-      if (el) el.innerText = formatarMoedaK(data.total || 0);
+    // 3. Jobs, Tabela e Lógica da Semana (Jobs em Andamento)
+    const resJobs = await fetch(`${API_URL}/jobs`);
+    const jobs = await resJobs.json();
+
+    // --- LÓGICA DA SEMANA (SEGUNDA A DOMINGO) ---
+    const hoje = new Date();
+    const diaSemana = hoje.getDay(); // 0 (Dom) a 6 (Sab)
+
+    // Calcula a data da Segunda-Feira desta semana
+    const diffSegunda = hoje.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1);
+
+    const dataSegunda = new Date(hoje.setDate(diffSegunda));
+    dataSegunda.setHours(0, 0, 0, 0); // Começo do dia
+
+    const dataDomingo = new Date(dataSegunda);
+    dataDomingo.setDate(dataDomingo.getDate() + 6);
+    dataDomingo.setHours(23, 59, 59, 999); // Fim do dia
+
+    // Filtra: Só Jobs desta semana E que estão "Em Andamento"
+    const jobsDaSemana = jobs.filter(job => {
+      const dataJob = new Date(job.data_job);
+      dataJob.setHours(dataJob.getHours() + 3); // Ajuste Fuso
+
+      return dataJob >= dataSegunda &&
+        dataJob <= dataDomingo &&
+        job.status === "Em Andamento";
     });
 
-  // 3. Jobs, Tabela e Lógica da Semana (Jobs em Andamento)
-  fetch(`${API_URL}/jobs`)
-    .then(res => res.json())
-    .then(jobs => {
+    // Atualiza o Número Grande do Card
+    const elJobs = document.getElementById('kpi-jobs');
+    if (elJobs) elJobs.innerText = jobsDaSemana.length;
 
-      // --- LÓGICA DA SEMANA (SEGUNDA A DOMINGO) ---
-      const hoje = new Date();
-      const diaSemana = hoje.getDay(); // 0 (Dom) a 6 (Sab)
+    // Atualiza Tabela (Últimas Diárias)
+    preencherTabela(jobs);
 
-      // Calcula a data da Segunda-Feira desta semana
-      const diffSegunda = hoje.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1);
-
-      const dataSegunda = new Date(hoje.setDate(diffSegunda));
-      dataSegunda.setHours(0, 0, 0, 0); // Começo do dia
-
-      const dataDomingo = new Date(dataSegunda);
-      dataDomingo.setDate(dataDomingo.getDate() + 6);
-      dataDomingo.setHours(23, 59, 59, 999); // Fim do dia
-
-      // Filtra: Só Jobs desta semana E que estão "Em Andamento"
-      const jobsDaSemana = jobs.filter(job => {
-        const dataJob = new Date(job.data_job);
-        dataJob.setHours(dataJob.getHours() + 3); // Ajuste Fuso
-
-        return dataJob >= dataSegunda &&
-          dataJob <= dataDomingo &&
-          job.status === "Em Andamento";
-      });
-
-      // Atualiza o Número Grande do Card
-      const elJobs = document.getElementById('kpi-jobs');
-      if (elJobs) elJobs.innerText = jobsDaSemana.length;
-
-      // Atualiza Tabela (Últimas Diárias)
-      preencherTabela(jobs);
-
-      // Atualiza Mini Gráfico de Jobs (Barrinhas da Semana)
-      // Essa função deve existir no seu código (a que criamos antes)
-      if (typeof atualizarMiniGraficoSemana === "function") {
-        atualizarMiniGraficoSemana(jobs, dataSegunda);
-      }
-    })
-    .catch(err => console.error("Erro ao buscar jobs:", err));
+    // Atualiza Mini Gráfico de Jobs (Barrinhas da Semana)
+    // Essa função deve existir no seu código (a que criamos antes)
+    if (typeof atualizarMiniGraficoSemana === "function") {
+      atualizarMiniGraficoSemana(jobs, dataSegunda);
+    }
+  } catch (err) {
+    console.error("Erro ao buscar dados do dashboard:", err);
+  }
 }
 
 // --- FUNÇÕES SEPARADAS (FORA DO ATUALIZARDASHBOARD) ---
@@ -1683,73 +2046,81 @@ function iniciarMapa() {
   // L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png").addTo(map);
 }
 
-window.switchView = function (viewId) {
-  // 1. Remove ativo de todas as seções e links (Lógica padrão)
-  document.querySelectorAll(".view-section").forEach((el) => el.classList.remove("active"));
-  document.querySelectorAll(".submenu-link").forEach((el) => el.classList.remove("active"));
+window.switchView = async function (viewId) {
+  // Mostra skeleton durante troca de view
+  showGlobalSkeleton();
 
-  // 2. Fechar sidebar automaticamente em dispositivos móveis
-  if (window.innerWidth < 992) {
-    closeSidebarMobile();
-  }
+  try {
+    // 1. Remove ativo de todas as seções e links (Lógica padrão)
+    document.querySelectorAll(".view-section").forEach((el) => el.classList.remove("active"));
+    document.querySelectorAll(".submenu-link").forEach((el) => el.classList.remove("active"));
 
-  // 3. Ativa a tela desejada
-  const viewAlvo = document.getElementById("view-" + viewId);
-  if (viewAlvo) viewAlvo.classList.add("active");
-
-  // --- LÓGICA DE CARREGAMENTO ESPECÍFICA ---
-
-  if (viewId === 'principal') {
-    atualizarDashboard();
-  }
-
-  if (viewId === 'clientes') {
-    carregarListaClientes();
-    // Restaura a página salva se existir
-    setTimeout(() => {
-      if (window.paginacaoClientes.paginaSalva > 1) {
-        console.log('🔙 Restaurando página:', window.paginacaoClientes.paginaSalva);
-        window.paginacaoClientes.paginaAtual = window.paginacaoClientes.paginaSalva;
-        renderizarPaginaClientes();
-        renderizarBotoesPaginacao();
-      }
-    }, 100);
-  }
-
-  if (viewId === 'estoque') {
-    carregarEstoque(); // <--- ADICIONE ISSO PARA RECARREGAR SEMPRE QUE ENTRAR NA TELA
-  }
-
-  if (viewId === 'funcionarios') {
-    carregarFuncionarios(); // <--- ADICIONE ISSO
-  }
-
-  // === A CORREÇÃO MÁGICA ESTÁ AQUI ===
-  if (viewId === 'novo-job') {
-    // Verifica se NÃO estamos editando (ou seja, é um NOVO pedido)
-    if (window.__jobEditandoId === null) {
-
-      // 1. Limpa os campos de texto (input, select, textarea)
-      const form = document.getElementById('formNovoJobFull');
-      if (form) form.reset();
-
-      // 2. Limpa a tabela de itens (remove linhas antigas)
-      const tbody = document.getElementById('lista-itens-job');
-      if (tbody) {
-        tbody.innerHTML = '';
-        adicionarLinhaItem(); // Adiciona uma linha em branco novinha
-      }
-
-      // 3. Zera o Valor Total Visualmente
-      const totalEl = document.getElementById('displayValorTotal');
-      if (totalEl) totalEl.innerText = "R$ 0,00";
-
-      // 4. Garante que o botão mostre "Salvar" e não "Atualizar"
-      const btnSalvar = document.querySelector('#view-novo-job .btn-success');
-      if (btnSalvar) btnSalvar.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> SALVAR PEDIDO';
+    // 2. Fechar sidebar automaticamente em dispositivos móveis
+    if (window.innerWidth < 992) {
+      closeSidebarMobile();
     }
+
+    // 3. Ativa a tela desejada
+    const viewAlvo = document.getElementById("view-" + viewId);
+    if (viewAlvo) viewAlvo.classList.add("active");
+
+    // --- LÓGICA DE CARREGAMENTO ESPECÍFICA ---
+
+    if (viewId === 'principal') {
+      await atualizarDashboard();
+    }
+
+    if (viewId === 'clientes') {
+      await carregarListaClientes();
+      // Restaura a página salva se existir
+      setTimeout(() => {
+        if (window.paginacaoClientes.paginaSalva > 1) {
+          console.log('🔙 Restaurando página:', window.paginacaoClientes.paginaSalva);
+          window.paginacaoClientes.paginaAtual = window.paginacaoClientes.paginaSalva;
+          renderizarPaginaClientes();
+          renderizarBotoesPaginacao();
+        }
+      }, 100);
+    }
+
+    if (viewId === 'estoque') {
+      await carregarEstoque(); // <--- ADICIONE ISSO PARA RECARREGAR SEMPRE QUE ENTRAR NA TELA
+    }
+
+    if (viewId === 'funcionarios') {
+      await carregarFuncionarios(); // <--- ADICIONE ISSO
+    }
+
+    // === A CORREÇÃO MÁGICA ESTÁ AQUI ===
+    if (viewId === 'novo-job') {
+      // Verifica se NÃO estamos editando (ou seja, é um NOVO pedido)
+      if (window.__jobEditandoId === null) {
+
+        // 1. Limpa os campos de texto (input, select, textarea)
+        const form = document.getElementById('formNovoJobFull');
+        if (form) form.reset();
+
+        // 2. Limpa a tabela de itens (remove linhas antigas)
+        const tbody = document.getElementById('lista-itens-job');
+        if (tbody) {
+          tbody.innerHTML = '';
+          adicionarLinhaItem(); // Adiciona uma linha em branco novinha
+        }
+
+        // 3. Zera o Valor Total Visualmente
+        const totalEl = document.getElementById('displayValorTotal');
+        if (totalEl) totalEl.innerText = "R$ 0,00";
+
+        // 4. Garante que o botão mostre "Salvar" e não "Atualizar"
+        const btnSalvar = document.querySelector('#view-novo-job .btn-success');
+        if (btnSalvar) btnSalvar.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> SALVAR PEDIDO';
+      }
+    }
+    // --------------------------------
+  } finally {
+    // Oculta skeleton após troca de view
+    await hideGlobalSkeleton();
   }
-  // --------------------------------
 }
 
 // Formatadores
@@ -3717,80 +4088,90 @@ window.paginacaoClientes = {
 };
 
 // 1. Função Principal: Busca do Servidor e guarda no Cache
-function carregarListaClientes() {
-  fetch(`${API_URL}/clientes`)
-    .then(res => res.json())
-    .then(clientes => {
+async function carregarListaClientes() {
+  try {
+    const res = await fetch(`${API_URL}/clientes`);
+    const clientes = await res.json();
 
-      // MODIFICAÇÃO: Ordenar para que INATIVOS e BLOQUEADOS vão para o final da lista
-      clientes.sort((a, b) => {
-        if (a.status === 'Ativo' && b.status !== 'Ativo') return -1;
-        if (a.status !== 'Ativo' && b.status === 'Ativo') return 1;
-        return 0;
-      });
-      // Guarda na memória para filtrar rápido sem ir no servidor
-      window.cacheClientes = clientes;
+    // MODIFICAÇÃO: Ordenar para que INATIVOS e BLOQUEADOS vão para o final da lista
+    clientes.sort((a, b) => {
+      if (a.status === 'Ativo' && b.status !== 'Ativo') return -1;
+      if (a.status !== 'Ativo' && b.status === 'Ativo') return 1;
+      return 0;
+    });
 
-      // Desenha a tela com todos os clientes (COM PAGINAÇÃO)
-      renderizarClientesComPaginacao(window.cacheClientes);
-    })
-    .catch(err => console.error("Erro ao carregar clientes:", err));
+    // Guarda na memória para filtrar rápido sem ir no servidor
+    window.cacheClientes = clientes;
+
+    // Desenha a tela com todos os clientes (COM PAGINAÇÃO)
+    renderizarClientesComPaginacao(window.cacheClientes);
+  } catch (err) {
+    console.error("Erro ao carregar clientes:", err);
+  }
 }
 
 // 2. Função de Filtragem (O que você pediu!)
 // 2. Função de Filtragem (Texto + Tipo PF/PJ + Status)
-window.filtrarClientes = function () {
-  // Pega o texto digitado (minúsculo)
-  const texto = document.getElementById('inputBuscaCliente').value.toLowerCase().trim();
-  // Pega o tipo selecionado no dropdown (PF, PJ ou Vazio)
-  const tipoSelecionado = document.getElementById('filtroTipoCliente').value;
-  // Pega o status selecionado (Ativo, Inativo, Bloqueado ou Vazio)
-  const statusSelecionado = document.getElementById('filtroStatusCliente').value;
+window.filtrarClientes = async function () {
+  // Mostra skeleton durante o filtro
+  showGlobalSkeleton();
 
-  console.log('🔍 Filtros aplicados:', { texto, tipoSelecionado, statusSelecionado });
+  try {
+    // Pega o texto digitado (minúsculo)
+    const texto = document.getElementById('inputBuscaCliente').value.toLowerCase().trim();
+    // Pega o tipo selecionado no dropdown (PF, PJ ou Vazio)
+    const tipoSelecionado = document.getElementById('filtroTipoCliente').value;
+    // Pega o status selecionado (Ativo, Inativo, Bloqueado ou Vazio)
+    const statusSelecionado = document.getElementById('filtroStatusCliente').value;
 
-  // Se não tiver nenhum filtro, mostra tudo
-  if (texto === "" && tipoSelecionado === "" && statusSelecionado === "") {
-    console.log('📋 Mostrando todos os clientes:', window.cacheClientes.length);
-    renderizarClientesComPaginacao(window.cacheClientes);
-    return;
-  }
+    console.log('🔍 Filtros aplicados:', { texto, tipoSelecionado, statusSelecionado });
 
-  const filtrados = window.cacheClientes.filter(cli => {
-    // --- 1. FILTRO DE TIPO (PF ou PJ) ---
-    // Consideramos PJ se o documento formatado tiver mais de 14 caracteres (CNPJ tem 18, CPF tem 14)
-    const isPJ = cli.documento && cli.documento.length > 14;
-
-    if (tipoSelecionado === "PF" && isPJ) return false; // Se quer PF mas é PJ, esconde
-    if (tipoSelecionado === "PJ" && !isPJ) return false; // Se quer PJ mas é PF, esconde
-
-    // --- 2. FILTRO DE STATUS ---
-    if (statusSelecionado !== "" && cli.status !== statusSelecionado) return false;
-
-    // --- 3. FILTRO DE TEXTO (Nome, Doc, Email, etc) ---
-    if (texto !== "") {
-      const nomeEmpresa = (cli.nome || "").toLowerCase();
-      const nomeFantasia = (cli.nome_fantasia || "").toLowerCase();
-      const doc = (cli.documento || "").replace(/\D/g, ""); // Só números
-      const docFormatado = (cli.documento || "").toLowerCase();
-      const responsavel = (cli.contato1_nome || "").toLowerCase();
-      const email = (cli.email || cli.contato1_email || "").toLowerCase();
-
-      // Retorna VERDADEIRO se achar o texto em algum lugar
-      return nomeEmpresa.includes(texto) ||
-        nomeFantasia.includes(texto) ||
-        doc.includes(texto) ||
-        docFormatado.includes(texto) ||
-        responsavel.includes(texto) ||
-        email.includes(texto);
+    // Se não tiver nenhum filtro, mostra tudo
+    if (texto === "" && tipoSelecionado === "" && statusSelecionado === "") {
+      console.log('📋 Mostrando todos os clientes:', window.cacheClientes.length);
+      renderizarClientesComPaginacao(window.cacheClientes);
+      return;
     }
 
-    // Se passou pelos filtros e não tem texto digitado, mostra o cliente
-    return true;
-  });
+    const filtrados = window.cacheClientes.filter(cli => {
+      // --- 1. FILTRO DE TIPO (PF ou PJ) ---
+      // Consideramos PJ se o documento formatado tiver mais de 14 caracteres (CNPJ tem 18, CPF tem 14)
+      const isPJ = cli.documento && cli.documento.length > 14;
 
-  console.log('✅ Clientes filtrados:', filtrados.length);
-  renderizarClientesComPaginacao(filtrados);
+      if (tipoSelecionado === "PF" && isPJ) return false; // Se quer PF mas é PJ, esconde
+      if (tipoSelecionado === "PJ" && !isPJ) return false; // Se quer PJ mas é PF, esconde
+
+      // --- 2. FILTRO DE STATUS ---
+      if (statusSelecionado !== "" && cli.status !== statusSelecionado) return false;
+
+      // --- 3. FILTRO DE TEXTO (Nome, Doc, Email, etc) ---
+      if (texto !== "") {
+        const nomeEmpresa = (cli.nome || "").toLowerCase();
+        const nomeFantasia = (cli.nome_fantasia || "").toLowerCase();
+        const doc = (cli.documento || "").replace(/\D/g, ""); // Só números
+        const docFormatado = (cli.documento || "").toLowerCase();
+        const responsavel = (cli.contato1_nome || "").toLowerCase();
+        const email = (cli.email || cli.contato1_email || "").toLowerCase();
+
+        // Retorna VERDADEIRO se achar o texto em algum lugar
+        return nomeEmpresa.includes(texto) ||
+          nomeFantasia.includes(texto) ||
+          doc.includes(texto) ||
+          docFormatado.includes(texto) ||
+          responsavel.includes(texto) ||
+          email.includes(texto);
+      }
+
+      // Se passou pelos filtros e não tem texto digitado, mostra o cliente
+      return true;
+    });
+
+    console.log('✅ Clientes filtrados:', filtrados.length);
+    renderizarClientesComPaginacao(filtrados);
+  } finally {
+    // Oculta skeleton após filtro
+    await hideGlobalSkeleton();
+  }
 }
 
 
@@ -5549,7 +5930,7 @@ window.paginacaoEstoque = {
 window.idItemEditando = null;
 
 // 1. CARREGAR ESTOQUE (Com proteção contra travamento)
-function carregarEstoque() {
+async function carregarEstoque() {
   console.log("Iniciando carregamento do estoque...");
 
   // Mostra spinner caso não esteja lá
@@ -5562,32 +5943,30 @@ function carregarEstoque() {
             </div>`;
   }
 
-  fetch(`${API_URL}/equipamentos`)
-    .then(res => {
-      if (!res.ok) throw new Error("Erro na resposta do servidor");
-      return res.json();
-    })
-    .then(itens => {
-      console.log("Itens carregados:", itens.length);
-      window.cacheEstoque = itens; // Salva no cache
+  try {
+    const res = await fetch(`${API_URL}/equipamentos`);
+    if (!res.ok) throw new Error("Erro na resposta do servidor");
+    const itens = await res.json();
 
-      // Atualiza os números lá em cima (KPIs)
-      atualizarKPIsEstoque(itens);
+    console.log("Itens carregados:", itens.length);
+    window.cacheEstoque = itens; // Salva no cache
 
-      // Aplica os filtros e desenha na tela
-      filtrarEstoque();
-    })
-    .catch(err => {
-      console.error("Erro fatal ao carregar estoque:", err);
-      if (container) {
-        container.innerHTML = `
-                    <div class="col-12 text-center py-5 text-danger">
-                        <i class="bi bi-exclamation-triangle fs-1"></i>
-                        <p class="mt-2 fw-bold">Erro ao carregar itens.</p>
-                        <small>${err.message}</small>
-                    </div>`;
-      }
-    });
+    // Atualiza os números lá em cima (KPIs)
+    atualizarKPIsEstoque(itens);
+
+    // Aplica os filtros e desenha na tela
+    filtrarEstoque();
+  } catch (err) {
+    console.error("Erro fatal ao carregar estoque:", err);
+    if (container) {
+      container.innerHTML = `
+                  <div class="col-12 text-center py-5 text-danger">
+                      <i class="bi bi-exclamation-triangle fs-1"></i>
+                      <p class="mt-2 fw-bold">Erro ao carregar itens.</p>
+                      <small>${err.message}</small>
+                  </div>`;
+    }
+  }
 }
 
 // 2. ATUALIZAR OS INDICADORES (KPIs)
@@ -6478,100 +6857,110 @@ if (!window.paginacaoFuncionarios) {
 }
 
 // 1. CARREGAR LISTA DE FUNCIONÁRIOS
-window.carregarFuncionarios = function () {
+window.carregarFuncionarios = async function () {
   console.log('🔄 Carregando funcionários do servidor...');
 
-  fetch(`${API_URL}/funcionarios/todos`)
-    .then(res => res.json())
-    .then(lista => {
-      console.log('✅ Funcionários carregados:', lista.length, 'items');
-      window.cacheFuncionarios = lista;
+  try {
+    const res = await fetch(`${API_URL}/funcionarios/todos`);
+    const lista = await res.json();
 
-      // --- CÁLCULO DOS CARDS KPI ---
-      const total = lista.length;
-      const ativos = lista.filter(f => f.status === 'Ativo').length;
-      const ferias = lista.filter(f => f.status === 'Férias').length;
-      const inativos = lista.filter(f => f.status === 'Inativo').length;
+    console.log('✅ Funcionários carregados:', lista.length, 'items');
+    window.cacheFuncionarios = lista;
 
-      console.log('📊 KPIs calculados:', { total, ativos, ferias, inativos });
+    // --- CÁLCULO DOS CARDS KPI ---
+    const total = lista.length;
+    const ativos = lista.filter(f => f.status === 'Ativo').length;
+    const ferias = lista.filter(f => f.status === 'Férias').length;
+    const inativos = lista.filter(f => f.status === 'Inativo').length;
 
-      // Atualiza o HTML dos Cards
-      const elTotal = document.getElementById('kpi-rh-total');
-      const elAtivos = document.getElementById('kpi-rh-ativos');
-      const elFerias = document.getElementById('kpi-rh-ferias');
-      const elInativos = document.getElementById('kpi-rh-inativos');
+    console.log('📊 KPIs calculados:', { total, ativos, ferias, inativos });
 
-      if (elTotal) {
-        elTotal.innerText = total;
-        console.log('✅ KPI Total atualizado:', total);
-      }
-      if (elAtivos) {
-        elAtivos.innerText = ativos;
-        console.log('✅ KPI Ativos atualizado:', ativos);
-      }
-      if (elFerias) {
-        elFerias.innerText = ferias;
-        console.log('✅ KPI Férias atualizado:', ferias);
-      }
-      if (elInativos) {
-        elInativos.innerText = inativos;
-        console.log('✅ KPI Inativos atualizado:', inativos);
-      }
-      // ----------------------------------------------
+    // Atualiza o HTML dos Cards
+    const elTotal = document.getElementById('kpi-rh-total');
+    const elAtivos = document.getElementById('kpi-rh-ativos');
+    const elFerias = document.getElementById('kpi-rh-ferias');
+    const elInativos = document.getElementById('kpi-rh-inativos');
 
-      // Aplica filtros inicialmente
-      window.filtrarFuncionarios();
-    })
-    .catch(err => console.error("Erro ao carregar funcionários:", err));
+    if (elTotal) {
+      elTotal.innerText = total;
+      console.log('✅ KPI Total atualizado:', total);
+    }
+    if (elAtivos) {
+      elAtivos.innerText = ativos;
+      console.log('✅ KPI Ativos atualizado:', ativos);
+    }
+    if (elFerias) {
+      elFerias.innerText = ferias;
+      console.log('✅ KPI Férias atualizado:', ferias);
+    }
+    if (elInativos) {
+      elInativos.innerText = inativos;
+      console.log('✅ KPI Inativos atualizado:', inativos);
+    }
+    // ----------------------------------------------
+
+    // Aplica filtros inicialmente
+    await window.filtrarFuncionarios();
+  } catch (err) {
+    console.error("Erro ao carregar funcionários:", err);
+  }
 };
 
 // 2. FILTRAR FUNCIONÁRIOS
-window.filtrarFuncionarios = function () {
+window.filtrarFuncionarios = async function () {
   // Validação: se não tem cache, não faz nada
   if (!window.cacheFuncionarios || window.cacheFuncionarios.length === 0) {
     console.warn('⚠️ Cache de funcionários vazio. Aguardando carregamento...');
     return;
   }
 
-  console.log('🔍 Filtrando funcionários. Cache tem:', window.cacheFuncionarios.length, 'items');
+  // Mostra skeleton durante o filtro
+  showGlobalSkeleton();
 
-  const inputBusca = document.getElementById('buscaFuncionarios');
-  const inputStatus = document.getElementById('filtroStatusFuncionario');
-  const inputDepartamento = document.getElementById('filtroDepartamentoFuncionario');
+  try {
+    console.log('🔍 Filtrando funcionários. Cache tem:', window.cacheFuncionarios.length, 'items');
 
-  const termo = inputBusca ? inputBusca.value.toLowerCase() : "";
-  const statusFiltro = inputStatus ? inputStatus.value : "";
-  const deptoFiltro = inputDepartamento ? inputDepartamento.value : "";
+    const inputBusca = document.getElementById('buscaFuncionarios');
+    const inputStatus = document.getElementById('filtroStatusFuncionario');
+    const inputDepartamento = document.getElementById('filtroDepartamentoFuncionario');
 
-  console.log('🎯 Filtros aplicados:', { termo, statusFiltro, deptoFiltro });
+    const termo = inputBusca ? inputBusca.value.toLowerCase() : "";
+    const statusFiltro = inputStatus ? inputStatus.value : "";
+    const deptoFiltro = inputDepartamento ? inputDepartamento.value : "";
 
-  const filtrados = window.cacheFuncionarios.filter(func => {
-    const nome = (func.nome || "").toLowerCase();
-    const cargo = (func.cargo || "").toLowerCase();
-    const email = (func.email || "").toLowerCase();
-    const status = (func.status || "");
-    const departamento = (func.departamento || "");
+    console.log('🎯 Filtros aplicados:', { termo, statusFiltro, deptoFiltro });
 
-    // Filtro de Texto
-    const bateuTexto = nome.includes(termo) || cargo.includes(termo) || email.includes(termo);
+    const filtrados = window.cacheFuncionarios.filter(func => {
+      const nome = (func.nome || "").toLowerCase();
+      const cargo = (func.cargo || "").toLowerCase();
+      const email = (func.email || "").toLowerCase();
+      const status = (func.status || "");
+      const departamento = (func.departamento || "");
 
-    // Filtro de Status
-    const bateuStatus = statusFiltro === "" || status === statusFiltro;
+      // Filtro de Texto
+      const bateuTexto = nome.includes(termo) || cargo.includes(termo) || email.includes(termo);
 
-    // Filtro de Departamento
-    const bateuDepto = deptoFiltro === "" || departamento === deptoFiltro;
+      // Filtro de Status
+      const bateuStatus = statusFiltro === "" || status === statusFiltro;
 
-    return bateuTexto && bateuStatus && bateuDepto;
-  });
+      // Filtro de Departamento
+      const bateuDepto = deptoFiltro === "" || departamento === deptoFiltro;
 
-  console.log('✅ Filtrados:', filtrados.length, 'de', window.cacheFuncionarios.length, 'funcionários');
+      return bateuTexto && bateuStatus && bateuDepto;
+    });
 
-  // Salva lista filtrada e reseta para página 1
-  window.paginacaoFuncionarios.listaTotalFiltrada = filtrados;
-  window.paginacaoFuncionarios.paginaAtual = 1;
+    console.log('✅ Filtrados:', filtrados.length, 'de', window.cacheFuncionarios.length, 'funcionários');
 
-  // Renderiza primeira página
-  window.renderizarFuncionariosPaginado();
+    // Salva lista filtrada e reseta para página 1
+    window.paginacaoFuncionarios.listaTotalFiltrada = filtrados;
+    window.paginacaoFuncionarios.paginaAtual = 1;
+
+    // Renderiza primeira página
+    window.renderizarFuncionariosPaginado();
+  } finally {
+    // Oculta skeleton após filtro
+    await hideGlobalSkeleton();
+  }
 };
 
 // 3. RENDERIZAR COM PAGINAÇÃO
@@ -6684,8 +7073,14 @@ window.renderizarFuncionariosCards = function (lista) {
 
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="d-flex align-items-center">
-                            <div class="avatar-square" style="background-color: ${corAvatar}">
-                                ${iniciais}
+                            <div class="avatar-square avatar-upload-container" 
+                                 style="background-color: ${corAvatar}; ${func.avatar ? `background-image: url(${func.avatar}); background-size: cover; background-position: center;` : ''}"
+                                 onclick="abrirUploadAvatarFuncionario(${func.id})"
+                                 title="Clique para alterar foto">
+                                ${func.avatar ? '' : iniciais}
+                                <div class="avatar-upload-overlay-card">
+                                    <i class="bi bi-camera-fill"></i>
+                                </div>
                             </div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">${func.nome}</h6>
@@ -6946,6 +7341,112 @@ window.excluirFuncionario = function (id) {
     .then(() => carregarFuncionarios())
     .catch(err => alert("Erro ao excluir: " + err));
 };
+
+/* =============================================================
+   UPLOAD DE AVATAR DE FUNCIONÁRIO
+   ============================================================= */
+
+/**
+ * Abre o seletor de arquivo para upload de avatar do funcionário
+ * @param {number} funcionarioId - ID do funcionário
+ */
+window.abrirUploadAvatarFuncionario = function (funcionarioId) {
+  // Cria input file dinamicamente
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.style.display = 'none';
+
+  input.onchange = function (e) {
+    handleAvatarFuncionarioUpload(e, funcionarioId);
+  };
+
+  document.body.appendChild(input);
+  input.click();
+
+  // Remove input após uso
+  setTimeout(() => document.body.removeChild(input), 1000);
+};
+
+/**
+ * Processa o upload de avatar do funcionário
+ * @param {Event} event - Evento do input file
+ * @param {number} funcionarioId - ID do funcionário
+ */
+async function handleAvatarFuncionarioUpload(event, funcionarioId) {
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  // Valida se é imagem
+  if (!file.type.startsWith('image/')) {
+    alert('⚠️ Por favor, selecione apenas arquivos de imagem (JPG, PNG, etc.)');
+    return;
+  }
+
+  // Valida tamanho (max 5MB)
+  const maxSize = 5 * 1024 * 1024;
+  if (file.size > maxSize) {
+    alert('⚠️ A imagem deve ter no máximo 5MB');
+    return;
+  }
+
+  // Cria preview da imagem
+  const reader = new FileReader();
+
+  reader.onload = async function (e) {
+    const imageUrl = e.target.result;
+
+    // Atualiza avatar visualmente no cache e na tela
+    const funcionario = window.cacheFuncionarios.find(f => f.id === funcionarioId);
+    if (funcionario) {
+      funcionario.avatar = imageUrl;
+    }
+
+    // Re-renderiza os cards para mostrar a nova foto
+    window.renderizarFuncionariosPaginado();
+
+    console.log('📸 Avatar do funcionário atualizado (preview)');
+
+    // Envia imagem para o servidor
+    await uploadAvatarFuncionarioToServer(file, funcionarioId);
+  };
+
+  reader.readAsDataURL(file);
+}
+
+/**
+ * Envia a foto do funcionário para o servidor (para implementação futura)
+ * @param {File} file - Arquivo de imagem
+ * @param {number} funcionarioId - ID do funcionário
+ */
+async function uploadAvatarFuncionarioToServer(file, funcionarioId) {
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    formData.append('funcionarioId', funcionarioId);
+
+    const response = await fetch(`${API_URL}/funcionarios/${funcionarioId}/avatar`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Avatar salvo no servidor:', data);
+
+      // Recarrega lista de funcionários para pegar URL real do servidor
+      await carregarFuncionarios();
+
+      alert('✅ Foto de perfil atualizada com sucesso!');
+    } else {
+      throw new Error('Erro ao salvar avatar');
+    }
+  } catch (error) {
+    console.error('❌ Erro ao fazer upload do avatar:', error);
+    alert('❌ Erro ao salvar foto. Tente novamente.');
+  }
+}
 
 // Resetar modal ao fechar (para voltar a ser "Novo")
 document.getElementById('modalNovoFuncionario').addEventListener('hidden.bs.modal', function () {
