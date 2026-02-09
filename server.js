@@ -92,19 +92,19 @@ db.connect((err) => {
     // Migração: Adicionar coluna avatar na tabela funcionarios (se não existir)
     const sqlAdicionarAvatar = `
       ALTER TABLE funcionarios 
-      ADD COLUMN IF NOT EXISTS avatar VARCHAR(255)
+      ADD COLUMN avatar VARCHAR(255)
     `;
     
     db.query(sqlAdicionarAvatar, (err) => {
       if (err) {
-        // Ignora erro se coluna já existe (MySQL < 8.0 não suporta IF NOT EXISTS no ALTER)
-        if (err.code !== 'ER_DUP_FIELDNAME') {
-          console.error('⚠️ Erro ao adicionar coluna avatar:', err.message);
-        } else {
+        // Ignora erro se coluna já existe (código 1060 no MySQL)
+        if (err.code === 'ER_DUP_FIELDNAME') {
           console.log('✅ Coluna avatar já existe na tabela funcionarios.');
+        } else {
+          console.error('⚠️ Erro ao adicionar coluna avatar:', err.message);
         }
       } else {
-        console.log('✅ Coluna avatar verificada/criada com sucesso na tabela funcionarios.');
+        console.log('✅ Coluna avatar criada com sucesso na tabela funcionarios.');
       }
     });
   }
@@ -126,7 +126,7 @@ db.connect((err) => {
 
 
 
-  
+
 });
 
 
