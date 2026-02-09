@@ -15,6 +15,17 @@
 </head>
 
 <body>
+  <!-- Botão de menu móvel (só aparece em telas pequenas) -->
+  <button class="btn btn-primary d-lg-none position-fixed" 
+          id="mobile-menu-btn" 
+          style="top: 15px; left: 15px; z-index: 1060;"
+          onclick="toggleSidebarMobile()">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Overlay para fechar sidebar em mobile -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebarMobile()"></div>
+
   <div class="sidebar" id="sidebar">
     
     <!-- Botão de toggle dentro do sidebar -->
@@ -359,6 +370,8 @@
             <tbody id="tabela-ultimas-diarias"></tbody>
           </table>
         </div>
+        <!-- Mobile cards container (hidden on desktop via CSS) -->
+        <div id="ultimas-diarias-mobile-cards" style="display: none;"></div>
       </div>
     </div>
 
@@ -838,7 +851,7 @@
       </div>
 
       <div class="card-custom mb-4 p-3">
-        <div class="row g-2 align-items-center">
+        <div class="row align-items-center">
           <div class="col-md-5">
             <div class="search-box">
               <i class="bi bi-search text-muted me-2"></i>
@@ -864,13 +877,13 @@
             </select>
           </div>
 
-          <div class="col-md-1 text-center">
+          <div class="col-md-1 text-center d-none d-md-flex">
             <button class="btn btn-outline-secondary px-3" onclick="limparFiltrosClientes()" title="Limpar filtros">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
 
-          <div class="col-md-2 text-end">
+          <div class="col-md-2 text-end d-none d-md-flex">
             <div class="btn-group" role="group">
               <button type="button" class="btn btn-outline-secondary active" id="btn-view-card"
                 onclick="alternarViewCliente('card')" title="Visualização em Cards">
@@ -881,6 +894,23 @@
                 <i class="bi bi-list-ul"></i>
               </button>
             </div>
+          </div>
+        </div>
+        
+        <!-- Controles mobile - só aparece em mobile -->
+        <div class="controles-mobile d-flex d-md-none">
+          <button class="btn btn-outline-secondary btn-limpar" onclick="limparFiltrosClientes()" title="Limpar filtros">
+            <i class="bi bi-x-lg"></i>
+          </button>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-secondary active" id="btn-view-card-mobile"
+              onclick="alternarViewCliente('card')" title="Cards">
+              <i class="bi bi-grid-fill"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btn-view-list-mobile"
+              onclick="alternarViewCliente('list')" title="Lista">
+              <i class="bi bi-list-ul"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -920,7 +950,7 @@
           <div class="card-header bg-white pt-4 pb-0 border-0">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-light border rounded-circle d-print-none" onclick="voltarParaListaClientes()"
+                <button class="btn btn-light" onclick="voltarParaListaClientes()"
                   title="Voltar">
                   <i class="bi bi-arrow-left"></i>
                 </button>
@@ -1084,6 +1114,8 @@
                     <tbody id="tabela-perfil-pedidos"></tbody>
                   </table>
                 </div>
+                <!-- Mobile cards container (hidden on desktop via CSS) -->
+                <div id="pedidos-perfil-mobile-cards" style="display: none;"></div>
               </div>
 
               <div class="tab-pane fade p-4 d-print-none" id="aba-financeiro">
@@ -1439,6 +1471,8 @@
           <tbody id="tabela-contratos"></tbody>
         </table>
       </div>
+      <!-- Mobile cards container (hidden on desktop via CSS) -->
+      <div id="contratos-mobile-cards" style="display: none;"></div>
 
       <!-- Container de Paginação (centralizado, padrão moderno) -->
       <div id="paginacao-contratos" class="col-12 mt-4"></div>

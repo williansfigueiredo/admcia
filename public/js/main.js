@@ -321,9 +321,11 @@ function atualizarCardEquipamentos() {
 // Preenche a tabela "Últimas Diárias" (Top 5 - ORDEM DE CADASTRO)
 function preencherTabela(listaJobs) {
   const tabela = document.getElementById('tabela-ultimas-diarias');
+  const mobileContainer = document.getElementById('ultimas-diarias-mobile-cards');
   if (!tabela) return;
 
   tabela.innerHTML = "";
+  if (mobileContainer) mobileContainer.innerHTML = "";
 
   // 1. ORDENAÇÃO: Pelo ID (Do maior para o menor)
   const listaOrdenada = listaJobs.sort((a, b) => {
@@ -334,8 +336,6 @@ function preencherTabela(listaJobs) {
   const top5 = listaOrdenada.slice(0, 5);
 
   top5.forEach(job => {
-    const tr = document.createElement('tr');
-
     // --- LÓGICA DE DATA (MESMA DA GESTÃO DE CONTRATOS) ---
     const dInicio = new Date(job.data_job);
     dInicio.setHours(dInicio.getHours() + 3); // Ajuste fuso
@@ -370,7 +370,8 @@ function preencherTabela(listaJobs) {
     }
     // -----------------------------------------------------
 
-    // HTML com 5 colunas 
+    // Desktop: tabela <tr>
+    const tr = document.createElement('tr');
     tr.innerHTML = `
             <td>
                 <div class="fw-bold text-dark text-truncate" style="max-width: 200px;">
@@ -393,7 +394,33 @@ function preencherTabela(listaJobs) {
             <td>${getPagamentoPill(job.pagamento)}</td>
         `;
     tabela.appendChild(tr);
+
+    // Mobile: card (Últimas Diárias)
+    if (mobileContainer) {
+      const card = document.createElement('div');
+      card.className = 'diaria-card-mobile';
+      card.innerHTML = `
+        <div class="diaria-header">
+          <div>
+            <div class="diaria-title">${job.descricao}</div>
+            <div class="diaria-client">${job.nome_cliente || 'Cliente'}</div>
+          </div>
+          <div class="diaria-date">${textoData}</div>
+        </div>
+        <div class="diaria-footer">
+          <div class="diaria-valor">${formatarMoeda(job.valor)}</div>
+          <div class="diaria-pills">
+            ${getStatusPill(job.status)}
+            ${getPagamentoPill(job.pagamento)}
+          </div>
+        </div>
+      `;
+      mobileContainer.appendChild(card);
+    }
   });
+
+  // Atualiza visibilidade table/cards conforme tela
+  if (typeof toggleMobileCards === 'function') toggleMobileCards();
 }
 
 // Preenche os Selects do Modal (CORREÇÃO DO BUG "CARREGANDO...")
@@ -1309,8 +1336,7 @@ function iniciarSidebar() {
 
       if (window.innerWidth < 992) {
         // Em mobile, fecha o menu
-        sidebar.classList.remove('show');
-        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+        closeSidebarMobile();
       } else {
         // Em desktop, colapsa com ícones
         sidebar.classList.toggle('collapsed');
@@ -1323,16 +1349,33 @@ function iniciarSidebar() {
   if (mobileMenuToggle) {
     mobileMenuToggle.addEventListener('click', (e) => {
       e.stopPropagation();
-      sidebar.classList.toggle('show');
-      if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+      toggleSidebarMobile();
     });
   }
 
   // Fechar ao clicar no overlay
   if (sidebarOverlay) {
     sidebarOverlay.addEventListener('click', () => {
-      sidebar.classList.remove('show');
-      sidebarOverlay.classList.remove('active');
+      closeSidebarMobile();
+    });
+  }
+
+  // *** NOVO: Fechar sidebar ao clicar em qualquer item do menu em mobile ***
+  if (sidebar) {
+    sidebar.addEventListener('click', (e) => {
+      // Verificar se clicou em um link do menu em dispositivo móvel
+      if (window.innerWidth < 992) {
+        const isMenuLink = e.target.closest('.submenu-link') || 
+                          e.target.closest('.nav-link:not([data-bs-toggle])') ||
+                          (e.target.closest('.nav-link') && !e.target.closest('[data-bs-toggle]'));
+        
+        if (isMenuLink) {
+          // Pequeno delay para permitir que a ação seja executada primeiro
+          setTimeout(() => {
+            closeSidebarMobile();
+          }, 100);
+        }
+      }
     });
   }
 
@@ -1344,8 +1387,7 @@ function iniciarSidebar() {
   // Ajustar ao redimensionar a janela
   window.addEventListener('resize', () => {
     if (window.innerWidth >= 992) {
-      sidebar.classList.remove('show');
-      if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+      closeSidebarMobile();
     } else {
       sidebar.classList.remove('collapsed');
     }
@@ -1364,7 +1406,12 @@ window.switchView = function (viewId) {
   document.querySelectorAll(".view-section").forEach((el) => el.classList.remove("active"));
   document.querySelectorAll(".submenu-link").forEach((el) => el.classList.remove("active"));
 
-  // 2. Ativa a tela desejada
+  // 2. Fechar sidebar automaticamente em dispositivos móveis
+  if (window.innerWidth < 992) {
+    closeSidebarMobile();
+  }
+
+  // 3. Ativa a tela desejada
   const viewAlvo = document.getElementById("view-" + viewId);
   if (viewAlvo) viewAlvo.classList.add("active");
 
@@ -1687,6 +1734,7 @@ function limparFiltros() {
 function renderizarTabelaContratos(pagina) {
   const tabela = document.getElementById('tabela-contratos');
   const divPaginacao = document.getElementById('paginacao-contratos');
+  const mobileContainer = document.getElementById('contratos-mobile-cards');
 
   console.log('📊 renderizarTabelaContratos:', { 
     pagina, 
@@ -1700,6 +1748,7 @@ function renderizarTabelaContratos(pagina) {
   }
 
   tabela.innerHTML = "";
+  if (mobileContainer) mobileContainer.innerHTML = "";
   paginaAtual = pagina;
 
   // Garante que jobsFiltrados existe
@@ -1732,10 +1781,11 @@ function renderizarTabelaContratos(pagina) {
                     </div>
                 </td>
             </tr>`;
+    if (mobileContainer) {
+      mobileContainer.innerHTML = `<div class="text-center py-4 text-muted"><i class="bi bi-search fs-1 d-block mb-2"></i>Nenhum contrato encontrado.</div>`;
+    }
   } else {
     jobsDaPagina.forEach(job => {
-      const tr = document.createElement('tr');
-
       // --- LÓGICA DE DATA ---
       const dInicio = new Date(job.data_job);
       dInicio.setHours(dInicio.getHours() + 3);
@@ -1755,6 +1805,8 @@ function renderizarTabelaContratos(pagina) {
       } else textoData = `${diaIni} ${mesIni}`;
       // ---------------------
 
+      // Desktop: table row
+      const tr = document.createElement('tr');
       tr.innerHTML = `
                 <td>
                     <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">${job.descricao}</div>
@@ -1794,11 +1846,40 @@ function renderizarTabelaContratos(pagina) {
 
             `;
       tabela.appendChild(tr);
+
+      // Mobile: card
+      if (mobileContainer) {
+        const card = document.createElement('div');
+        card.className = 'contrato-card-mobile';
+        card.innerHTML = `
+          <div class="contrato-action">
+            <button class="btn btn-light btn-sm border" onclick="abrirMenuAcoes(event, ${job.id})" style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;">
+              <i class="bi bi-three-dots-vertical text-muted"></i>
+            </button>
+          </div>
+          <div class="contrato-header">
+            <div class="contrato-title">${job.descricao}</div>
+            <div class="contrato-client">${job.nome_cliente || 'Cliente'}</div>
+          </div>
+          <div class="contrato-meta">
+            <span class="contrato-date">${textoData}</span>
+            <span class="contrato-valor">${formatarMoeda(job.valor)}</span>
+          </div>
+          <div class="contrato-pills">
+            <span class="${getStatusPill(job.status, true)} cursor-pointer" onclick="abrirMenuStatus(this, ${job.id}, 'status', '${job.status}')">${job.status}</span>
+            <span class="${getPagamentoPill(job.pagamento, true)} cursor-pointer" onclick="abrirMenuStatus(this, ${job.id}, 'pagamento', '${job.pagamento}')">${job.pagamento}</span>
+          </div>
+        `;
+        mobileContainer.appendChild(card);
+      }
     });
   }
 
   console.log('✅ Renderizando paginação...');
   renderizarBotoesPaginacaoContratos(divPaginacao, pagina, totalPaginas);
+
+  // Atualiza visibilidade table/cards conforme tela
+  if (typeof toggleMobileCards === 'function') toggleMobileCards();
 }
 
 
@@ -2589,7 +2670,7 @@ async function abrirModalInvoice(jobId) {
   try {
     // 1. FAZ AS BUSCAS NECESSÁRIAS (Template + Equipe + Lista de Funcionários para achar o nome do Operador)
     const [resTemplate, resEquipe, resFuncionarios] = await Promise.all([
-      fetch('invoice.html'),
+      fetch(`${API_URL}/invoice`),
       fetch(`${API_URL}/jobs/${id}/equipe`),
       fetch(`${API_URL}/funcionarios`) // Buscamos a lista para encontrar o nome do Operador pelo ID
     ]);
@@ -3257,21 +3338,80 @@ window.buscarCepGenerico = function (cep, prefixo) {
 window.alternarViewCliente = function (modo) {
   const containerCards = document.getElementById('lista-clientes-cards');
   const containerLista = document.getElementById('lista-clientes-tabela-container');
+  
+  // Botões desktop
   const btnCard = document.getElementById('btn-view-card');
   const btnList = document.getElementById('btn-view-list');
+  
+  // Botões mobile
+  const btnCardMobile = document.getElementById('btn-view-card-mobile');
+  const btnListMobile = document.getElementById('btn-view-list-mobile');
 
   if (modo === 'card') {
     containerCards.classList.remove('d-none');
     containerLista.classList.add('d-none');
-    btnCard.classList.add('active');
-    btnList.classList.remove('active');
+    
+    // Desktop
+    if (btnCard && btnList) {
+      btnCard.classList.add('active');
+      btnList.classList.remove('active');
+    }
+    
+    // Mobile
+    if (btnCardMobile && btnListMobile) {
+      btnCardMobile.classList.add('active');
+      btnListMobile.classList.remove('active');
+    }
+    
   } else {
     containerCards.classList.add('d-none');
     containerLista.classList.remove('d-none');
-    btnCard.classList.remove('active');
-    btnList.classList.add('active');
+    
+    // Desktop
+    if (btnCard && btnList) {
+      btnCard.classList.remove('active');
+      btnList.classList.add('active');
+    }
+    
+    // Mobile
+    if (btnCardMobile && btnListMobile) {
+      btnCardMobile.classList.remove('active');
+      btnListMobile.classList.add('active');
+    }
+    
+    // Re-renderizar imediatamente se estiver em mobile para garantir que apareça
+    const isMobile = window.innerWidth <= 767.98;
+    console.log('📱 Alternando para lista - Mobile detectado:', isMobile);
+    
+    if (isMobile && window.paginacaoClientes && window.paginacaoClientes.listaTotalFiltrada && window.paginacaoClientes.listaTotalFiltrada.length > 0) {
+      console.log('🔄 Renderizando lista mobile...');
+      setTimeout(() => {
+        renderizarPaginaClientes();
+        // Força exibição do container
+        containerLista.style.display = 'block';
+        const tbody = document.getElementById('lista-clientes-tabela-body');
+        if (tbody) {
+          tbody.style.display = 'block';
+          tbody.style.width = '100%';
+        }
+      }, 50);
+    }
   }
 }
+
+// Listener para redimensionamento da janela
+window.addEventListener('resize', function() {
+  // Re-renderizar apenas se estivermos na visualização de lista
+  const containerLista = document.getElementById('lista-clientes-tabela-container');
+  const isListView = !containerLista.classList.contains('d-none');
+  
+  if (isListView && window.paginacaoClientes && window.paginacaoClientes.listaTotalFiltrada && window.paginacaoClientes.listaTotalFiltrada.length > 0) {
+    // Aguardar um pouco para a transição de tamanho terminar
+    setTimeout(() => {
+      renderizarPaginaClientes();
+    }, 150);
+  }
+});
 
 // Função Principal de Carregamento
 /* SUBSTITUA A FUNÇÃO carregarListaClientes NO main.js */
@@ -3401,7 +3541,14 @@ function renderizarPaginaClientes() {
 
   if (lista.length === 0) {
     containerCards.innerHTML = '<div class="col-12 text-center text-muted py-5">Nenhum cliente encontrado com esse filtro.</div>';
-    containerLista.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum cliente encontrado.</td></tr>';
+    
+    // Verificar se é mobile para a mensagem da lista
+    const isMobile = window.innerWidth <= 767.98;
+    if (isMobile) {
+      containerLista.innerHTML = '<div class="text-center py-4 text-muted">Nenhum cliente encontrado com esse filtro.</div>';
+    } else {
+      containerLista.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum cliente encontrado.</td></tr>';
+    }
     return;
   }
 
@@ -3455,7 +3602,7 @@ function renderizarPaginaClientes() {
                 
                 <div class="position-absolute top-0 end-0 p-3" style="z-index: 5;">
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-light border-0 rounded-circle shadow-sm" 
+                        <button class="btn btn-sm" 
                                 type="button" 
                                 data-bs-toggle="dropdown" 
                                 onclick="event.stopPropagation()" 
@@ -3491,7 +3638,67 @@ function renderizarPaginaClientes() {
     containerCards.insertAdjacentHTML('beforeend', cardHTML);
 
     // --- RENDERIZAÇÃO DA LISTA (TABELA) ---
-    const rowHTML = `
+    
+    // Verificar se é mobile
+    const isMobile = window.innerWidth <= 767.98;
+    console.log('📱 Mobile detectado:', isMobile, 'Largura:', window.innerWidth);
+    
+    if (isMobile) {
+      // Renderizar cards lineares para mobile
+      const cardLinearHTML = `
+        <div class="cliente-row-mobile" onclick="abrirPerfilCliente(${cli.id})">
+          <div class="row align-items-center">
+            <div class="col-auto">
+              <div class="client-avatar ${avatarClass}">
+                <i class="bi ${icon}"></i>
+              </div>
+            </div>
+            <div class="col">
+              <div class="cliente-info">
+                <h6 class="text-truncate" title="${cli.nome}">${cli.nome}</h6>
+                <span class="small">${isPJ ? 'PJ' : 'PF'} • ${cli.documento || 'Documento não informado'}</span>
+                <div class="contact-info">
+                  <span class="contact-item">
+                    <i class="bi bi-person-fill"></i>
+                    ${nomeContato.length > 15 ? nomeContato.substring(0, 13) + '...' : nomeContato}
+                  </span>
+                  <span class="contact-item">
+                    <i class="bi bi-envelope"></i>
+                    ${email.length > 18 ? email.substring(0, 16) + '...' : email}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="col-auto">
+              <div class="cliente-actions">
+                <span class="status-pill ${classeStatus}">${cli.status || 'Ativo'}</span>
+                <div class="dropdown">
+                  <button class="btn-actions" 
+                          type="button" 
+                          data-bs-toggle="dropdown" 
+                          onclick="event.stopPropagation()">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  ${menuDropdownHTML}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      
+      containerLista.insertAdjacentHTML('beforeend', cardLinearHTML);
+      console.log('✅ Card linear adicionado para:', cli.nome);
+      
+      // Garantir que o container esteja visível
+      const container = document.getElementById('lista-clientes-tabela-container');
+      if (container) {
+        container.style.display = 'block';
+        container.classList.remove('d-none');
+      }
+      
+    } else {
+      // Renderizar tabela tradicional para desktop
+      const rowHTML = `
         <tr class="align-middle bg-white border-bottom table-row-hover" 
             onclick="abrirPerfilCliente(${cli.id})" 
             style="cursor: pointer;">
@@ -3528,7 +3735,9 @@ function renderizarPaginaClientes() {
                 </div>
             </td>
         </tr>`;
-    containerLista.insertAdjacentHTML('beforeend', rowHTML);
+      containerLista.insertAdjacentHTML('beforeend', rowHTML);
+      console.log('✅ Linha de tabela adicionada para:', cli.nome);
+    }
   });
 }
 
@@ -4427,18 +4636,19 @@ function carregarHistoricoPerfil(idCliente) {
 // =============================================================
 function renderizarTabelaPedidosPerfil(listaJobs) {
   const tbody = document.getElementById('tabela-perfil-pedidos');
+  const mobileContainer = document.getElementById('pedidos-perfil-mobile-cards');
   if (!tbody) return;
 
   tbody.innerHTML = ""; // Limpa a tabela antes de desenhar
+  if (mobileContainer) mobileContainer.innerHTML = "";
 
   if (listaJobs.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum pedido encontrado.</td></tr>';
+    if (mobileContainer) mobileContainer.innerHTML = '<div class="text-center py-4 text-muted">Nenhum pedido encontrado.</div>';
     return;
   }
 
   listaJobs.forEach(job => {
-    const trJob = document.createElement('tr');
-
     // Formatações
     const valorFmt = parseFloat(job.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -4453,6 +4663,8 @@ function renderizarTabelaPedidosPerfil(listaJobs) {
     // Pega o badge de status (usando sua função existente)
     const badgeStatus = getStatusPill(job.status);
 
+    // Desktop: table row
+    const trJob = document.createElement('tr');
     trJob.innerHTML = `
             <td class="ps-4 fw-bold">#${job.id}</td>
             <td>${job.descricao}</td>
@@ -4465,11 +4677,34 @@ function renderizarTabelaPedidosPerfil(listaJobs) {
               </button>
             </td>
         `;
-
-    // --- A CORREÇÃO PRINCIPAL ESTAVA AQUI EMBAIXO ---
-    // Faltava adicionar a linha (tr) dentro do corpo da tabela (tbody)
     tbody.appendChild(trJob);
+
+    // Mobile: card
+    if (mobileContainer) {
+      const card = document.createElement('div');
+      card.className = 'pedido-card-mobile';
+      card.innerHTML = `
+        <div class="pedido-header">
+          <span class="pedido-id">#${job.id}</span>
+          <span class="pedido-date">${dataFmt}</span>
+        </div>
+        <div class="pedido-desc">${job.descricao}</div>
+        <div class="pedido-meta">
+          <span class="pedido-valor">${valorFmt}</span>
+        </div>
+        <div class="pedido-footer">
+          ${badgeStatus}
+          <button class="btn btn-sm btn-light border" onclick="window.abrirHistoricoJob(${job.id}, ${window.idPerfilAtual})">
+            <i class="bi bi-eye"></i> Ver
+          </button>
+        </div>
+      `;
+      mobileContainer.appendChild(card);
+    }
   });
+
+  // Atualiza visibilidade table/cards conforme tela
+  if (typeof toggleMobileCards === 'function') toggleMobileCards();
 }
 
 // =============================================================
@@ -7731,3 +7966,190 @@ function carregarTemaSalvo() {
 }
 
 carregarTemaSalvo();
+
+// ===== FUNÇÕES DE RESPONSIVIDADE MÓVEL =====
+
+// Função para fechar sidebar móvel
+function closeSidebarMobile() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  
+  if (sidebar) sidebar.classList.remove('show');
+  if (overlay) {
+    overlay.classList.remove('active');
+    overlay.style.display = '';  // limpa inline residual
+  }
+  document.body.classList.remove('sidebar-open');
+}
+
+// Função para abrir/fechar sidebar móvel
+function toggleSidebarMobile() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  
+  if (sidebar && overlay) {
+    const isOpen = sidebar.classList.contains('show');
+    
+    if (isOpen) {
+      sidebar.classList.remove('show');
+      overlay.classList.remove('active');
+      overlay.style.display = '';  // limpa inline residual
+      document.body.classList.remove('sidebar-open');
+    } else {
+      sidebar.classList.add('show');
+      overlay.classList.add('active');
+      overlay.style.display = '';  // garante que class controla
+      document.body.classList.add('sidebar-open');
+    }
+  }
+}
+
+// Melhorar a inicialização da sidebar
+document.addEventListener('DOMContentLoaded', function() {
+  // Garantir que a função seja chamada após o DOM estar pronto
+  setTimeout(iniciarSidebar, 100);
+  
+  // Adicionar classe para detectar mobile
+  function detectarMobile() {
+    if (window.innerWidth <= 991) {
+      document.body.classList.add('is-mobile');
+    } else {
+      document.body.classList.remove('is-mobile');
+    }
+  }
+  
+  detectarMobile();
+  window.addEventListener('resize', detectarMobile);
+});
+
+// Prevenir problemas de scroll horizontal
+document.addEventListener('DOMContentLoaded', function() {
+  // Garantir que elementos não estourem a tela
+  const preventOverflow = () => {
+    const elements = document.querySelectorAll('.table-responsive, .modal-dialog, .card');
+    elements.forEach(el => {
+      if (el.scrollWidth > el.clientWidth && window.innerWidth <= 767) {
+        el.style.overflowX = 'auto';
+      }
+    });
+  };
+  
+  preventOverflow();
+  window.addEventListener('resize', preventOverflow);
+});
+
+// Fechar sidebar ao redimensionar para desktop
+window.addEventListener('resize', function() {
+  if (window.innerWidth >= 992) {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    if (sidebar && overlay) {
+      sidebar.classList.remove('show');
+      overlay.style.display = 'none';
+    }
+  }
+});
+
+// Melhorar experiência de toque em dispositivos móveis
+document.addEventListener('DOMContentLoaded', function() {
+  
+  // Adicionar classes de responsividade a tabelas
+  const tables = document.querySelectorAll('.table');
+  tables.forEach(table => {
+    if (!table.closest('.table-responsive')) {
+      table.classList.add('table-responsive');
+    }
+    
+    // Para tabelas em mobile, adicionar atributos data-label
+    if (window.innerWidth <= 767) {
+      table.classList.add('table-mobile-stack');
+      addDataLabelsToTable(table);
+    }
+  });
+  
+  // Melhorar inputs para evitar zoo em iOS
+  const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="search"], textarea, select');
+  inputs.forEach(input => {
+    if (!input.style.fontSize) {
+      input.style.fontSize = '16px';
+    }
+  });
+});
+
+// Função para adicionar labels a tabelas móveis
+function addDataLabelsToTable(table) {
+  const headers = table.querySelectorAll('thead th');
+  const rows = table.querySelectorAll('tbody tr');
+  
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    cells.forEach((cell, index) => {
+      if (headers[index]) {
+        cell.setAttribute('data-label', headers[index].textContent.trim());
+      }
+    });
+  });
+}
+
+// Classes utilitárias para responsividade
+function isMobile() {
+  return window.innerWidth <= 767;
+}
+
+function isTablet() {
+  return window.innerWidth > 767 && window.innerWidth <= 991;
+}
+
+function isDesktop() {
+  return window.innerWidth >= 992;
+}
+
+// Função para adaptar gráficos a diferentes tamanhos de tela
+function resizeCharts() {
+  if (typeof Chart !== 'undefined') {
+    Chart.instances.forEach(chart => {
+      chart.resize();
+    });
+  }
+}
+
+// Redimensionar gráficos quando a orientação muda
+window.addEventListener('orientationchange', function() {
+  setTimeout(resizeCharts, 100);
+});
+
+window.addEventListener('resize', function() {
+  resizeCharts();
+  toggleMobileCards();
+});
+
+// ===============================
+// MOBILE CARDS: Show/hide table vs cards
+// ===============================
+function toggleMobileCards() {
+  const isMobile = window.innerWidth <= 767;
+
+  // Helper: hide table-responsive wrapper (or table itself) and show mobile cards
+  function toggle(tbodyId, mobileId) {
+    const tbody = document.getElementById(tbodyId);
+    const mob = document.getElementById(mobileId);
+    if (!tbody || !mob) return;
+    // Try to find the .table-responsive wrapper first, else the <table>
+    const wrapper = tbody.closest('.table-responsive') || tbody.closest('table');
+    if (wrapper) wrapper.style.display = isMobile ? 'none' : '';
+    mob.style.display = isMobile ? 'block' : 'none';
+  }
+
+  toggle('tabela-ultimas-diarias', 'ultimas-diarias-mobile-cards');
+  toggle('tabela-contratos', 'contratos-mobile-cards');
+  toggle('tabela-perfil-pedidos', 'pedidos-perfil-mobile-cards');
+}
+
+// Run on load
+document.addEventListener('DOMContentLoaded', function() {
+  toggleMobileCards();
+});
+window.addEventListener('orientationchange', function() {
+  setTimeout(toggleMobileCards, 150);
+});
