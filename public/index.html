@@ -15,10 +15,77 @@
 </head>
 
 <body>
-  <!-- Global Skeleton Loader -->
-  <div id="global-skeleton" class="global-skeleton-overlay hidden">
+  <!-- ============================================
+       SKELETONS ESPECÍFICOS PARA CADA PÁGINA
+       ============================================ -->
+  
+  <!-- Skeleton Dashboard -->
+  <div id="skeleton-dashboard" class="global-skeleton-overlay hidden">
     <div class="skeleton-container">
-      <!-- Sidebar Skeleton -->
+      <div class="skeleton-sidebar">
+        <div class="skeleton-logo shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+      </div>
+      
+      <div class="skeleton-main-content">
+        <div class="skeleton-header">
+          <div class="skeleton-title shimmer"></div>
+          <div class="skeleton-subtitle shimmer"></div>
+        </div>
+        
+        <!-- KPIs Grid -->
+        <div class="skeleton-kpis-grid">
+          <div class="skeleton-kpi shimmer">
+            <div class="skeleton-kpi-label shimmer"></div>
+            <div class="skeleton-kpi-value shimmer"></div>
+            <div class="skeleton-kpi-change shimmer"></div>
+          </div>
+          <div class="skeleton-kpi shimmer">
+            <div class="skeleton-kpi-label shimmer"></div>
+            <div class="skeleton-kpi-value shimmer"></div>
+            <div class="skeleton-kpi-change shimmer"></div>
+          </div>
+          <div class="skeleton-kpi shimmer">
+            <div class="skeleton-kpi-label shimmer"></div>
+            <div class="skeleton-kpi-value shimmer"></div>
+            <div class="skeleton-kpi-change shimmer"></div>
+          </div>
+          <div class="skeleton-kpi shimmer">
+            <div class="skeleton-kpi-label shimmer"></div>
+            <div class="skeleton-kpi-value shimmer"></div>
+            <div class="skeleton-kpi-change shimmer"></div>
+          </div>
+        </div>
+        
+        <!-- Charts -->
+        <div class="skeleton-charts">
+          <div class="skeleton-chart shimmer"></div>
+          <div class="skeleton-chart shimmer"></div>
+        </div>
+        
+        <!-- Tabela recente -->
+        <div class="skeleton-table" style="margin-top: 30px;">
+          <div class="skeleton-table-header shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton Clientes -->
+  <div id="skeleton-clientes" class="global-skeleton-overlay hidden">
+    <div class="skeleton-container">
       <div class="skeleton-sidebar">
         <div class="skeleton-logo shimmer"></div>
         <div class="skeleton-nav-item shimmer"></div>
@@ -29,40 +96,336 @@
         <div class="skeleton-nav-item shimmer"></div>
       </div>
       
-      <!-- Main Content Skeleton -->
       <div class="skeleton-main-content">
-        <!-- Header Skeleton -->
+        <div class="skeleton-header">
+          <div class="skeleton-title shimmer"></div>
+          <div class="skeleton-controls">
+            <div class="skeleton-search shimmer"></div>
+            <div class="skeleton-button shimmer" style="width: 100px;"></div>
+            <div class="skeleton-button shimmer" style="width: 100px;"></div>
+            <div class="skeleton-button shimmer" style="width: 44px;"></div>
+            <div class="skeleton-button shimmer" style="width: 44px;"></div>
+          </div>
+        </div>
+        
+        <!-- Filtros adicionais -->
+        <div class="skeleton-controls" style="margin-bottom: 20px;">
+          <div class="skeleton-button shimmer" style="width: 150px;"></div>
+          <div class="skeleton-button shimmer" style="width: 150px;"></div>
+          <div class="skeleton-button shimmer" style="width: 150px;"></div>
+        </div>
+        
+        <div class="skeleton-cards-grid">
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+        </div>
+        
+        <!-- Paginação -->
+        <div class="skeleton-controls" style="margin-top: 30px; justify-content: center;">
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton Funcionários -->
+  <div id="skeleton-funcionarios" class="global-skeleton-overlay hidden">
+    <div class="skeleton-container">
+      <div class="skeleton-sidebar">
+        <div class="skeleton-logo shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+      </div>
+      
+      <div class="skeleton-main-content">
+        <div class="skeleton-header">
+          <div class="skeleton-title shimmer"></div>
+          <div class="skeleton-controls">
+            <div class="skeleton-search shimmer"></div>
+            <div class="skeleton-button shimmer" style="width: 140px;"></div>
+            <div class="skeleton-button shimmer" style="width: 44px;"></div>
+            <div class="skeleton-button shimmer" style="width: 44px;"></div>
+          </div>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="skeleton-controls" style="margin-bottom: 20px;">
+          <div class="skeleton-button shimmer" style="width: 180px;"></div>
+          <div class="skeleton-button shimmer" style="width: 180px;"></div>
+        </div>
+        
+        <!-- Cards de funcionários -->
+        <div class="skeleton-cards-grid">
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+          <div class="skeleton-card shimmer"><div class="skeleton-card-header shimmer"></div><div class="skeleton-card-body shimmer"></div></div>
+        </div>
+        
+        <!-- Paginação -->
+        <div class="skeleton-controls" style="margin-top: 30px; justify-content: center;">
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton Jobs/Agenda -->
+  <div id="skeleton-jobs" class="global-skeleton-overlay hidden">
+    <div class="skeleton-container">
+      <div class="skeleton-sidebar">
+        <div class="skeleton-logo shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+      </div>
+      
+      <div class="skeleton-main-content">
+        <div class="skeleton-header">
+          <div class="skeleton-title shimmer"></div>
+          <div class="skeleton-controls">
+            <div class="skeleton-search shimmer"></div>
+            <div class="skeleton-button shimmer" style="width: 120px;"></div>
+            <div class="skeleton-button shimmer" style="width: 44px;"></div>
+          </div>
+        </div>
+        
+        <!-- Cards KPI -->
+        <div class="skeleton-kpis-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 25px;">
+          <div class="skeleton-kpi shimmer">
+            <div class="skeleton-kpi-label shimmer"></div>
+            <div class="skeleton-kpi-value shimmer"></div>
+          </div>
+          <div class="skeleton-kpi shimmer">
+            <div class="skeleton-kpi-label shimmer"></div>
+            <div class="skeleton-kpi-value shimmer"></div>
+          </div>
+          <div class="skeleton-kpi shimmer">
+            <div class="skeleton-kpi-label shimmer"></div>
+            <div class="skeleton-kpi-value shimmer"></div>
+          </div>
+        </div>
+        
+        <!-- Filtros/Abas -->
+        <div class="skeleton-controls" style="margin-bottom: 20px;">
+          <div class="skeleton-button shimmer" style="width: 80px;"></div>
+          <div class="skeleton-button shimmer" style="width: 80px;"></div>
+          <div class="skeleton-button shimmer" style="width: 80px;"></div>
+        </div>
+        
+        <div class="skeleton-table">
+          <div class="skeleton-table-header shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+        </div>
+        
+        <!-- Paginação -->
+        <div class="skeleton-controls" style="margin-top: 20px; justify-content: center;">
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton Estoque -->
+  <div id="skeleton-estoque" class="global-skeleton-overlay hidden">
+    <div class="skeleton-container">
+      <div class="skeleton-sidebar">
+        <div class="skeleton-logo shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+      </div>
+      
+      <div class="skeleton-main-content">
+        <div class="skeleton-header">
+          <div class="skeleton-title shimmer"></div>
+          <div class="skeleton-controls">
+            <div class="skeleton-search shimmer"></div>
+            <div class="skeleton-button shimmer" style="width: 110px;"></div>
+            <div class="skeleton-button shimmer" style="width: 44px;"></div>
+            <div class="skeleton-button shimmer" style="width: 44px;"></div>
+          </div>
+        </div>
+        
+        <!-- Filtros de categoria -->
+        <div class="skeleton-controls" style="margin-bottom: 20px;">
+          <div class="skeleton-button shimmer" style="width: 100px;"></div>
+          <div class="skeleton-button shimmer" style="width: 100px;"></div>
+          <div class="skeleton-button shimmer" style="width: 100px;"></div>
+          <div class="skeleton-button shimmer" style="width: 100px;"></div>
+        </div>
+        
+        <div class="skeleton-products-grid">
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+          <div class="skeleton-product shimmer"><div class="skeleton-product-image shimmer"></div><div class="skeleton-product-info shimmer"></div></div>
+        </div>
+        
+        <!-- Paginação -->
+        <div class="skeleton-controls" style="margin-top: 30px; justify-content: center;">
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton Financeiro -->
+  <div id="skeleton-financeiro" class="global-skeleton-overlay hidden">
+    <div class="skeleton-container">
+      <div class="skeleton-sidebar">
+        <div class="skeleton-logo shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+      </div>
+      
+      <div class="skeleton-main-content">
         <div class="skeleton-header">
           <div class="skeleton-title shimmer"></div>
           <div class="skeleton-subtitle shimmer"></div>
         </div>
         
-        <!-- Cards Grid Skeleton -->
-        <div class="skeleton-cards-grid">
-          <div class="skeleton-card">
-            <div class="skeleton-card-header shimmer"></div>
-            <div class="skeleton-card-body shimmer"></div>
+        <!-- Resumo Financeiro -->
+        <div class="skeleton-financial-summary">
+          <div class="skeleton-financial-card shimmer"></div>
+          <div class="skeleton-financial-card shimmer"></div>
+          <div class="skeleton-financial-card shimmer"></div>
+        </div>
+        
+        <!-- Gráfico -->
+        <div class="skeleton-chart shimmer" style="margin-bottom: 30px; height: 300px;"></div>
+        
+        <!-- Filtros/Abas -->
+        <div class="skeleton-controls" style="margin-bottom: 20px;">
+          <div class="skeleton-button shimmer" style="width: 100px;"></div>
+          <div class="skeleton-button shimmer" style="width: 100px;"></div>
+          <div class="skeleton-button shimmer" style="width: 100px;"></div>
+        </div>
+        
+        <div class="skeleton-table">
+          <div class="skeleton-table-header shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+          <div class="skeleton-table-row shimmer"></div>
+        </div>
+        
+        <!-- Paginação -->
+        <div class="skeleton-controls" style="margin-top: 20px; justify-content: center;">
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+          <div class="skeleton-button shimmer" style="width: 40px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton Configurações -->
+  <div id="skeleton-configuracoes" class="global-skeleton-overlay hidden">
+    <div class="skeleton-container">
+      <div class="skeleton-sidebar">
+        <div class="skeleton-logo shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+        <div class="skeleton-nav-item shimmer"></div>
+      </div>
+      
+      <div class="skeleton-main-content">
+        <div class="skeleton-header">
+          <div class="skeleton-title shimmer"></div>
+          <div class="skeleton-subtitle shimmer"></div>
+        </div>
+        
+        <!-- Cards de configuração rápida -->
+        <div class="skeleton-kpis-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 30px;">
+          <div class="skeleton-kpi shimmer">
+            <div class="skeleton-kpi-label shimmer"></div>
+            <div class="skeleton-kpi-value shimmer"></div>
           </div>
-          <div class="skeleton-card">
-            <div class="skeleton-card-header shimmer"></div>
-            <div class="skeleton-card-body shimmer"></div>
-          </div>
-          <div class="skeleton-card">
-            <div class="skeleton-card-header shimmer"></div>
-            <div class="skeleton-card-body shimmer"></div>
-          </div>
-          <div class="skeleton-card">
-            <div class="skeleton-card-header shimmer"></div>
-            <div class="skeleton-card-body shimmer"></div>
+          <div class="skeleton-kpi shimmer">
+            <div class="skeleton-kpi-label shimmer"></div>
+            <div class="skeleton-kpi-value shimmer"></div>
           </div>
         </div>
         
-        <!-- Table Skeleton -->
-        <div class="skeleton-table">
-          <div class="skeleton-table-row shimmer"></div>
-          <div class="skeleton-table-row shimmer"></div>
-          <div class="skeleton-table-row shimmer"></div>
-          <div class="skeleton-table-row shimmer"></div>
+        <div class="skeleton-form">
+          <div class="skeleton-form-section shimmer">
+            <div class="skeleton-form-label shimmer"></div>
+            <div class="skeleton-form-input shimmer"></div>
+          </div>
+          <div class="skeleton-form-section shimmer">
+            <div class="skeleton-form-label shimmer"></div>
+            <div class="skeleton-form-input shimmer"></div>
+          </div>
+          <div class="skeleton-form-section shimmer">
+            <div class="skeleton-form-label shimmer"></div>
+            <div class="skeleton-form-input shimmer"></div>
+          </div>
+          <div class="skeleton-form-section shimmer">
+            <div class="skeleton-form-label shimmer"></div>
+            <div class="skeleton-form-input shimmer"></div>
+          </div>
+          <div class="skeleton-form-section shimmer">
+            <div class="skeleton-form-label shimmer"></div>
+            <div class="skeleton-form-input shimmer"></div>
+          </div>
+          <div class="skeleton-form-section shimmer">
+            <div class="skeleton-form-label shimmer"></div>
+            <div class="skeleton-form-input shimmer"></div>
+          </div>
+          
+          <!-- Botões de ação -->
+          <div class="skeleton-controls" style="margin-top: 30px; justify-content: flex-end;">
+            <div class="skeleton-button shimmer" style="width: 100px;"></div>
+            <div class="skeleton-button shimmer" style="width: 120px;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -201,24 +564,57 @@
   </div>
 
   <div class="main-content">
-    <header class="d-flex justify-content-between align-items-center mb-5">
+    <header class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
       
       <!-- Botão menu mobile -->
       <button class="btn border-0 d-lg-none me-2" id="mobile-menu-toggle" title="Abrir Menu">
         <i class="bi bi-list fs-4 text-dark"></i>
       </button>
 
-      <div class="position-relative flex-grow-1 mx-3 d-none d-md-block">
+      <!-- Busca Global -->
+      <div class="global-search-container position-relative flex-grow-1 mx-3">
+        <div class="global-search-wrapper">
+          <i class="bi bi-search global-search-icon"></i>
+          <input 
+            type="text" 
+            class="global-search-input" 
+            id="globalSearchInput"
+            placeholder="Buscar clientes, jobs, produtos, funcionários..."
+            autocomplete="off"
+          />
+          <div class="global-search-results" id="globalSearchResults"></div>
+        </div>
       </div>
 
-<div class="d-flex align-items-center gap-3 gap-md-4">
-    
-    <div class="d-flex align-items-center">
+      <!-- Botão Novo Job -->
+      <button class="btn-new-job" onclick="switchView('novo-job')" title="Criar novo pedido/job">
+        <i class="bi bi-plus-lg me-2"></i>
+        <span class="d-none d-md-inline">Novo Job</span>
+        <span class="d-inline d-md-none">Job</span>
+      </button>
+
+      <!-- Indicadores de Status -->
+      <div class="status-indicators d-none d-xl-flex gap-3">
+        <div class="status-badge status-online">
+          <i class="bi bi-circle-fill"></i>
+          <span>Online</span>
+        </div>
+        <div class="status-badge status-jobs" id="statusJobsAtivos">
+          <i class="bi bi-lightning-charge-fill"></i>
+          <span>0 jobs</span>
+        </div>
+        <div class="status-badge status-team" id="statusFuncionarios">
+          <i class="bi bi-people-fill"></i>
+          <span>0 pessoas</span>
+        </div>
+      </div>
+
+      <!-- Botões de Controle do Usuário -->
+      <div class="d-flex align-items-center gap-3 gap-md-4">
         <button class="btn btn-link p-0 me-3 text-decoration-none" onclick="window.toggleDarkMode()" title="Alternar Tema">
-    <i id="iconTheme" class="bi bi-moon-stars-fill fs-5 text-secondary"></i>
-</button>
-    </div>
-    <i class="bi bi-bell fs-5 text-secondary cursor-pointer"></i>
+          <i id="iconTheme" class="bi bi-moon-stars-fill fs-5 text-secondary"></i>
+        </button>
+        <i class="bi bi-bell fs-5 text-secondary cursor-pointer"></i>
 
     <!-- User Profile Dropdown -->
     <div class="user-profile-container position-relative">
@@ -2199,7 +2595,7 @@
         </div>
         <div>
           <button class="btn btn-light border bg-white text-muted" onclick="switchView('estoque')">
-            <i class="bi bi-arrow-left me-1"></i> Cancelar
+            <i class="bi bi-arrow-left me-1"></i> Voltar
           </button>
           <button class="btn btn-success ms-2 px-4" onclick="salvarNovoItem()">
             <i class="bi bi-check-lg me-2"></i> Salvar Item

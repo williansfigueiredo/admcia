@@ -15,11 +15,11 @@ let currentSkeletonId = null; // Controla qual skeleton está ativo
 function showGlobalSkeleton(skeletonType = 'dashboard', forceImmediate = false) {
   // Oculta qualquer skeleton que esteja ativo
   hideAllSkeletons();
-  
+
   // Define o ID do skeleton baseado no tipo
   const skeletonId = `skeleton-${skeletonType}`;
   const skeleton = document.getElementById(skeletonId);
-  
+
   if (!skeleton) {
     console.warn(`⚠️ Skeleton "${skeletonType}" não encontrado. Usando skeleton-dashboard como fallback.`);
     const fallbackSkeleton = document.getElementById('skeleton-dashboard');
@@ -61,7 +61,7 @@ function hideAllSkeletons() {
  */
 async function hideGlobalSkeleton() {
   if (!currentSkeletonId) return;
-  
+
   const skeleton = document.getElementById(currentSkeletonId);
   if (!skeleton || skeleton.classList.contains('hidden')) return;
 
@@ -75,7 +75,7 @@ async function hideGlobalSkeleton() {
 
   skeleton.classList.add('hidden');
   document.body.style.overflow = '';
-  
+
   console.log(`✅ Skeleton desativado`);
   currentSkeletonId = null;
 }
@@ -128,21 +128,21 @@ let searchTimeout = null;
 function initializeGlobalSearch() {
   const searchInput = document.getElementById('globalSearchInput');
   const searchResults = document.getElementById('globalSearchResults');
-  
+
   if (!searchInput || !searchResults) return;
 
   // Event listener para o input
   searchInput.addEventListener('input', (e) => {
     const query = e.target.value.trim();
-    
+
     // Cancela busca anterior
     if (searchTimeout) clearTimeout(searchTimeout);
-    
+
     if (query.length < 2) {
       searchResults.classList.remove('active');
       return;
     }
-    
+
     // Aguarda 300ms após usuário parar de digitar
     searchTimeout = setTimeout(() => {
       performGlobalSearch(query);
@@ -180,7 +180,7 @@ async function updateSearchCache() {
     } else {
       searchCache.clientes = window.listaClientes;
     }
-    
+
     // Busca jobs - carrega se ainda não existir
     if (!window.todosOsJobsCache || window.todosOsJobsCache.length === 0) {
       try {
@@ -196,7 +196,7 @@ async function updateSearchCache() {
     } else {
       searchCache.jobs = window.todosOsJobsCache;
     }
-    
+
     // Busca equipamentos - carrega se ainda não existir
     if (!window.cacheEstoque || window.cacheEstoque.length === 0) {
       try {
@@ -212,7 +212,7 @@ async function updateSearchCache() {
     } else {
       searchCache.produtos = window.cacheEstoque;
     }
-    
+
     // Busca TODOS os funcionários (incluindo desativados/férias) para busca global
     try {
       const response = await fetch(`${API_URL}/funcionarios/todos?_t=${Date.now()}`);
@@ -260,9 +260,9 @@ function matchSearch(text, query) {
 function performGlobalSearch(query) {
   const searchResults = document.getElementById('globalSearchResults');
   const queryLower = query.toLowerCase();
-  
+
   let results = [];
-  
+
   // Busca em clientes (todos os campos)
   const clientesResults = searchCache.clientes
     .filter(c => {
@@ -274,15 +274,15 @@ function performGlobalSearch(query) {
       const cidade = c.cidade || '';
       const uf = c.uf || '';
       const contato = c.contato || '';
-      
-      return matchSearch(nome, query) || 
-             matchSearch(cpfCnpj, query) || 
-             matchSearch(email, query) ||
-             matchSearch(telefone, query) ||
-             matchSearch(endereco, query) ||
-             matchSearch(cidade, query) ||
-             matchSearch(uf, query) ||
-             matchSearch(contato, query);
+
+      return matchSearch(nome, query) ||
+        matchSearch(cpfCnpj, query) ||
+        matchSearch(email, query) ||
+        matchSearch(telefone, query) ||
+        matchSearch(endereco, query) ||
+        matchSearch(cidade, query) ||
+        matchSearch(uf, query) ||
+        matchSearch(contato, query);
     })
     .slice(0, 3)
     .map(c => ({
@@ -292,7 +292,7 @@ function performGlobalSearch(query) {
       subtitle: c.cpf_cnpj || c.email,
       icon: 'bi-person-circle'
     }));
-  
+
   // Busca em jobs (número, título, cliente, equipamentos, datas, status)
   const jobsResults = searchCache.jobs
     .filter(j => {
@@ -305,16 +305,16 @@ function performGlobalSearch(query) {
       const dataFim = j.data_fim || '';
       const status = j.status || '';
       const operador = j.operador_nome || '';
-      
+
       return numero.includes(queryLower) ||
-             matchSearch(titulo, query) || 
-             matchSearch(cliente, query) ||
-             matchSearch(descricao, query) ||
-             matchSearch(equipamentos, query) ||
-             matchSearch(dataInicio, query) ||
-             matchSearch(dataFim, query) ||
-             matchSearch(status, query) ||
-             matchSearch(operador, query);
+        matchSearch(titulo, query) ||
+        matchSearch(cliente, query) ||
+        matchSearch(descricao, query) ||
+        matchSearch(equipamentos, query) ||
+        matchSearch(dataInicio, query) ||
+        matchSearch(dataFim, query) ||
+        matchSearch(status, query) ||
+        matchSearch(operador, query);
     })
     .slice(0, 4)
     .map(j => ({
@@ -324,7 +324,7 @@ function performGlobalSearch(query) {
       subtitle: j.cliente_nome || j.nome_cliente || 'Cliente não informado',
       icon: 'bi-briefcase'
     }));
-  
+
   // Busca em produtos/equipamentos (todos os campos)
   const produtosResults = searchCache.produtos
     .filter(p => {
@@ -335,14 +335,14 @@ function performGlobalSearch(query) {
       const modelo = p.modelo || '';
       const codigo = p.codigo || '';
       const serial = p.serial || '';
-      
-      return matchSearch(nome, query) || 
-             matchSearch(categoria, query) ||
-             matchSearch(descricao, query) ||
-             matchSearch(marca, query) ||
-             matchSearch(modelo, query) ||
-             matchSearch(codigo, query) ||
-             matchSearch(serial, query);
+
+      return matchSearch(nome, query) ||
+        matchSearch(categoria, query) ||
+        matchSearch(descricao, query) ||
+        matchSearch(marca, query) ||
+        matchSearch(modelo, query) ||
+        matchSearch(codigo, query) ||
+        matchSearch(serial, query);
     })
     .slice(0, 3)
     .map(p => ({
@@ -352,7 +352,7 @@ function performGlobalSearch(query) {
       subtitle: `${p.categoria || 'Equipamento'} - Estoque: ${p.quantidade || 0}`,
       icon: 'bi-box'
     }));
-  
+
   // Busca em funcionários (TODOS - incluindo desativados/férias)
   const funcionariosResults = searchCache.funcionarios
     .filter(f => {
@@ -363,14 +363,14 @@ function performGlobalSearch(query) {
       const telefone = f.telefone || '';
       const cpf = f.cpf || '';
       const status = f.status || '';
-      
-      return matchSearch(nome, query) || 
-             matchSearch(cargo, query) || 
-             matchSearch(email, query) ||
-             matchSearch(departamento, query) ||
-             matchSearch(telefone, query) ||
-             matchSearch(cpf, query) ||
-             matchSearch(status, query);
+
+      return matchSearch(nome, query) ||
+        matchSearch(cargo, query) ||
+        matchSearch(email, query) ||
+        matchSearch(departamento, query) ||
+        matchSearch(telefone, query) ||
+        matchSearch(cpf, query) ||
+        matchSearch(status, query);
     })
     .slice(0, 3)
     .map(f => {
@@ -379,7 +379,7 @@ function performGlobalSearch(query) {
       if (f.status && f.status !== 'Ativo') {
         subtitle += ` • ${f.status}`;
       }
-      
+
       return {
         type: 'funcionario',
         id: f.id,
@@ -388,9 +388,9 @@ function performGlobalSearch(query) {
         icon: 'bi-person-badge'
       };
     });
-  
+
   results = [...clientesResults, ...jobsResults, ...produtosResults, ...funcionariosResults];
-  
+
   displaySearchResults(results);
 }
 
@@ -399,13 +399,13 @@ function performGlobalSearch(query) {
  */
 function displaySearchResults(results) {
   const searchResults = document.getElementById('globalSearchResults');
-  
+
   if (results.length === 0) {
     searchResults.innerHTML = '<div class="search-no-results">Nenhum resultado encontrado</div>';
     searchResults.classList.add('active');
     return;
   }
-  
+
   const html = results.map(result => `
     <div class="search-result-item" onclick="handleSearchResultClick('${result.type}', ${result.id})">
       <div class="search-result-icon type-${result.type}">
@@ -417,7 +417,7 @@ function displaySearchResults(results) {
       </div>
     </div>
   `).join('');
-  
+
   searchResults.innerHTML = html;
   searchResults.classList.add('active');
 }
@@ -425,16 +425,16 @@ function displaySearchResults(results) {
 /**
  * Trata clique em resultado da busca
  */
-window.handleSearchResultClick = function(type, id) {
+window.handleSearchResultClick = function (type, id) {
   const searchResults = document.getElementById('globalSearchResults');
   const searchInput = document.getElementById('globalSearchInput');
-  
+
   // Fecha resultados e limpa busca
   searchResults.classList.remove('active');
   searchInput.value = '';
-  
+
   // Navega para o item correto
-  switch(type) {
+  switch (type) {
     case 'cliente':
       switchView('clientes');
       setTimeout(() => visualizarCliente(id), 300);
@@ -467,15 +467,15 @@ window.handleSearchResultClick = function(type, id) {
  */
 async function updateStatusIndicators() {
   console.log('🔄 Atualizando indicadores de status...');
-  
+
   // 1. VERIFICA CONEXÃO COM SERVIDOR
   const statusOnline = document.querySelector('.status-online');
   try {
-    const response = await fetch(`${API_URL}/jobs`, { 
+    const response = await fetch(`${API_URL}/jobs`, {
       method: 'HEAD',
       cache: 'no-cache'
     });
-    
+
     if (statusOnline) {
       if (response.ok) {
         statusOnline.classList.remove('status-offline');
@@ -495,47 +495,47 @@ async function updateStatusIndicators() {
       statusOnline.innerHTML = '<i class="bi bi-circle-fill"></i><span>Offline</span>';
     }
   }
-  
+
   // 2. JOBS ATIVOS
   const statusJobs = document.getElementById('statusJobsAtivos');
   if (statusJobs && window.todosOsJobsCache) {
-    const jobsAtivos = window.todosOsJobsCache.filter(j => 
+    const jobsAtivos = window.todosOsJobsCache.filter(j =>
       j.status === 'Agendado' || j.status === 'Confirmado' || j.status === 'Em Andamento'
     );
-    
+
     console.log('📊 Jobs no cache:', window.todosOsJobsCache.length);
     console.log('📊 Jobs ativos filtrados:', jobsAtivos.length);
     console.log('📊 Status dos jobs:', window.todosOsJobsCache.map(j => ({ id: j.id, status: j.status })));
-    
+
     statusJobs.innerHTML = `<i class="bi bi-lightning-charge-fill"></i><span>${jobsAtivos.length} jobs</span>`;
   } else {
     console.warn('⚠️ statusJobsAtivos ou todosOsJobsCache não encontrado');
   }
-  
+
   // 3. FUNCIONÁRIOS ALOCADOS EM JOBS EM ANDAMENTO
   const statusFunc = document.getElementById('statusFuncionarios');
   if (statusFunc && window.todosOsJobsCache) {
     try {
       // Busca apenas jobs EM ANDAMENTO
       const jobsEmAndamento = window.todosOsJobsCache.filter(j => j.status === 'Em Andamento');
-      
+
       console.log('🎬 Jobs em andamento:', jobsEmAndamento.length);
-      
+
       if (jobsEmAndamento.length === 0) {
         statusFunc.innerHTML = `<i class="bi bi-people-fill"></i><span>0 pessoas</span>`;
       } else {
         // Cria um Set com IDs únicos de funcionários
         const funcionariosUnicos = new Set();
-        
+
         // 1. ADICIONA OS OPERADORES TÉCNICOS (responsáveis principais)
         jobsEmAndamento.forEach(job => {
           if (job.operador_id) {
             funcionariosUnicos.add(job.operador_id);
           }
         });
-        
+
         // 2. BUSCA E ADICIONA A EQUIPE ADICIONAL de cada job (cache-bust para dados frescos)
-        const promessasEquipes = jobsEmAndamento.map(job => 
+        const promessasEquipes = jobsEmAndamento.map(job =>
           fetch(`${API_URL}/jobs/${job.id}/equipe?_t=${Date.now()}`, {
             cache: 'no-cache',
             headers: { 'Cache-Control': 'no-cache' }
@@ -543,9 +543,9 @@ async function updateStatusIndicators() {
             .then(res => res.ok ? res.json() : [])
             .catch(() => [])
         );
-        
+
         const todasEquipes = await Promise.all(promessasEquipes);
-        
+
         // Adiciona membros da equipe ao Set (evita duplicatas se operador também estiver na equipe)
         todasEquipes.forEach(equipe => {
           equipe.forEach(membro => {
@@ -554,10 +554,10 @@ async function updateStatusIndicators() {
             }
           });
         });
-        
+
         const totalFuncionarios = funcionariosUnicos.size;
         console.log('👥 Operadores técnicos + equipe:', totalFuncionarios);
-        
+
         statusFunc.innerHTML = `<i class="bi bi-people-fill"></i><span>${totalFuncionarios} ${totalFuncionarios === 1 ? 'pessoa' : 'pessoas'}</span>`;
       }
     } catch (error) {
@@ -567,7 +567,7 @@ async function updateStatusIndicators() {
   } else {
     console.warn('⚠️ statusFuncionarios ou todosOsJobsCache não encontrado');
   }
-  
+
   console.log('✅ Indicadores atualizados');
 }
 
@@ -907,16 +907,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       console.error('❌ Função carregarFuncionarios NÃO existe!');
     }
-    
+
     // Inicializa busca global
     initializeGlobalSearch();
-    
+
     // Atualiza indicadores de status
     updateStatusIndicators();
-    
+
     // Inicia monitoramento de conexão (verifica a cada 30 segundos)
     setInterval(updateStatusIndicators, 30000);
-    
+
     console.log('✅ Busca global e indicadores inicializados');
   } catch (error) {
     console.error('❌ Erro durante inicialização:', error);
@@ -2577,7 +2577,7 @@ window.switchView = async function (viewId) {
     'funcionarios': 'funcionarios',
     'configuracoes': 'configuracoes'
   };
-  
+
   // Mostra skeleton específico para a view
   const skeletonType = skeletonMap[viewId] || 'dashboard';
   showGlobalSkeleton(skeletonType);
@@ -2712,7 +2712,7 @@ function carregarGestaoContratos() {
       // === ADICIONE ESTA LINHA AQUI ===
       atualizarSugestoesBusca(jobs);
       // ================================
-      
+
       // Atualiza cache de busca global
       if (typeof updateSearchCache === 'function') {
         updateSearchCache();
@@ -4646,7 +4646,7 @@ async function carregarListaClientes() {
 
     // Desenha a tela com todos os clientes (COM PAGINAÇÃO)
     renderizarClientesComPaginacao(window.cacheClientes);
-    
+
     // Atualiza cache de busca
     if (typeof updateSearchCache === 'function') {
       updateSearchCache();
@@ -8037,7 +8037,7 @@ window.abrirTelaNovoFuncionario = function () {
   // REMOVE O BADGE DE VISUALIZAÇÃO SE EXISTIR
   const badgeAntigo = document.getElementById('badgeModoVisualizacao');
   if (badgeAntigo) badgeAntigo.remove();
-  
+
   const badgeNovo = document.getElementById('badge-funcionario-visualizacao');
   if (badgeNovo) badgeNovo.remove();
 
@@ -8164,7 +8164,7 @@ window.abrirTelaNovoFuncionario = function () {
   // REMOVE O BADGE DE VISUALIZAÇÃO SE EXISTIR
   const badgeAntigo = document.getElementById('badgeModoVisualizacao');
   if (badgeAntigo) badgeAntigo.remove();
-  
+
   const badgeNovo = document.getElementById('badge-funcionario-visualizacao');
   if (badgeNovo) badgeNovo.remove();
 
@@ -8187,7 +8187,7 @@ window.editarFuncionario = async function (id) {
     // REMOVE O BADGE DE VISUALIZAÇÃO SE EXISTIR
     const badgeAntigo = document.getElementById('badgeModoVisualizacao');
     if (badgeAntigo) badgeAntigo.remove();
-    
+
     const badgeNovo = document.getElementById('badge-funcionario-visualizacao');
     if (badgeNovo) badgeNovo.remove();
 
@@ -8386,7 +8386,7 @@ window.editarFuncionario = async function (id) {
     // REMOVE O BADGE DE VISUALIZAÇÃO SE EXISTIR
     const badgeAntigo = document.getElementById('badgeModoVisualizacao');
     if (badgeAntigo) badgeAntigo.remove();
-    
+
     const badgeNovo = document.getElementById('badge-funcionario-visualizacao');
     if (badgeNovo) badgeNovo.remove();
 
@@ -8421,18 +8421,18 @@ window.visualizarFuncionario = async function (id) {
     if (btn) btn.style.display = 'none';
 
     switchView('cadastro-funcionario');
-    
+
     // ADICIONA BADGE "MODO VISUALIZAÇÃO" NO H2 (DEPOIS DO SWITCHVIEW)
     setTimeout(() => {
       const tituloH2 = document.getElementById('tituloPaginaFuncionario');
-      
+
       // Remove badge antigo se existir
       const badgeAntigo = document.getElementById('badge-funcionario-visualizacao');
       if (badgeAntigo) badgeAntigo.remove();
-      
+
       if (tituloH2) {
         tituloH2.innerText = "Visualizar Funcionário";
-        
+
         const badge = document.createElement('span');
         badge.id = 'badge-funcionario-visualizacao';
         badge.className = 'badge bg-info text-white rounded-pill ms-3';
@@ -8443,7 +8443,7 @@ window.visualizarFuncionario = async function (id) {
         tituloH2.appendChild(badge);
       }
     }, 100);
-    
+
     await verDetalhesFuncionario(id);
   }
 };
