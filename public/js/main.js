@@ -1,34 +1,68 @@
 /* =============================================================
-   GLOBAL SKELETON LOADER SYSTEM
+   GLOBAL SKELETON LOADER SYSTEM - COM SKELETONS ESPECÍFICOS
    ============================================================= */
 
 // Variáveis de controle do skeleton loader
 let skeletonStartTime = null;
 const SKELETON_MIN_DISPLAY_TIME = 2000; // Tempo mínimo de exibição (2000ms = 2 segundos)
+let currentSkeletonId = null; // Controla qual skeleton está ativo
 
 /**
- * Exibe o skeleton loader global
+ * Exibe o skeleton loader específico para a página
+ * @param {string} skeletonType - Tipo de skeleton: 'dashboard', 'clientes', 'funcionarios', 'jobs', 'estoque', 'financeiro', 'configuracoes'
  * @param {boolean} forceImmediate - Se true, mostra imediatamente sem delay
  */
-function showGlobalSkeleton(forceImmediate = false) {
-  const skeleton = document.getElementById('global-skeleton');
-  if (!skeleton) return;
+function showGlobalSkeleton(skeletonType = 'dashboard', forceImmediate = false) {
+  // Oculta qualquer skeleton que esteja ativo
+  hideAllSkeletons();
+  
+  // Define o ID do skeleton baseado no tipo
+  const skeletonId = `skeleton-${skeletonType}`;
+  const skeleton = document.getElementById(skeletonId);
+  
+  if (!skeleton) {
+    console.warn(`⚠️ Skeleton "${skeletonType}" não encontrado. Usando skeleton-dashboard como fallback.`);
+    const fallbackSkeleton = document.getElementById('skeleton-dashboard');
+    if (fallbackSkeleton) {
+      currentSkeletonId = 'skeleton-dashboard';
+      skeletonStartTime = Date.now();
+      fallbackSkeleton.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    return;
+  }
 
+  currentSkeletonId = skeletonId;
   skeletonStartTime = Date.now();
   skeleton.classList.remove('hidden');
 
   // Previne scroll do body quando skeleton está ativo
   document.body.style.overflow = 'hidden';
 
-  console.log('🔄 Skeleton loader ativado');
+  console.log(`🔄 Skeleton "${skeletonType}" ativado`);
 }
 
 /**
- * Oculta o skeleton loader global com tempo mínimo de exibição
+ * Oculta todos os skeletons
+ */
+function hideAllSkeletons() {
+  const skeletonTypes = ['dashboard', 'clientes', 'funcionarios', 'jobs', 'estoque', 'financeiro', 'configuracoes'];
+  skeletonTypes.forEach(type => {
+    const skeleton = document.getElementById(`skeleton-${type}`);
+    if (skeleton) {
+      skeleton.classList.add('hidden');
+    }
+  });
+}
+
+/**
+ * Oculta o skeleton loader ativo com tempo mínimo de exibição
  * @returns {Promise} Promise que resolve quando o skeleton é ocultado
  */
 async function hideGlobalSkeleton() {
-  const skeleton = document.getElementById('global-skeleton');
+  if (!currentSkeletonId) return;
+  
+  const skeleton = document.getElementById(currentSkeletonId);
   if (!skeleton || skeleton.classList.contains('hidden')) return;
 
   const elapsedTime = Date.now() - skeletonStartTime;
@@ -41,22 +75,24 @@ async function hideGlobalSkeleton() {
 
   skeleton.classList.add('hidden');
   document.body.style.overflow = '';
-
-  console.log('✅ Skeleton loader desativado');
+  
+  console.log(`✅ Skeleton desativado`);
+  currentSkeletonId = null;
 }
 
 /**
  * Wrapper para operações assíncronas com skeleton loader
  * @param {Function} asyncFunction - Função assíncrona a ser executada
+ * @param {string} skeletonType - Tipo de skeleton: 'dashboard', 'clientes', 'funcionarios', 'jobs', 'estoque', 'financeiro', 'configuracoes'
  * @param {Object} options - Opções de configuração
  * @returns {Promise} Resultado da função assíncrona
  */
-async function withSkeletonLoader(asyncFunction, options = {}) {
+async function withSkeletonLoader(asyncFunction, skeletonType = 'dashboard', options = {}) {
   const { showSkeleton = true } = options;
 
   try {
     if (showSkeleton) {
-      showGlobalSkeleton();
+      showGlobalSkeleton(skeletonType);
     }
 
     const result = await asyncFunction();
@@ -69,6 +105,470 @@ async function withSkeletonLoader(asyncFunction, options = {}) {
       await hideGlobalSkeleton();
     }
   }
+}
+
+/* =============================================================
+   SISTEMA DE BUSCA GLOBAL
+   ============================================================= */
+
+// Cache de dados para busca
+let searchCache = {
+  clientes: [],
+  jobs: [],
+  produtos: [],
+  funcionarios: []
+};
+
+// Debounce para otimizar performance
+let searchTimeout = null;
+
+/**
+ * Inicializa o sistema de busca global
+ */
+function initializeGlobalSearch() {
+  const searchInput = document.getElementById('globalSearchInput');
+  const searchResults = document.getElementById('globalSearchResults');
+  
+  if (!searchInput || !searchResults) return;
+
+  // Event listener para o input
+  searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+    
+    // Cancela busca anterior
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    if (query.length < 2) {
+      searchResults.classList.remove('active');
+      return;
+    }
+    
+    // Aguarda 300ms após usuário parar de digitar
+    searchTimeout = setTimeout(() => {
+      performGlobalSearch(query);
+    }, 300);
+  });
+
+  // Fecha resultados ao clicar fora
+  document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      searchResults.classList.remove('active');
+    }
+  });
+
+  // Atualiza cache inicial
+  updateSearchCache();
+}
+
+/**
+ * Atualiza o cache de dados para busca
+ */
+async function updateSearchCache() {
+  try {
+    // Busca clientes - carrega se ainda não existir
+    if (!window.listaClientes || window.listaClientes.length === 0) {
+      try {
+        const response = await fetch(`${API_URL}/clientes`);
+        if (response.ok) {
+          const clientes = await response.json();
+          window.listaClientes = clientes;
+          searchCache.clientes = clientes;
+        }
+      } catch (error) {
+        console.log('Erro ao carregar clientes para busca:', error);
+      }
+    } else {
+      searchCache.clientes = window.listaClientes;
+    }
+    
+    // Busca jobs - carrega se ainda não existir
+    if (!window.todosOsJobsCache || window.todosOsJobsCache.length === 0) {
+      try {
+        const response = await fetch(`${API_URL}/jobs`);
+        if (response.ok) {
+          const jobs = await response.json();
+          window.todosOsJobsCache = jobs;
+          searchCache.jobs = jobs;
+        }
+      } catch (error) {
+        console.log('Erro ao carregar jobs para busca:', error);
+      }
+    } else {
+      searchCache.jobs = window.todosOsJobsCache;
+    }
+    
+    // Busca equipamentos - carrega se ainda não existir
+    if (!window.cacheEstoque || window.cacheEstoque.length === 0) {
+      try {
+        const response = await fetch(`${API_URL}/equipamentos`);
+        if (response.ok) {
+          const equipamentos = await response.json();
+          window.cacheEstoque = equipamentos;
+          searchCache.produtos = equipamentos;
+        }
+      } catch (error) {
+        console.log('Erro ao carregar equipamentos para busca:', error);
+      }
+    } else {
+      searchCache.produtos = window.cacheEstoque;
+    }
+    
+    // Busca TODOS os funcionários (incluindo desativados/férias) para busca global
+    try {
+      const response = await fetch(`${API_URL}/funcionarios/todos?_t=${Date.now()}`);
+      if (response.ok) {
+        const funcionarios = await response.json();
+        searchCache.funcionarios = funcionarios;
+        // Atualiza o cache principal também
+        if (!window.cacheFuncionarios || window.cacheFuncionarios.length === 0) {
+          window.cacheFuncionarios = funcionarios;
+        }
+      }
+    } catch (error) {
+      console.log('Erro ao carregar funcionários para busca:', error);
+      // Fallback para o cache existente se houver erro
+      if (window.cacheFuncionarios && window.cacheFuncionarios.length > 0) {
+        searchCache.funcionarios = window.cacheFuncionarios;
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar cache de busca:', error);
+  }
+}
+
+/**
+ * Remove acentos e normaliza string para busca
+ */
+function normalizeString(str) {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // Remove diacríticos (acentos)
+}
+
+/**
+ * Verifica se uma string contém outra (normalizado)
+ */
+function matchSearch(text, query) {
+  return normalizeString(text).includes(normalizeString(query));
+}
+
+/**
+ * Executa a busca global
+ */
+function performGlobalSearch(query) {
+  const searchResults = document.getElementById('globalSearchResults');
+  const queryLower = query.toLowerCase();
+  
+  let results = [];
+  
+  // Busca em clientes (todos os campos)
+  const clientesResults = searchCache.clientes
+    .filter(c => {
+      const nome = c.nome || '';
+      const cpfCnpj = c.cpf_cnpj || '';
+      const email = c.email || '';
+      const telefone = c.telefone || '';
+      const endereco = c.endereco || '';
+      const cidade = c.cidade || '';
+      const uf = c.uf || '';
+      const contato = c.contato || '';
+      
+      return matchSearch(nome, query) || 
+             matchSearch(cpfCnpj, query) || 
+             matchSearch(email, query) ||
+             matchSearch(telefone, query) ||
+             matchSearch(endereco, query) ||
+             matchSearch(cidade, query) ||
+             matchSearch(uf, query) ||
+             matchSearch(contato, query);
+    })
+    .slice(0, 3)
+    .map(c => ({
+      type: 'cliente',
+      id: c.id,
+      title: c.nome,
+      subtitle: c.cpf_cnpj || c.email,
+      icon: 'bi-person-circle'
+    }));
+  
+  // Busca em jobs (número, título, cliente, equipamentos, datas, status)
+  const jobsResults = searchCache.jobs
+    .filter(j => {
+      const numero = `${j.id}`;
+      const titulo = j.titulo || '';
+      const cliente = j.cliente_nome || j.nome_cliente || '';
+      const descricao = j.descricao || '';
+      const equipamentos = j.equipamentos_nomes || '';
+      const dataInicio = j.data_inicio || '';
+      const dataFim = j.data_fim || '';
+      const status = j.status || '';
+      const operador = j.operador_nome || '';
+      
+      return numero.includes(queryLower) ||
+             matchSearch(titulo, query) || 
+             matchSearch(cliente, query) ||
+             matchSearch(descricao, query) ||
+             matchSearch(equipamentos, query) ||
+             matchSearch(dataInicio, query) ||
+             matchSearch(dataFim, query) ||
+             matchSearch(status, query) ||
+             matchSearch(operador, query);
+    })
+    .slice(0, 4)
+    .map(j => ({
+      type: 'job',
+      id: j.id,
+      title: `#${j.id} - ${j.titulo || j.descricao || 'Job'}`,
+      subtitle: j.cliente_nome || j.nome_cliente || 'Cliente não informado',
+      icon: 'bi-briefcase'
+    }));
+  
+  // Busca em produtos/equipamentos (todos os campos)
+  const produtosResults = searchCache.produtos
+    .filter(p => {
+      const nome = p.nome || '';
+      const categoria = p.categoria || '';
+      const descricao = p.descricao || '';
+      const marca = p.marca || '';
+      const modelo = p.modelo || '';
+      const codigo = p.codigo || '';
+      const serial = p.serial || '';
+      
+      return matchSearch(nome, query) || 
+             matchSearch(categoria, query) ||
+             matchSearch(descricao, query) ||
+             matchSearch(marca, query) ||
+             matchSearch(modelo, query) ||
+             matchSearch(codigo, query) ||
+             matchSearch(serial, query);
+    })
+    .slice(0, 3)
+    .map(p => ({
+      type: 'produto',
+      id: p.id,
+      title: p.nome,
+      subtitle: `${p.categoria || 'Equipamento'} - Estoque: ${p.quantidade || 0}`,
+      icon: 'bi-box'
+    }));
+  
+  // Busca em funcionários (TODOS - incluindo desativados/férias)
+  const funcionariosResults = searchCache.funcionarios
+    .filter(f => {
+      const nome = f.nome || '';
+      const cargo = f.cargo || '';
+      const email = f.email || '';
+      const departamento = f.departamento || '';
+      const telefone = f.telefone || '';
+      const cpf = f.cpf || '';
+      const status = f.status || '';
+      
+      return matchSearch(nome, query) || 
+             matchSearch(cargo, query) || 
+             matchSearch(email, query) ||
+             matchSearch(departamento, query) ||
+             matchSearch(telefone, query) ||
+             matchSearch(cpf, query) ||
+             matchSearch(status, query);
+    })
+    .slice(0, 3)
+    .map(f => {
+      // Mostra status se não for "Ativo"
+      let subtitle = f.cargo || 'Cargo não informado';
+      if (f.status && f.status !== 'Ativo') {
+        subtitle += ` • ${f.status}`;
+      }
+      
+      return {
+        type: 'funcionario',
+        id: f.id,
+        title: f.nome,
+        subtitle: subtitle,
+        icon: 'bi-person-badge'
+      };
+    });
+  
+  results = [...clientesResults, ...jobsResults, ...produtosResults, ...funcionariosResults];
+  
+  displaySearchResults(results);
+}
+
+/**
+ * Exibe os resultados da busca
+ */
+function displaySearchResults(results) {
+  const searchResults = document.getElementById('globalSearchResults');
+  
+  if (results.length === 0) {
+    searchResults.innerHTML = '<div class="search-no-results">Nenhum resultado encontrado</div>';
+    searchResults.classList.add('active');
+    return;
+  }
+  
+  const html = results.map(result => `
+    <div class="search-result-item" onclick="handleSearchResultClick('${result.type}', ${result.id})">
+      <div class="search-result-icon type-${result.type}">
+        <i class="bi ${result.icon}"></i>
+      </div>
+      <div class="search-result-content">
+        <div class="search-result-title">${result.title}</div>
+        <div class="search-result-subtitle">${result.subtitle}</div>
+      </div>
+    </div>
+  `).join('');
+  
+  searchResults.innerHTML = html;
+  searchResults.classList.add('active');
+}
+
+/**
+ * Trata clique em resultado da busca
+ */
+window.handleSearchResultClick = function(type, id) {
+  const searchResults = document.getElementById('globalSearchResults');
+  const searchInput = document.getElementById('globalSearchInput');
+  
+  // Fecha resultados e limpa busca
+  searchResults.classList.remove('active');
+  searchInput.value = '';
+  
+  // Navega para o item correto
+  switch(type) {
+    case 'cliente':
+      switchView('clientes');
+      setTimeout(() => visualizarCliente(id), 300);
+      break;
+    case 'job':
+      switchView('contratos');
+      setTimeout(() => visualizarJob(id), 300);
+      break;
+    case 'produto':
+      switchView('estoque');
+      setTimeout(() => {
+        if (typeof editarProduto === 'function') {
+          editarProduto(id);
+        }
+      }, 300);
+      break;
+    case 'funcionario':
+      switchView('funcionarios');
+      setTimeout(() => visualizarFuncionario(id), 300);
+      break;
+  }
+};
+
+/* =============================================================
+   INDICADORES DE STATUS EM TEMPO REAL
+   ============================================================= */
+
+/**
+ * Atualiza os indicadores de status no header
+ */
+async function updateStatusIndicators() {
+  console.log('🔄 Atualizando indicadores de status...');
+  
+  // 1. VERIFICA CONEXÃO COM SERVIDOR
+  const statusOnline = document.querySelector('.status-online');
+  try {
+    const response = await fetch(`${API_URL}/jobs`, { 
+      method: 'HEAD',
+      cache: 'no-cache'
+    });
+    
+    if (statusOnline) {
+      if (response.ok) {
+        statusOnline.classList.remove('status-offline');
+        statusOnline.classList.add('status-online');
+        statusOnline.innerHTML = '<i class="bi bi-circle-fill"></i><span>Online</span>';
+      } else {
+        statusOnline.classList.remove('status-online');
+        statusOnline.classList.add('status-offline');
+        statusOnline.innerHTML = '<i class="bi bi-circle-fill"></i><span>Offline</span>';
+      }
+    }
+  } catch (error) {
+    console.warn('⚠️ Servidor offline');
+    if (statusOnline) {
+      statusOnline.classList.remove('status-online');
+      statusOnline.classList.add('status-offline');
+      statusOnline.innerHTML = '<i class="bi bi-circle-fill"></i><span>Offline</span>';
+    }
+  }
+  
+  // 2. JOBS ATIVOS
+  const statusJobs = document.getElementById('statusJobsAtivos');
+  if (statusJobs && window.todosOsJobsCache) {
+    const jobsAtivos = window.todosOsJobsCache.filter(j => 
+      j.status === 'Agendado' || j.status === 'Confirmado' || j.status === 'Em Andamento'
+    );
+    
+    console.log('📊 Jobs no cache:', window.todosOsJobsCache.length);
+    console.log('📊 Jobs ativos filtrados:', jobsAtivos.length);
+    console.log('📊 Status dos jobs:', window.todosOsJobsCache.map(j => ({ id: j.id, status: j.status })));
+    
+    statusJobs.innerHTML = `<i class="bi bi-lightning-charge-fill"></i><span>${jobsAtivos.length} jobs</span>`;
+  } else {
+    console.warn('⚠️ statusJobsAtivos ou todosOsJobsCache não encontrado');
+  }
+  
+  // 3. FUNCIONÁRIOS ALOCADOS EM JOBS EM ANDAMENTO
+  const statusFunc = document.getElementById('statusFuncionarios');
+  if (statusFunc && window.todosOsJobsCache) {
+    try {
+      // Busca apenas jobs EM ANDAMENTO
+      const jobsEmAndamento = window.todosOsJobsCache.filter(j => j.status === 'Em Andamento');
+      
+      console.log('🎬 Jobs em andamento:', jobsEmAndamento.length);
+      
+      if (jobsEmAndamento.length === 0) {
+        statusFunc.innerHTML = `<i class="bi bi-people-fill"></i><span>0 pessoas</span>`;
+      } else {
+        // Cria um Set com IDs únicos de funcionários
+        const funcionariosUnicos = new Set();
+        
+        // 1. ADICIONA OS OPERADORES TÉCNICOS (responsáveis principais)
+        jobsEmAndamento.forEach(job => {
+          if (job.operador_id) {
+            funcionariosUnicos.add(job.operador_id);
+          }
+        });
+        
+        // 2. BUSCA E ADICIONA A EQUIPE ADICIONAL de cada job (cache-bust para dados frescos)
+        const promessasEquipes = jobsEmAndamento.map(job => 
+          fetch(`${API_URL}/jobs/${job.id}/equipe?_t=${Date.now()}`, {
+            cache: 'no-cache',
+            headers: { 'Cache-Control': 'no-cache' }
+          })
+            .then(res => res.ok ? res.json() : [])
+            .catch(() => [])
+        );
+        
+        const todasEquipes = await Promise.all(promessasEquipes);
+        
+        // Adiciona membros da equipe ao Set (evita duplicatas se operador também estiver na equipe)
+        todasEquipes.forEach(equipe => {
+          equipe.forEach(membro => {
+            if (membro.funcionario_id) {
+              funcionariosUnicos.add(membro.funcionario_id);
+            }
+          });
+        });
+        
+        const totalFuncionarios = funcionariosUnicos.size;
+        console.log('👥 Operadores técnicos + equipe:', totalFuncionarios);
+        
+        statusFunc.innerHTML = `<i class="bi bi-people-fill"></i><span>${totalFuncionarios} ${totalFuncionarios === 1 ? 'pessoa' : 'pessoas'}</span>`;
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar funcionários alocados:', error);
+      statusFunc.innerHTML = `<i class="bi bi-people-fill"></i><span>0 pessoas</span>`;
+    }
+  } else {
+    console.warn('⚠️ statusFuncionarios ou todosOsJobsCache não encontrado');
+  }
+  
+  console.log('✅ Indicadores atualizados');
 }
 
 /* =============================================================
@@ -407,6 +907,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       console.error('❌ Função carregarFuncionarios NÃO existe!');
     }
+    
+    // Inicializa busca global
+    initializeGlobalSearch();
+    
+    // Atualiza indicadores de status
+    updateStatusIndicators();
+    
+    // Inicia monitoramento de conexão (verifica a cada 30 segundos)
+    setInterval(updateStatusIndicators, 30000);
+    
+    console.log('✅ Busca global e indicadores inicializados');
   } catch (error) {
     console.error('❌ Erro durante inicialização:', error);
   } finally {
@@ -595,6 +1106,9 @@ async function atualizarDashboard() {
     if (typeof atualizarMiniGraficoSemana === "function") {
       atualizarMiniGraficoSemana(jobs, dataSegunda);
     }
+
+    // Atualiza indicadores de status no header
+    updateStatusIndicators();
   } catch (err) {
     console.error("Erro ao buscar dados do dashboard:", err);
   }
@@ -2051,8 +2565,22 @@ function iniciarMapa() {
 }
 
 window.switchView = async function (viewId) {
-  // Mostra skeleton durante troca de view
-  showGlobalSkeleton();
+  // Mapeia views para skeletons específicos
+  const skeletonMap = {
+    'principal': 'dashboard',
+    'financeiro': 'financeiro',
+    'clientes': 'clientes',
+    'contratos': 'clientes',
+    'novo-job': 'jobs',
+    'estoque': 'estoque',
+    'novo-item': 'estoque',
+    'funcionarios': 'funcionarios',
+    'configuracoes': 'configuracoes'
+  };
+  
+  // Mostra skeleton específico para a view
+  const skeletonType = skeletonMap[viewId] || 'dashboard';
+  showGlobalSkeleton(skeletonType);
 
   try {
     // 1. Remove ativo de todas as seções e links (Lógica padrão)
@@ -2166,7 +2694,7 @@ function getPagamentoPill(status) {
 
 let paginaAtual = 1;
 const ITENS_POR_PAGINA = 6; // Mesmo padrão dos clientes
-let todosOsJobsCache = []; // Guarda os dados para não buscar toda hora
+window.todosOsJobsCache = []; // Guarda os dados para não buscar toda hora (GLOBAL)
 let jobsFiltrados = []; // <--- NOVA VARIÁVEL
 // --- VARIÁVEIS DE CONTROLE DE ESTADO (SWITCH) ---
 let estadoViewJobs = 'ativos';
@@ -2178,12 +2706,17 @@ function carregarGestaoContratos() {
     .then(res => res.json())
     .then(jobs => {
       // 1. Atualiza o Cache Global com dados novos
-      todosOsJobsCache = jobs.sort((a, b) => b.id - a.id);
-      jobsFiltrados = [...todosOsJobsCache];
+      window.todosOsJobsCache = jobs.sort((a, b) => b.id - a.id);
+      jobsFiltrados = [...window.todosOsJobsCache];
 
       // === ADICIONE ESTA LINHA AQUI ===
       atualizarSugestoesBusca(jobs);
       // ================================
+      
+      // Atualiza cache de busca global
+      if (typeof updateSearchCache === 'function') {
+        updateSearchCache();
+      }
 
       // 2. ATUALIZA OS CARDS (Lógica Visual)
       // =====================================
@@ -2288,6 +2821,9 @@ function carregarGestaoContratos() {
 
       aplicarFiltrosContratos(paginaAtual);
 
+      // Atualiza indicadores de status no header
+      updateStatusIndicators();
+
     })
     .catch(err => console.error("Erro ao carregar contratos:", err));
 }
@@ -2341,7 +2877,7 @@ function aplicarFiltrosContratos() {
   const pagamentoSelecionado = document.getElementById('filtro-pagamento').value;
 
   // 2. Filtra a lista
-  jobsFiltrados = todosOsJobsCache.filter(job => {
+  jobsFiltrados = window.todosOsJobsCache.filter(job => {
     // A) VERIFICAÇÃO DE TEXTO (Nome do Job, Cliente ou ID)
     const desc = (job.descricao || "").toLowerCase();      // Nome do Job
     const cliente = (job.nome_cliente || "").toLowerCase(); // Nome do Cliente
@@ -2379,7 +2915,7 @@ function limparFiltros() {
   document.getElementById('filtro-pagamento').value = ""; // NOVO
 
   // Reseta a lista
-  jobsFiltrados = [...todosOsJobsCache];
+  jobsFiltrados = [...window.todosOsJobsCache];
 
   renderizarTabelaContratos(1);
 }
@@ -2410,7 +2946,7 @@ function renderizarTabelaContratos(pagina) {
 
   // Garante que jobsFiltrados existe
   if (!jobsFiltrados || jobsFiltrados.length === 0) {
-    jobsFiltrados = [...todosOsJobsCache];
+    jobsFiltrados = [...window.todosOsJobsCache];
     console.log('🔄 Resetou jobsFiltrados:', jobsFiltrados.length);
   }
 
@@ -3134,7 +3670,7 @@ function exportarParaExcel() {
   // 1. Pega a lista atual (filtrada ou completa)
   let listaBase = (typeof jobsFiltrados !== 'undefined' && jobsFiltrados.length > 0)
     ? jobsFiltrados
-    : todosOsJobsCache;
+    : window.todosOsJobsCache;
 
   if (!listaBase || listaBase.length === 0) {
     alert("Não há dados para exportar!");
@@ -3318,7 +3854,7 @@ async function abrirModalInvoice(jobId) {
   const id = Number(jobId);
 
   // Pega dados básicos do Cache
-  let job = todosOsJobsCache.find(j => Number(j.id) === id);
+  let job = window.todosOsJobsCache.find(j => Number(j.id) === id);
   if (!job) {
     alert("Pedido não encontrado. Recarregue a página.");
     return;
@@ -3609,7 +4145,7 @@ function renderizarInvoiceHTML(job) {
 
 
 function salvarInvoicePDF(jobId) {
-  const job = todosOsJobsCache.find(j => j.id === jobId);
+  const job = window.todosOsJobsCache.find(j => j.id === jobId);
   if (!job) return alert('Pedido não encontrado!');
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -4106,9 +4642,15 @@ async function carregarListaClientes() {
 
     // Guarda na memória para filtrar rápido sem ir no servidor
     window.cacheClientes = clientes;
+    window.listaClientes = clientes; // Para busca global
 
     // Desenha a tela com todos os clientes (COM PAGINAÇÃO)
     renderizarClientesComPaginacao(window.cacheClientes);
+    
+    // Atualiza cache de busca
+    if (typeof updateSearchCache === 'function') {
+      updateSearchCache();
+    }
   } catch (err) {
     console.error("Erro ao carregar clientes:", err);
   }
@@ -4118,7 +4660,7 @@ async function carregarListaClientes() {
 // 2. Função de Filtragem (Texto + Tipo PF/PJ + Status)
 window.filtrarClientes = async function () {
   // Mostra skeleton durante o filtro
-  showGlobalSkeleton();
+  showGlobalSkeleton('clientes');
 
   try {
     // Pega o texto digitado (minúsculo)
@@ -4817,6 +5359,8 @@ window.excluirJob = function (id) {
         if (data.success) {
           // Remove da interface sem recarregar a página inteira
           carregarGestaoContratos();
+          // Atualiza indicadores de status
+          updateStatusIndicators();
         } else {
           alert("Erro ao excluir: " + (data.message || "Erro desconhecido"));
         }
@@ -4906,7 +5450,7 @@ window.editarJob = async function (jobId) {
 
   // Fallback: Se a busca falhar (ou servidor offline), tenta usar o que tem na memória
   if (!job) {
-    job = (Array.isArray(todosOsJobsCache) && todosOsJobsCache.find(j => Number(j.id) === id)) ||
+    job = (Array.isArray(window.todosOsJobsCache) && window.todosOsJobsCache.find(j => Number(j.id) === id)) ||
       (Array.isArray(jobsFiltrados) && jobsFiltrados.find(j => Number(j.id) === id));
   }
 
@@ -5121,6 +5665,8 @@ window.excluirJob = function (jobId) {
       // Recarrega lista e cards sem mexer na lógica atual
       if (typeof atualizarDashboard === "function") atualizarDashboard();
       if (typeof carregarGestaoContratos === "function") carregarGestaoContratos();
+      // Atualiza indicadores de status
+      if (typeof updateStatusIndicators === "function") updateStatusIndicators();
     })
     .catch(err => {
       console.error(err);
@@ -5574,7 +6120,7 @@ window.abrirDetalhesJob = async function (jobId) {
 
   const id = Number(jobId);
 
-  let job = (Array.isArray(todosOsJobsCache) && todosOsJobsCache.find(j => Number(j.id) === id)) ||
+  let job = (Array.isArray(window.todosOsJobsCache) && window.todosOsJobsCache.find(j => Number(j.id) === id)) ||
     (Array.isArray(jobsFiltrados) && jobsFiltrados.find(j => Number(j.id) === id));
 
   if (!job) {
@@ -5582,7 +6128,7 @@ window.abrirDetalhesJob = async function (jobId) {
       const res = await fetch(`${API_URL}/jobs`);
       if (!res.ok) throw new Error("Falha ao recarregar jobs");
       const jobs = await res.json();
-      todosOsJobsCache = jobs;
+      window.todosOsJobsCache = jobs;
       jobsFiltrados = [...jobs];
       job = jobs.find(j => Number(j.id) === id);
     } catch (e) {
@@ -5955,6 +6501,11 @@ async function carregarEstoque() {
     console.log("Itens carregados:", itens.length);
     window.cacheEstoque = itens; // Salva no cache
 
+    // Atualiza cache de busca global
+    if (typeof updateSearchCache === 'function') {
+      updateSearchCache();
+    }
+
     // Atualiza os números lá em cima (KPIs)
     atualizarKPIsEstoque(itens);
 
@@ -6317,11 +6868,13 @@ function renderizarEstoqueCards(lista) {
 
     const card = `
         <div class="col-xl-4 col-md-6">
-          <div class="card-custom h-100">
+          <div class="card-custom h-100" 
+               onclick="visualizarItem(${item.id})" 
+               style="cursor: pointer;">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 ${areaIconeHTML}
                 
-                <div class="dropdown ms-auto"> 
+                <div class="dropdown ms-auto" onclick="event.stopPropagation();"> 
                     <button class="btn btn-sm btn-light border-0 rounded-circle shadow-sm" 
                             type="button" 
                             data-bs-toggle="dropdown"
@@ -6871,6 +7424,11 @@ window.carregarFuncionarios = async function () {
     console.log('✅ Funcionários carregados:', lista.length, 'items');
     window.cacheFuncionarios = lista;
 
+    // Atualiza cache de busca global
+    if (typeof updateSearchCache === 'function') {
+      updateSearchCache();
+    }
+
     // --- CÁLCULO DOS CARDS KPI ---
     const total = lista.length;
     const ativos = lista.filter(f => f.status === 'Ativo').length;
@@ -6905,6 +7463,9 @@ window.carregarFuncionarios = async function () {
 
     // Aplica filtros inicialmente
     await window.filtrarFuncionarios();
+
+    // Atualiza indicadores de status no header
+    updateStatusIndicators();
   } catch (err) {
     console.error("Erro ao carregar funcionários:", err);
   }
@@ -6919,7 +7480,7 @@ window.filtrarFuncionarios = async function () {
   }
 
   // Mostra skeleton durante o filtro
-  showGlobalSkeleton();
+  showGlobalSkeleton('funcionarios');
 
   try {
     console.log('🔍 Filtrando funcionários. Cache tem:', window.cacheFuncionarios.length, 'items');
@@ -7047,9 +7608,11 @@ window.renderizarFuncionariosCards = function (lista) {
 
     const cardHTML = `
             <div class="col-xl-4 col-md-6">
-                <div class="card-custom h-100 position-relative">
+                <div class="card-custom h-100 position-relative" 
+                     onclick="visualizarFuncionario(${func.id})" 
+                     style="cursor: pointer;">
                     
-                    <div class="dropdown position-absolute top-0 end-0 mt-3 me-3">
+                    <div class="dropdown position-absolute top-0 end-0 mt-3 me-3" onclick="event.stopPropagation();">
                         <button class="btn btn-sm btn-light border-0 rounded-circle shadow-sm" 
                                 type="button" 
                                 data-bs-toggle="dropdown"
@@ -7079,7 +7642,7 @@ window.renderizarFuncionariosCards = function (lista) {
                         <div class="d-flex align-items-center">
                             <div class="avatar-square avatar-upload-container" 
                                  style="background-color: ${corAvatar}; ${func.avatar ? `background-image: url(${func.avatar}); background-size: cover; background-position: center;` : ''}"
-                                 onclick="abrirUploadAvatarFuncionario(${func.id})"
+                                 onclick="event.stopPropagation(); abrirUploadAvatarFuncionario(${func.id})"
                                  title="Clique para alterar foto">
                                 ${func.avatar ? '' : iniciais}
                                 <div class="avatar-upload-overlay-card">
@@ -7167,7 +7730,7 @@ window.renderizarFuncionariosLista = function (lista) {
             </ul>`;
 
     const tr = `
-        <tr>
+        <tr style="cursor: pointer;" onclick="visualizarFuncionario(${func.id})">
             <td class="ps-4">
                 <div class="fw-bold text-dark">${func.nome}</div>
                 <div class="text-muted small">${func.cargo || 'Sem cargo'}</div>
@@ -7179,7 +7742,7 @@ window.renderizarFuncionariosLista = function (lista) {
             </td>
             <td class="small">${func.data_admissao ? new Date(func.data_admissao).toLocaleDateString('pt-BR') : '-'}</td>
             <td><span class="status-pill ${statusClass}">${func.status}</span></td>
-            <td class="text-end pe-4">
+            <td class="text-end pe-4" onclick="event.stopPropagation();">
                 <div class="dropdown">
                     <button class="btn btn-light btn-sm border-0 rounded-circle shadow-sm" 
                             type="button" 
@@ -7471,8 +8034,12 @@ window.abrirTelaNovoFuncionario = function () {
   document.getElementById('formFuncionarioFull').reset();
   document.getElementById('tituloPaginaFuncionario').innerText = "Novo Funcionário";
 
-  const badge = document.getElementById('badgeModoVisualizacao');
-  if (badge) badge.style.display = 'none';
+  // REMOVE O BADGE DE VISUALIZAÇÃO SE EXISTIR
+  const badgeAntigo = document.getElementById('badgeModoVisualizacao');
+  if (badgeAntigo) badgeAntigo.remove();
+  
+  const badgeNovo = document.getElementById('badge-funcionario-visualizacao');
+  if (badgeNovo) badgeNovo.remove();
 
   toggleCamposFuncionario(false);
 
@@ -7594,9 +8161,12 @@ window.abrirTelaNovoFuncionario = function () {
   document.getElementById('formFuncionarioFull').reset();
   document.getElementById('tituloPaginaFuncionario').innerText = "Novo Funcionário";
 
-  // ESCONDE A TAG
-  const badge = document.getElementById('badgeModoVisualizacao');
-  if (badge) badge.style.display = 'none';
+  // REMOVE O BADGE DE VISUALIZAÇÃO SE EXISTIR
+  const badgeAntigo = document.getElementById('badgeModoVisualizacao');
+  if (badgeAntigo) badgeAntigo.remove();
+  
+  const badgeNovo = document.getElementById('badge-funcionario-visualizacao');
+  if (badgeNovo) badgeNovo.remove();
 
   toggleCamposFuncionario(false);
 
@@ -7614,9 +8184,12 @@ window.editarFuncionario = async function (id) {
     window.idFuncionarioEditando = id;
     document.getElementById('tituloPaginaFuncionario').innerText = "Editar Cadastro";
 
-    // ESCONDE A TAG
-    const badge = document.getElementById('badgeModoVisualizacao');
-    if (badge) badge.style.display = 'none';
+    // REMOVE O BADGE DE VISUALIZAÇÃO SE EXISTIR
+    const badgeAntigo = document.getElementById('badgeModoVisualizacao');
+    if (badgeAntigo) badgeAntigo.remove();
+    
+    const badgeNovo = document.getElementById('badge-funcionario-visualizacao');
+    if (badgeNovo) badgeNovo.remove();
 
     // Libera campos e ajusta botão
     toggleCamposFuncionario(false);
@@ -7624,23 +8197,6 @@ window.editarFuncionario = async function (id) {
     if (btn) { btn.style.display = 'inline-block'; btn.innerHTML = 'Atualizar Dados'; }
 
     switchView('cadastro-funcionario');
-  }
-};
-
-// 4. VISUALIZAR
-window.visualizarFuncionario = async function (id) {
-  const sucesso = await preencherFormularioFuncionario(id);
-  if (sucesso) {
-    window.idFuncionarioEditando = null;
-    document.getElementById('tituloPaginaFuncionario').innerText = "Visualizar Funcionário";
-
-    toggleCamposFuncionario(true); // Bloqueia tudo
-
-    const btnSalvar = document.querySelector('#view-cadastro-funcionario .btn-success');
-    btnSalvar.style.display = 'none'; // Esconde salvar
-
-    switchView('cadastro-funcionario');
-    await verDetalhesFuncionario(id);
   }
 };
 
@@ -7827,6 +8383,13 @@ window.editarFuncionario = async function (id) {
     // 3. Muda o título da página
     document.getElementById('tituloPaginaFuncionario').innerText = "Editar Cadastro";
 
+    // REMOVE O BADGE DE VISUALIZAÇÃO SE EXISTIR
+    const badgeAntigo = document.getElementById('badgeModoVisualizacao');
+    if (badgeAntigo) badgeAntigo.remove();
+    
+    const badgeNovo = document.getElementById('badge-funcionario-visualizacao');
+    if (badgeNovo) badgeNovo.remove();
+
     // 4. Garante que os campos estão desbloqueados (editáveis)
     toggleCamposFuncionario(false);
 
@@ -7852,20 +8415,35 @@ window.visualizarFuncionario = async function (id) {
   if (sucesso) {
     window.idFuncionarioEditando = null;
 
-    // Título normal
-    const titulo = document.getElementById('tituloPaginaFuncionario');
-    if (titulo) titulo.innerText = "Visualizar Funcionário";
-
-    // MOSTRA A TAG AZUL (Igual da foto)
-    const badge = document.getElementById('badgeModoVisualizacao');
-    if (badge) badge.style.display = 'inline-block';
-
     // Bloqueia campos e esconde botão salvar
     toggleCamposFuncionario(true);
     const btn = document.querySelector('#view-cadastro-funcionario .btn-success');
     if (btn) btn.style.display = 'none';
 
     switchView('cadastro-funcionario');
+    
+    // ADICIONA BADGE "MODO VISUALIZAÇÃO" NO H2 (DEPOIS DO SWITCHVIEW)
+    setTimeout(() => {
+      const tituloH2 = document.getElementById('tituloPaginaFuncionario');
+      
+      // Remove badge antigo se existir
+      const badgeAntigo = document.getElementById('badge-funcionario-visualizacao');
+      if (badgeAntigo) badgeAntigo.remove();
+      
+      if (tituloH2) {
+        tituloH2.innerText = "Visualizar Funcionário";
+        
+        const badge = document.createElement('span');
+        badge.id = 'badge-funcionario-visualizacao';
+        badge.className = 'badge bg-info text-white rounded-pill ms-3';
+        badge.style.fontSize = '0.75rem';
+        badge.style.verticalAlign = 'middle';
+        badge.style.letterSpacing = '0.5px';
+        badge.textContent = '👁️ MODO VISUALIZAÇÃO';
+        tituloH2.appendChild(badge);
+      }
+    }, 100);
+    
     await verDetalhesFuncionario(id);
   }
 };
