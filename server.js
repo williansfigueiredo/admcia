@@ -845,18 +845,28 @@ app.post('/jobs', (req, res) => {
     const numeroPedido = `${prefixo}-${numeroAtual}`;
     console.log(`📝 Gerando pedido com número: ${numeroPedido}`);
 
+    // Função auxiliar para converter data para formato SQL (evita problema de timezone)
+    const formatarDataSQL = (data) => {
+      if (!data) return null;
+      const d = new Date(data);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     // 1. ADICIONADO: Colunas de horário e numero_pedido no INSERT
     const sqlJob = `
         INSERT INTO jobs (
             numero_pedido,
-            descricao, valor, data_job, data_fim, status, pagamento, cliente_id,
+            descricao, valor, data_job, data_inicio, data_fim, status, pagamento, cliente_id,
             operador_id, 
             hora_chegada_prevista, hora_inicio_evento, hora_fim_evento,
             logradouro, numero, bairro, cidade, uf, cep,
             solicitante_nome, solicitante_email, solicitante_telefone,
             producao_local, producao_contato, producao_email,
             pagador_nome, pagador_cnpj, pagador_email, pagador_endereco,
-            forma_pagamento, tipo_documento, observacoes, data_inicio,
+            forma_pagamento, tipo_documento, observacoes,
             desconto_porcentagem, motivo_desconto, vencimento_texto,
             pagador_cep, pagador_logradouro, pagador_numero, pagador_bairro,
             pagador_cidade, pagador_uf, desconto_valor
@@ -882,8 +892,9 @@ app.post('/jobs', (req, res) => {
       numeroPedido,
       data.descricao || null,
       data.valor || 0,
-      data.data_inicio || null,
-      data.data_fim || null,
+      formatarDataSQL(new Date()), // data_job = data ATUAL (criação do pedido)
+      formatarDataSQL(data.data_inicio) || null, // data_inicio = data do evento
+      formatarDataSQL(data.data_fim) || null, // data_fim = data final do evento
       "Agendado",
       "Pendente",
       data.cliente_id || null,
@@ -916,8 +927,7 @@ app.post('/jobs', (req, res) => {
       data.forma_pagamento || null,
       data.tipo_documento || null,
       data.observacoes || null,
-      data.data_inicio || null,
-      0,
+      0, // desconto_porcentagem
       data.motivo_desconto || null,
       (data.vencimento_texto && data.vencimento_texto.trim() !== '' && data.vencimento_texto !== 'null') ? data.vencimento_texto : "À vista",
 
@@ -1077,6 +1087,16 @@ app.put('/jobs/:id', (req, res) => {
   const data = req.body;
   const id = req.params.id;
 
+  // Função auxiliar para converter data para formato SQL (evita problema de timezone)
+  const formatarDataSQL = (data) => {
+    if (!data) return null;
+    const d = new Date(data);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // MONTAR ENDEREÇO COMPLETO DO PAGADOR
   const pagadorEnderecoCompleto = (data.pagador_logradouro || data.endereco?.logradouro)
     ? `${data.pagador_logradouro || data.endereco?.logradouro}, ${data.pagador_numero || data.endereco?.numero} - ${data.pagador_bairro || data.endereco?.bairro}, ${data.pagador_cidade || data.endereco?.cidade}/${data.pagador_uf || data.endereco?.uf}`
@@ -1103,9 +1123,9 @@ app.put('/jobs/:id', (req, res) => {
   const values = [
     data.descricao || null,
     data.valor || 0,
-    data.data_inicio || null,
-    data.data_inicio || null,
-    data.data_fim || null,
+    formatarDataSQL(data.data_job || new Date()), // data_job (mantém a existente ou usa data atual)
+    formatarDataSQL(data.data_inicio) || null, // data_inicio = data do evento
+    formatarDataSQL(data.data_fim) || null, // data_fim = data final do evento
     data.cliente_id || null,
     data.operador_id || null,
 
@@ -1176,8 +1196,8 @@ app.put('/jobs/:id', (req, res) => {
           });
 
           // 2. CRIA ESCALAS AUTOMATICAMENTE PARA CADA MEMBRO DA EQUIPE
-          const dataInicio = data.data_inicio || null;
-          const dataFim = data.data_fim || data.data_inicio || null;
+          const dataInicio = formatarDataSQL(data.data_inicio) || null;
+          const dataFim = formatarDataSQL(data.data_fim || data.data_inicio) || null;
           
           if (dataInicio) {
             const sqlEscalas = `
