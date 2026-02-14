@@ -64,11 +64,18 @@ function preencherFormularioPerfil(usuario) {
   const avatarPreview = document.getElementById('configAvatarPreview');
   if (avatarPreview) {
     if (usuario.avatar) {
-      // Avatar pode vir como caminho completo (/uploads/...) ou só o nome do arquivo
-      const avatarUrl = usuario.avatar.startsWith('/') 
-        ? usuario.avatar 
-        : `/uploads/avatars/${usuario.avatar}`;
-      avatarPreview.innerHTML = `<img src="${avatarUrl}?t=${Date.now()}" alt="Avatar" class="config-avatar-img">`;
+      // Garante que o avatar sempre tenha caminho completo
+      let avatarUrl = usuario.avatar;
+      
+      // Se não começar com /, adiciona o caminho completo
+      if (!avatarUrl.startsWith('/')) {
+        avatarUrl = `/uploads/avatars/${avatarUrl}`;
+      }
+      
+      // Adiciona timestamp para evitar cache
+      avatarUrl += `?t=${Date.now()}`;
+      
+      avatarPreview.innerHTML = `<img src="${avatarUrl}" alt="Avatar" class="config-avatar-img" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\"config-avatar-initials\\">${usuario.nome ? usuario.nome.charAt(0).toUpperCase() : '?'}</div>';">`;
     } else {
       const iniciais = usuario.nome ? usuario.nome.charAt(0).toUpperCase() : '?';
       avatarPreview.innerHTML = `<div class="config-avatar-initials">${iniciais}</div>`;
@@ -281,10 +288,12 @@ async function uploadAvatar(file) {
     if (response.ok && result.success) {
       alert('✅ Foto atualizada!');
       
-      // Atualiza preview
+      // Atualiza preview com caminho completo
       const avatarPreview = document.getElementById('configAvatarPreview');
       if (avatarPreview && result.avatar) {
-        avatarPreview.innerHTML = `<img src="/uploads/avatars/${result.avatar}?t=${Date.now()}" alt="Avatar" class="config-avatar-img">`;
+        // result.avatar já vem com caminho completo agora
+        const avatarUrl = result.avatar.startsWith('/') ? result.avatar : `/uploads/avatars/${result.avatar}`;
+        avatarPreview.innerHTML = `<img src="${avatarUrl}?t=${Date.now()}" alt="Avatar" class="config-avatar-img">`;
       }
       
       // Atualiza usuário local

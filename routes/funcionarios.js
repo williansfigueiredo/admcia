@@ -189,8 +189,10 @@ router.post('/me/avatar', requireAuth, (req, res) => {
         }
       }
 
-      // Atualiza avatar no banco
-      db.query('UPDATE funcionarios SET avatar = ? WHERE id = ?', [avatarPath, userId], (err) => {
+      // Atualiza avatar no banco - SALVA COM CAMINHO COMPLETO
+      const avatarComCaminho = `/uploads/avatars/${avatarPath}`;
+      
+      db.query('UPDATE funcionarios SET avatar = ? WHERE id = ?', [avatarComCaminho, userId], (err) => {
         if (err) {
           console.error('Erro ao atualizar avatar:', err);
           return res.status(500).json({ success: false, error: 'Erro ao salvar avatar' });
@@ -199,7 +201,7 @@ router.post('/me/avatar', requireAuth, (req, res) => {
         return res.json({ 
           success: true, 
           message: 'Avatar atualizado!',
-          avatar: avatarPath
+          avatar: avatarComCaminho
         });
       });
     });

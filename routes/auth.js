@@ -218,6 +218,11 @@ router.get('/me', (req, res) => {
       // Formata is_master como boolean
       funcionario.is_master = funcionario.is_master === 1;
 
+      // Garante que o avatar sempre tenha caminho completo
+      if (funcionario.avatar && !funcionario.avatar.startsWith('/')) {
+        funcionario.avatar = `/uploads/avatars/${funcionario.avatar}`;
+      }
+
       return res.json({
         success: true,
         usuario: funcionario

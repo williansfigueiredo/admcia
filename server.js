@@ -993,8 +993,18 @@ app.post('/jobs', (req, res) => {
       });
 
       // B. CRIAR ESCALAS AUTOMATICAMENTE PARA CADA MEMBRO DA EQUIPE
-      const dataInicio = data.data_inicio || null;
-      const dataFim = data.data_fim || data.data_inicio || null;
+      // Função auxiliar para converter data para formato SQL (evita problema de timezone)
+      const formatarDataSQL = (data) => {
+        if (!data) return null;
+        const d = new Date(data);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const dataInicio = formatarDataSQL(data.data_inicio) || null;
+      const dataFim = formatarDataSQL(data.data_fim || data.data_inicio) || null;
       
       if (dataInicio) {
         const sqlEscalas = `
@@ -3192,6 +3202,12 @@ app.get('/auth/verificar', (req, res) => {
     
     const sessao = results[0];
     
+    // Garante que o avatar sempre tenha caminho completo
+    let avatarCompleto = sessao.avatar;
+    if (avatarCompleto && !avatarCompleto.startsWith('/')) {
+      avatarCompleto = `/uploads/avatars/${avatarCompleto}`;
+    }
+    
     res.json({
       valido: true,
       usuario: {
@@ -3200,7 +3216,7 @@ app.get('/auth/verificar', (req, res) => {
         nome: sessao.nome,
         cargo: sessao.cargo,
         email: sessao.email,
-        avatar: sessao.avatar,
+        avatar: avatarCompleto,
         permissoes: {
           dashboard: sessao.acesso_dashboard,
           clientes: sessao.acesso_clientes,
@@ -3262,3 +3278,42 @@ function verificarPermissao(permissaoNecessaria) {
 
 // Exportar para uso em outras partes se necessário
 module.exports = { verificarPermissao };
+
+// =======================================================
+//          ROTA DE MIGRAÇÃO DE EMERGÊNCIA
+// =======================================================
+app.get('/migrar-numero-pedido', (req, res) => {
+  console.log('🚨 EXECUTANDO MIGRAÇÃO DE EMERGÊNCIA: numero_pedido');
+  
+  const sqlAdicionarNumeroPedido = `
+    ALTER TABLE jobs 
+    ADD COLUMN numero_pedido VARCHAR(50)
+  `;
+  
+  db.query(sqlAdicionarNumeroPedido, (err) => {
+    if (err) {
+      if (err.code === 'ER_DUP_FIELDNAME') {
+        console.log('✅ Coluna numero_pedido já existe na tabela jobs.');
+        return res.json({ 
+          success: true, 
+          message: 'Coluna numero_pedido já existe na tabela jobs. ✅',
+          status: 'JÁ EXISTIA'
+        });
+      } else {
+        console.error('❌ Erro ao adicionar coluna numero_pedido:', err);
+        return res.status(500).json({ 
+          success: false, 
+          error: err.message,
+          message: 'Erro ao criar a coluna. Veja os detalhes no console.'
+        });
+      }
+    } else {
+      console.log('✅ Coluna numero_pedido criada com sucesso na tabela jobs!');
+      return res.json({ 
+        success: true, 
+        message: 'Coluna numero_pedido criada com sucesso! 🎉',
+        status: 'CRIADA AGORA'
+      });
+    }
+  });
+});
