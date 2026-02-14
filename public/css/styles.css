@@ -8912,34 +8912,32 @@ button:hover #iconTheme {
 /* Estado normal - valores visíveis */
 .sensitive-value {
   transition: all 0.3s ease;
+  position: relative;
 }
 
 /* Estado com valores escondidos */
 body.hide-values .sensitive-value {
   color: transparent !important;
   text-shadow: none !important;
-  background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  position: relative;
+  background: transparent !important;
+  -webkit-text-fill-color: transparent !important;
   user-select: none;
+  font-size: 0 !important;
 }
 
-body.hide-values .sensitive-value::after {
+body.hide-values .sensitive-value::before {
   content: '••••••';
-  position: absolute;
-  left: 0;
-  top: 0;
-  color: #94a3b8;
+  font-size: 1.875rem; /* fs-3 equiv */
+  color: #64748b;
   font-weight: 600;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
+  -webkit-text-fill-color: #64748b;
 }
 
 /* Esconde também os trends/percentuais */
 body.hide-values .sensitive-value .bi,
 body.hide-values .sensitive-value span {
-  visibility: hidden;
+  display: none !important;
 }
 
 /* Mini charts também ficam escondidos */
@@ -8968,12 +8966,7 @@ body.hide-values .trend-pill {
 }
 
 /* Dark mode - ajustes */
-[data-bs-theme="dark"] body.hide-values .sensitive-value {
-  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
-[data-bs-theme="dark"] body.hide-values .sensitive-value::after {
-  color: #64748b;
+[data-bs-theme="dark"] body.hide-values .sensitive-value::before {
+  color: #94a3b8;
+  -webkit-text-fill-color: #94a3b8;
 }

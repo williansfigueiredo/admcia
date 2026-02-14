@@ -2999,19 +2999,19 @@ function carregarGestaoContratos() {
       if (estadoViewJobs === 'ativos') {
         countJobs = jobs.filter(j => j.status === 'Agendado' || j.status === 'Confirmado' || j.status === 'Em Andamento').length;
         if (elTituloJobs) elTituloJobs.innerText = "Jobs em Aberto";
-        if (elValorJobs) elValorJobs.className = "fs-3 fw-bold text-dark";
+        if (elValorJobs) elValorJobs.className = "fs-3 fw-bold text-dark sensitive-value";
         if (elIconBgJobs) elIconBgJobs.className = "fin-icon-box bg-green-soft mb-0";
         if (elIconJobs) elIconJobs.className = "bi bi-camera-reels";
       } else if (estadoViewJobs === 'finalizados') {
         countJobs = jobs.filter(j => j.status === 'Finalizado').length;
         if (elTituloJobs) elTituloJobs.innerText = "Jobs Finalizados";
-        if (elValorJobs) elValorJobs.className = "fs-3 fw-bold text-primary";
+        if (elValorJobs) elValorJobs.className = "fs-3 fw-bold text-primary sensitive-value";
         if (elIconBgJobs) elIconBgJobs.className = "fin-icon-box bg-blue-soft mb-0";
         if (elIconJobs) elIconJobs.className = "bi bi-check-circle-fill";
       } else {
         countJobs = jobs.filter(j => j.status === 'Cancelado').length;
         if (elTituloJobs) elTituloJobs.innerText = "Jobs Cancelados";
-        if (elValorJobs) elValorJobs.className = "fs-3 fw-bold text-danger";
+        if (elValorJobs) elValorJobs.className = "fs-3 fw-bold text-danger sensitive-value";
         if (elIconBgJobs) elIconBgJobs.className = "fin-icon-box bg-red-soft mb-0";
         if (elIconJobs) elIconJobs.className = "bi bi-x-circle";
       }
@@ -3028,21 +3028,21 @@ function carregarGestaoContratos() {
         const jobsPrevisao = jobs.filter(j => j.status === 'Agendado' || j.status === 'Confirmado' || j.status === 'Em Andamento');
         valorExibir = jobsPrevisao.reduce((acc, curr) => acc + Number(curr.valor), 0);
         if (elTituloFat) elTituloFat.innerText = "Previsão Faturamento";
-        if (elValorFat) elValorFat.className = "fs-3 fw-bold text-green";
+        if (elValorFat) elValorFat.className = "fs-3 fw-bold text-green sensitive-value";
         if (elIconBgFat) elIconBgFat.className = "fin-icon-box bg-green-soft mb-0";
         if (elIconFat) elIconFat.className = "bi bi-currency-dollar";
       } else if (estadoViewFaturamento === 'finalizado') {
         const jobsFinalizados = jobs.filter(j => j.status === 'Finalizado');
         valorExibir = jobsFinalizados.reduce((acc, curr) => acc + Number(curr.valor), 0);
         if (elTituloFat) elTituloFat.innerText = "Faturamento Finalizado";
-        if (elValorFat) elValorFat.className = "fs-3 fw-bold text-primary";
+        if (elValorFat) elValorFat.className = "fs-3 fw-bold text-primary sensitive-value";
         if (elIconBgFat) elIconBgFat.className = "fin-icon-box bg-blue-soft mb-0";
         if (elIconFat) elIconFat.className = "bi bi-check-circle-fill";
       } else {
         const jobsCancelados = jobs.filter(j => j.status === 'Cancelado');
         valorExibir = jobsCancelados.reduce((acc, curr) => acc + Number(curr.valor), 0);
         if (elTituloFat) elTituloFat.innerText = "Valor Perdido (Cancelados)";
-        if (elValorFat) elValorFat.className = "fs-3 fw-bold text-danger";
+        if (elValorFat) elValorFat.className = "fs-3 fw-bold text-danger sensitive-value";
         if (elIconBgFat) elIconBgFat.className = "fin-icon-box bg-red-soft mb-0";
         if (elIconFat) elIconFat.className = "bi bi-graph-down-arrow";
       }
@@ -3058,19 +3058,19 @@ function carregarGestaoContratos() {
       if (estadoViewFinanceiro === 'pendentes') {
         countFin = jobs.filter(j => j.pagamento === 'Pendente').length;
         if (elTituloFin) elTituloFin.innerText = "Faturas Pendentes";
-        if (elValorFin) elValorFin.className = "fs-3 fw-bold text-orange";
+        if (elValorFin) elValorFin.className = "fs-3 fw-bold text-orange sensitive-value";
         if (elIconBgFin) elIconBgFin.className = "fin-icon-box bg-orange-soft mb-0";
         if (elIconFin) elIconFin.className = "bi bi-file-earmark-text";
       } else if (estadoViewFinanceiro === 'vencidas') {
         countFin = jobs.filter(j => j.pagamento === 'Vencido').length;
         if (elTituloFin) elTituloFin.innerText = "Faturas Vencidas";
-        if (elValorFin) elValorFin.className = "fs-3 fw-bold text-danger";
+        if (elValorFin) elValorFin.className = "fs-3 fw-bold text-danger sensitive-value";
         if (elIconBgFin) elIconBgFin.className = "fin-icon-box bg-red-soft mb-0";
         if (elIconFin) elIconFin.className = "bi bi-exclamation-triangle-fill";
       } else {
         countFin = jobs.filter(j => j.pagamento === 'Cancelado').length;
         if (elTituloFin) elTituloFin.innerText = "Faturas Canceladas";
-        if (elValorFin) elValorFin.className = "fs-3 fw-bold text-secondary";
+        if (elValorFin) elValorFin.className = "fs-3 fw-bold text-secondary sensitive-value";
         if (elIconBgFin) elIconBgFin.className = "fin-icon-box bg-gray-200 mb-0";
         if (elIconFin) elIconFin.className = "bi bi-x-octagon";
       }
@@ -3140,12 +3140,15 @@ function alternarViewFinanceiro() {
 // Função que roda quando você digita ou muda o select
 function aplicarFiltrosContratos() {
   // 1. Pega os valores dos campos
-  const texto = document.getElementById('filtro-busca').value.trim().toLowerCase();
-  const statusSelecionado = document.getElementById('filtro-status').value;
-  const pagamentoSelecionado = document.getElementById('filtro-pagamento').value;
+  const texto = document.getElementById('filtro-busca')?.value.trim().toLowerCase() || '';
+  const statusSelecionado = document.getElementById('filtro-status')?.value || '';
+  const pagamentoSelecionado = document.getElementById('filtro-pagamento')?.value || '';
+
+  console.log('🔍 [FILTRO] Aplicando:', { texto, statusSelecionado, pagamentoSelecionado });
+  console.log('🔍 [FILTRO] Jobs no cache:', window.todosOsJobsCache?.length);
 
   // 2. Filtra a lista
-  jobsFiltrados = window.todosOsJobsCache.filter(job => {
+  jobsFiltrados = (window.todosOsJobsCache || []).filter(job => {
     // A) VERIFICAÇÃO DE TEXTO (Nome do Job, Cliente, ID ou Número do Pedido)
     const desc = (job.descricao || "").toLowerCase();      // Nome do Job
     const cliente = (job.nome_cliente || "").toLowerCase(); // Nome do Cliente
@@ -3153,26 +3156,32 @@ function aplicarFiltrosContratos() {
     const numeroPedido = (job.numero_pedido || "").toLowerCase(); // Número customizado do pedido
 
     // O texto digitado existe em ALGUM desses 4 lugares?
-    const bateuTexto = desc.includes(texto) ||
+    const bateuTexto = !texto || desc.includes(texto) ||
       cliente.includes(texto) ||
       idString.includes(texto) ||
       numeroPedido.includes(texto);
 
     // B) Verifica Status
     let bateuStatus = true;
-    if (statusSelecionado !== "") {
+    if (statusSelecionado && statusSelecionado !== "") {
       bateuStatus = job.status === statusSelecionado;
+      // Debug
+      if (!bateuStatus) {
+        console.log(`❌ Job ${job.id} (${job.descricao}): status "${job.status}" != filtro "${statusSelecionado}"`);
+      }
     }
 
     // C) Verifica Pagamento
     let bateuPagamento = true;
-    if (pagamentoSelecionado !== "") {
+    if (pagamentoSelecionado && pagamentoSelecionado !== "") {
       bateuPagamento = job.pagamento === pagamentoSelecionado;
     }
 
     // O Job só aparece se passar em TODOS os testes (Texto E Status E Pagamento)
     return bateuTexto && bateuStatus && bateuPagamento;
   });
+
+  console.log('🔍 [FILTRO] Jobs filtrados:', jobsFiltrados.length);
 
   // 3. Atualiza a tabela começando da página 1
   renderizarTabelaContratos(1);
