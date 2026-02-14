@@ -89,7 +89,9 @@ db.connect((err) => {
     }
     
     // =====================================================
-    // MIGRAÇÃO AUTOMÁTICA - CRIAR TODAS AS TABELAS
+    // ⚠️ MIGRAÇÃO AUTOMÁTICA - CRIAR TODAS AS TABELAS
+    // ⚠️ APAGAR ESTE BLOCO DEPOIS QUE RODAR NO RAILWAY!
+    // ⚠️ (Após confirmar que as tabelas foram criadas)
     // =====================================================
     const tabelasSQL = [
       // 1. clientes
