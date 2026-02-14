@@ -1095,6 +1095,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.__jobEditandoId = null;
     window.__jobVisandoId = null;
     window.__itensOriginais = [];
+    
+    // REABILITAR TODOS OS INPUTS (importante ao sair do modo visualização)
+    const inputs = document.querySelectorAll('#view-novo-job input, #view-novo-job select, #view-novo-job textarea');
+    inputs.forEach(el => {
+      el.disabled = false;
+      el.style.backgroundColor = '';
+      el.style.cursor = '';
+    });
+    
+    // Restaurar botões
+    const btnSalvar = document.querySelector('#view-novo-job .btn-success');
+    const btnAdicionar = document.querySelector('#view-novo-job button[onclick*="adicionarLinhaItem"]');
+    const btnRemover = document.querySelectorAll('#view-novo-job .btn-danger');
+    
+    if (btnSalvar) btnSalvar.style.display = 'inline-block';
+    if (btnAdicionar) btnAdicionar.style.display = 'inline-block';
+    btnRemover.forEach(btn => btn.style.display = 'inline-block');
+    
     // NÃO limpa jobViewState, apenas quando necessário
   };
 
@@ -4061,10 +4079,23 @@ if (document.getElementById('lista-itens-job')) {
 
 // Atualiza o valor total do pedido em tempo real conforme os itens são preenchidos ou alterados.
 function atualizarValorTotalPedido() {
-  const itens = Array.from(document.querySelectorAll('#lista-itens-job tr')).map(tr => {
-    const qtd = parseFloat(tr.querySelector('input[name="itemQtd[]"]').value) || 0;
-    const valor = parseFloat(tr.querySelector('input[name="itemValor[]"]').value) || 0;
-    const desconto = parseFloat(tr.querySelector('input[name="itemDesconto[]"]').value) || 0;
+  const linhas = document.querySelectorAll('#lista-itens-job tr');
+  if (!linhas || linhas.length === 0) {
+    console.log('DEBUG atualizarValorTotal - Nenhum item na tabela');
+    return;
+  }
+  
+  const itens = Array.from(linhas).map(tr => {
+    const qtdInput = tr.querySelector('input[name="itemQtd[]"]');
+    const valorInput = tr.querySelector('input[name="itemValor[]"]');
+    const descontoInput = tr.querySelector('input[name="itemDesconto[]"]');
+    
+    // Verificação null-safe
+    if (!qtdInput || !valorInput) return 0;
+    
+    const qtd = parseFloat(qtdInput.value) || 0;
+    const valor = parseFloat(valorInput.value) || 0;
+    const desconto = descontoInput ? (parseFloat(descontoInput.value) || 0) : 0;
     const valorComDesconto = valor * (1 - (desconto / 100));
     return qtd * valorComDesconto;
   });

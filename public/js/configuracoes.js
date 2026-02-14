@@ -98,7 +98,7 @@ function preencherFormularioPerfil(usuario) {
     }
     
     if (avatarUrl) {
-      avatarPreview.innerHTML = `<img src="${avatarUrl}" alt="Avatar" class="config-avatar-img" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\"config-avatar-initials\\">${usuario.nome ? usuario.nome.charAt(0).toUpperCase() : '?'}</div>';">`;
+      avatarPreview.innerHTML = `<img src="${avatarUrl}" alt="" class="config-avatar-img" style="width:100%;height:100%;object-fit:cover;border-radius:12px;" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=config-avatar-initials>${usuario.nome ? usuario.nome.charAt(0).toUpperCase() : '?'}</div>';">`;
     } else {
       const iniciais = usuario.nome ? usuario.nome.charAt(0).toUpperCase() : '?';
       avatarPreview.innerHTML = `<div class="config-avatar-initials">${iniciais}</div>`;
