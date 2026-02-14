@@ -67,18 +67,26 @@ app.get('/invoice', requireAuth, (req, res) => {
 
 // --- CONEXÃO COM O BANCO ---
 // Suporta variáveis do Railway (MYSQL*) e variáveis customizadas (DB_*)
-const db = mysql.createConnection({
+// Usar POOL de conexões para reconexão automática (importante para Railway)
+const db = mysql.createPool({
   host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
   user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
   password: process.env.MYSQLPASSWORD || process.env.DB_PASS || '',
   database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'sistema_gestao_tp',
-  port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306)
+  port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
 });
 
-db.connect((err) => {
+// Testar conexão inicial
+db.getConnection((err, connection) => {
   if (err) console.error('Erro ao conectar:', err);
   else {
-    console.log('Sucesso! Conectado ao banco de dados MySQL.');
+    console.log('Sucesso! Conectado ao banco de dados MySQL (Pool).');
+    connection.release(); // Libera a conexão de volta ao pool
     
     // Inicializa serviço de email
     try {
@@ -89,10 +97,9 @@ db.connect((err) => {
     }
     
     // =====================================================
-    // ⚠️ MIGRAÇÃO AUTOMÁTICA - CRIAR TODAS AS TABELAS
-    // ⚠️ APAGAR ESTE BLOCO DEPOIS QUE RODAR NO RAILWAY!
-    // ⚠️ (Após confirmar que as tabelas foram criadas)
+    // ✅ MIGRAÇÃO JÁ EXECUTADA NO RAILWAY - COMENTADO
     // =====================================================
+    /*
     const tabelasSQL = [
       // 1. clientes
       `CREATE TABLE IF NOT EXISTS clientes (
@@ -421,6 +428,7 @@ db.connect((err) => {
         }
       });
     }
+    */
 
 
 
