@@ -1438,6 +1438,80 @@ app.get('/debug/jobs-datas', (req, res) => {
   });
 });
 
+// Debug: Verificar dependências de um job antes de excluir
+app.get('/debug/job-dependencias/:id', (req, res) => {
+  const jobId = req.params.id;
+  
+  const queries = {
+    job: "SELECT id, descricao, status FROM jobs WHERE id = ?",
+    job_itens: "SELECT COUNT(*) as total FROM job_itens WHERE job_id = ?",
+    job_equipe: "SELECT COUNT(*) as total FROM job_equipe WHERE job_id = ?",
+    escalas: "SELECT COUNT(*) as total FROM escalas WHERE job_id = ?",
+  };
+  
+  const resultados = {};
+  let completadas = 0;
+  const totalQueries = Object.keys(queries).length;
+  
+  Object.entries(queries).forEach(([nome, sql]) => {
+    db.query(sql, [jobId], (err, results) => {
+      if (err) {
+        resultados[nome] = { error: err.message };
+      } else {
+        resultados[nome] = results[0] || results;
+      }
+      completadas++;
+      
+      if (completadas === totalQueries) {
+        // Verificar foreign keys
+        db.query("SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE REFERENCED_TABLE_NAME = 'jobs' AND TABLE_SCHEMA = DATABASE()", (err, fks) => {
+          resultados.foreign_keys = err ? { error: err.message } : fks;
+          res.json({
+            job_id: jobId,
+            dependencias: resultados,
+            info: "Use isso para verificar o que impede a exclusão"
+          });
+        });
+      }
+    });
+  });
+});
+
+// Debug: Forçar exclusão de job (apenas para emergência)
+app.delete('/debug/forcar-exclusao-job/:id', (req, res) => {
+  const jobId = req.params.id;
+  
+  console.log(`⚠️ EXCLUSÃO FORÇADA do job ${jobId}`);
+  
+  // Executa todas as exclusões em sequência sem transação
+  const queries = [
+    `DELETE FROM job_itens WHERE job_id = ${jobId}`,
+    `DELETE FROM job_equipe WHERE job_id = ${jobId}`,
+    `DELETE FROM escalas WHERE job_id = ${jobId}`,
+    `DELETE FROM jobs WHERE id = ${jobId}`
+  ];
+  
+  let executadas = 0;
+  const erros = [];
+  
+  queries.forEach((sql, index) => {
+    db.query(sql, (err, result) => {
+      if (err) {
+        erros.push({ query: index, sql: sql, error: err.message, code: err.code });
+      }
+      executadas++;
+      
+      if (executadas === queries.length) {
+        if (erros.length > 0) {
+          res.json({ success: false, erros: erros });
+        } else {
+          res.json({ success: true, message: `Job ${jobId} excluído com sucesso` });
+        }
+      }
+    });
+  });
+});
+
 // Rota para Atualizar Status ou Pagamento
 app.post('/jobs/update/:id', (req, res) => {
   const { id } = req.params;
