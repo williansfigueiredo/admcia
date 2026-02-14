@@ -555,26 +555,32 @@ db.getConnection((err, connection) => {
         console.log('✅ Coluna numero_pedido criada com sucesso na tabela jobs.');
       }
     });
+
+    // Migração: Adicionar colunas data_inicio e data_fim na tabela escalas
+    db.query(`ALTER TABLE escalas ADD COLUMN data_inicio DATE`, (err) => {
+      if (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log('✅ Coluna data_inicio já existe na tabela escalas.');
+        } else {
+          console.error('⚠️ Erro ao adicionar coluna data_inicio em escalas:', err.message);
+        }
+      } else {
+        console.log('✅ Coluna data_inicio criada com sucesso na tabela escalas.');
+      }
+    });
+
+    db.query(`ALTER TABLE escalas ADD COLUMN data_fim DATE`, (err) => {
+      if (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log('✅ Coluna data_fim já existe na tabela escalas.');
+        } else {
+          console.error('⚠️ Erro ao adicionar coluna data_fim em escalas:', err.message);
+        }
+      } else {
+        console.log('✅ Coluna data_fim criada com sucesso na tabela escalas.');
+      }
+    });
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 });
 
 // --- DISPONIBILIZA DB PARA AS ROTAS ---
@@ -1662,130 +1668,110 @@ app.post('/clientes', (req, res) => {
 // ROTA DE EXCLUSÃO INTELIGENTE (CORRIGIDA)
 // Só devolve estoque se o pedido estiver ATIVO
 // =============================================================
-app.delete('/jobs/:id', (req, res) => {
+app.delete('/jobs/:id', async (req, res) => {
   const { id } = req.params;
 
   console.log(`🗑️ Solicitada exclusão do Job ${id}...`);
 
-  db.beginTransaction(async (err) => {
-    if (err) return res.status(500).json({ message: "Erro de transação" });
-
-    try {
-      // 1. PRIMEIRO: DESCOBRIR O STATUS DO PEDIDO
-      const job = await new Promise((resolve, reject) => {
-        db.query("SELECT status FROM jobs WHERE id = ?", [id], (err, results) => {
-          if (err) reject(err);
-          else if (!results.length) reject(new Error("Pedido não encontrado"));
-          else resolve(results[0]);
-        });
+  try {
+    // 1. PRIMEIRO: DESCOBRIR O STATUS DO PEDIDO
+    const jobResult = await new Promise((resolve, reject) => {
+      db.query("SELECT status FROM jobs WHERE id = ?", [id], (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
       });
+    });
 
-      console.log(`📊 Status do pedido a excluir: ${job.status}`);
-
-      // Lista de status que NÃO devem devolver estoque (pois já estão baixados ou nunca saíram)
-      // Se estiver Finalizado ou Cancelado, os itens "não estão na rua", então não devolvemos nada.
-      const isInativo = (job.status === 'Finalizado' || job.status === 'Cancelado');
-
-      if (isInativo) {
-        console.log("🛑 Pedido já inativo (Finalizado/Cancelado). Pulando devolução de estoque.");
-      } else {
-        // 2. SE ESTIVER ATIVO: DEVOLVER O ESTOQUE
-        const buscarItens = () => {
-          return new Promise((resolve, reject) => {
-            db.query("SELECT equipamento_id, qtd FROM job_itens WHERE job_id = ?", [id], (err, results) => {
-              if (err) reject(err);
-              else resolve(results);
-            });
-          });
-        };
-
-        const itens = await buscarItens();
-
-        if (itens.length > 0) {
-          console.log(`📦 Pedido Ativo: Devolvendo ${itens.length} itens ao estoque...`);
-
-          const atualizacoes = itens.map(item => {
-            if (!item.equipamento_id) return Promise.resolve();
-
-            return new Promise((resolve, reject) => {
-              const sqlDevolucao = "UPDATE equipamentos SET qtd_disponivel = qtd_disponivel + ? WHERE id = ?";
-              db.query(sqlDevolucao, [item.qtd, item.equipamento_id], (err) => {
-                if (err) reject(err);
-                else resolve();
-              });
-            });
-          });
-
-          await Promise.all(atualizacoes);
-          console.log("✅ Estoque devolvido com sucesso.");
-        }
-      }
-
-      // 3. APAGA OS ITENS DO PEDIDO (Limpeza do banco)
-      await new Promise((resolve, reject) => {
-        db.query("DELETE FROM job_itens WHERE job_id = ?", [id], (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-
-      // 3.1 APAGA AS ESCALAS ASSOCIADAS AO JOB
-      await new Promise((resolve, reject) => {
-        db.query("DELETE FROM escalas WHERE job_id = ?", [id], (err) => {
-          if (err) reject(err);
-          else {
-            console.log(`📅 Escalas do job ${id} removidas`);
-            resolve();
-          }
-        });
-      });
-
-      // 3.2 APAGA A EQUIPE DO JOB
-      await new Promise((resolve, reject) => {
-        db.query("DELETE FROM job_equipe WHERE job_id = ?", [id], (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-
-      // 4. APAGA O PEDIDO (CABEÇALHO)
-      await new Promise((resolve, reject) => {
-        db.query("DELETE FROM jobs WHERE id = ?", [id], (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-
-      // 5. CONFIRMA TUDO
-      db.commit((err) => {
-        if (err) {
-          return db.rollback(() => res.status(500).json({ message: "Erro no commit final" }));
-        }
-
-        const msg = isInativo
-          ? "Pedido excluído (Estoque mantido pois já estava finalizado/cancelado)."
-          : "Pedido excluído e estoque devolvido com sucesso!";
-
-        res.json({ success: true, message: msg });
-      });
-
-    } catch (error) {
-      console.error("❌ Erro na exclusão do Job:", error);
-      console.error("❌ Stack:", error.stack);
-      console.error("❌ SQL Error Code:", error.code);
-      console.error("❌ SQL Error Errno:", error.errno);
-      db.rollback(() => {
-        // Retorna erro detalhado para debug
-        res.status(500).json({ 
-          message: "Falha ao excluir",
-          error: error.message || "Erro desconhecido",
-          code: error.code || null,
-          errno: error.errno || null,
-          sqlMessage: error.sqlMessage || null
-        });
-      });
+    if (!jobResult.length) {
+      return res.status(404).json({ message: "Pedido não encontrado" });
     }
-  });
+
+    const job = jobResult[0];
+    console.log(`📊 Status do pedido a excluir: ${job.status}`);
+
+    // Lista de status que NÃO devem devolver estoque
+    const isInativo = (job.status === 'Finalizado' || job.status === 'Cancelado');
+
+    if (!isInativo) {
+      // 2. SE ESTIVER ATIVO: DEVOLVER O ESTOQUE
+      const itens = await new Promise((resolve, reject) => {
+        db.query("SELECT equipamento_id, qtd FROM job_itens WHERE job_id = ?", [id], (err, results) => {
+          if (err) reject(err);
+          else resolve(results || []);
+        });
+      });
+
+      if (itens.length > 0) {
+        console.log(`📦 Pedido Ativo: Devolvendo ${itens.length} itens ao estoque...`);
+
+        for (const item of itens) {
+          if (item.equipamento_id) {
+            await new Promise((resolve, reject) => {
+              db.query("UPDATE equipamentos SET qtd_disponivel = qtd_disponivel + ? WHERE id = ?", 
+                [item.qtd, item.equipamento_id], (err) => {
+                  if (err) reject(err);
+                  else resolve();
+                });
+            });
+          }
+        }
+        console.log("✅ Estoque devolvido com sucesso.");
+      }
+    } else {
+      console.log("🛑 Pedido já inativo. Pulando devolução de estoque.");
+    }
+
+    // 3. APAGA OS ITENS DO PEDIDO
+    await new Promise((resolve, reject) => {
+      db.query("DELETE FROM job_itens WHERE job_id = ?", [id], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // 3.1 APAGA AS ESCALAS ASSOCIADAS AO JOB
+    await new Promise((resolve, reject) => {
+      db.query("DELETE FROM escalas WHERE job_id = ?", [id], (err) => {
+        if (err) reject(err);
+        else {
+          console.log(`📅 Escalas do job ${id} removidas`);
+          resolve();
+        }
+      });
+    });
+
+    // 3.2 APAGA A EQUIPE DO JOB
+    await new Promise((resolve, reject) => {
+      db.query("DELETE FROM job_equipe WHERE job_id = ?", [id], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // 4. APAGA O PEDIDO (CABEÇALHO)
+    await new Promise((resolve, reject) => {
+      db.query("DELETE FROM jobs WHERE id = ?", [id], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    const msg = isInativo
+      ? "Pedido excluído (Estoque mantido pois já estava finalizado/cancelado)."
+      : "Pedido excluído e estoque devolvido com sucesso!";
+
+    console.log(`✅ Job ${id} excluído com sucesso`);
+    res.json({ success: true, message: msg });
+
+  } catch (error) {
+    console.error("❌ Erro na exclusão do Job:", error);
+    res.status(500).json({ 
+      message: "Falha ao excluir",
+      error: error.message || "Erro desconhecido",
+      code: error.code || null,
+      sqlMessage: error.sqlMessage || null
+    });
+  }
 });
 
 
@@ -2446,11 +2432,12 @@ app.get('/jobs/:jobId/itens', (req, res) => {
 
 app.get('/agenda', (req, res) => {
   // Primeiro busca escalas MANUAIS (apenas as que NÃO têm job_id)
+  // Usa apenas data_escala por compatibilidade (caso colunas data_inicio/data_fim não existam ainda)
   const sqlEscalas = `
     SELECT 
       CONCAT('escala-', e.id) as id,
-      COALESCE(e.data_inicio, e.data_escala) as data_inicio,
-      COALESCE(e.data_fim, e.data_escala) as data_fim,
+      e.data_escala as data_inicio,
+      e.data_escala as data_fim,
       CONCAT('📅 ', f.nome, ' - ', e.tipo) as title,
       e.tipo as description,
       f.id as operador_id,
