@@ -51,6 +51,11 @@ app.get('/login', redirectIfAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+// --- ROTA DE LIMPEZA DE CACHE (PÚBLICA) ---
+app.get('/clear-cache', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'clear-cache.html'));
+});
+
 // --- SERVIR ARQUIVOS HTML NA RAIZ (PROTEGIDO) ---
 app.get('/', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

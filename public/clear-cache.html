@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Limpeza de Cache - Sistema CIA</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+    p {
+      color: #666;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .success {
+      background: #10b981;
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      display: none;
+    }
+    .icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🔄</div>
+    <h1>Limpar Cache do Sistema</h1>
+    <p>Clique no botão abaixo para limpar todos os dados em cache (localStorage) e recarregar o sistema com as informações mais recentes do servidor.</p>
+    <p style="font-size: 14px; color: #999;">Você precisará fazer login novamente.</p>
+    
+    <button class="btn" onclick="clearAndReload()">
+      Limpar Cache e Recarregar
+    </button>
+    
+    <div class="success" id="successMsg">
+      ✅ Cache limpo! Redirecionando para login...
+    </div>
+  </div>
+
+  <script>
+    function clearAndReload() {
+      // Limpa TUDO do localStorage
+      localStorage.clear();
+      
+      // Limpa cookies
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
+      
+      // Mostra mensagem de sucesso
+      document.getElementById('successMsg').style.display = 'block';
+      
+      // Redireciona para login após 1.5 segundos
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+    }
+  </script>
+</body>
+</html>
