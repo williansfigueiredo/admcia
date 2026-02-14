@@ -1425,6 +1425,19 @@ app.get('/debug/estrutura-jobs', (req, res) => {
    - O tipo de cada coluna
 */
 
+// Debug: Verificar datas dos jobs
+app.get('/debug/jobs-datas', (req, res) => {
+  const sql = "SELECT id, descricao, data_job, data_inicio, data_fim, operador_id FROM jobs ORDER BY id DESC LIMIT 10";
+  db.query(sql, (err, results) => {
+    if (err) return res.json({ error: err.message });
+    res.json({
+      total: results.length,
+      jobs: results,
+      info: "Mostrando últimos 10 jobs com suas datas"
+    });
+  });
+});
+
 // Rota para Atualizar Status ou Pagamento
 app.post('/jobs/update/:id', (req, res) => {
   const { id } = req.params;
@@ -1647,8 +1660,16 @@ app.delete('/jobs/:id', (req, res) => {
       });
 
     } catch (error) {
-      console.error("❌ Erro na exclusão:", error);
-      db.rollback(() => res.status(500).json({ message: "Erro ao excluir: " + error.message }));
+      console.error("❌ Erro na exclusão do Job:", error);
+      console.error("❌ Stack:", error.stack);
+      console.error("❌ SQL Error Code:", error.code);
+      console.error("❌ SQL Error Errno:", error.errno);
+      db.rollback(() => {
+        const mensagemErro = error.code === 'ER_ROW_IS_REFERENCED_2' 
+          ? "Não é possível excluir: existem registros relacionados a este pedido"
+          : (error.message || "Erro desconhecido ao excluir");
+        res.status(500).json({ message: mensagemErro });
+      });
     }
   });
 });

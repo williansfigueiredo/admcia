@@ -1431,7 +1431,7 @@ function preencherTabela(listaJobs) {
 
   top5.forEach(job => {
     // --- LÓGICA DE DATA (MESMA DA GESTÃO DE CONTRATOS) ---
-    const dInicio = new Date(job.data_job);
+    const dInicio = new Date(job.data_inicio || job.data_job);
     dInicio.setHours(dInicio.getHours() + 3); // Ajuste fuso
 
     let textoData = "";
@@ -3177,7 +3177,7 @@ function renderizarTabelaContratos(pagina) {
   } else {
     jobsDaPagina.forEach(job => {
       // --- LÓGICA DE DATA ---
-      const dInicio = new Date(job.data_job);
+      const dInicio = new Date(job.data_inicio || job.data_job);
       dInicio.setHours(dInicio.getHours() + 3);
       let textoData = "";
       const diaIni = dInicio.getDate();
@@ -4365,7 +4365,7 @@ function salvarInvoicePDF(jobId) {
   if (!job) return alert('Pedido não encontrado!');
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  doc.text(`Pedido #${job.id}\nCliente: ${job.nome_cliente || ''}\nDescrição: ${job.descricao}\nPeríodo: ${job.data_job} a ${job.data_fim || job.data_job}\nValor: R$ ${parseFloat(job.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\nStatus: ${job.status}\nPagamento: ${job.pagamento}`, 10, 10);
+  doc.text(`Pedido #${job.id}\nCliente: ${job.nome_cliente || ''}\nDescrição: ${job.descricao}\nPeríodo: ${job.data_inicio || job.data_job} a ${job.data_fim || job.data_inicio || job.data_job}\nValor: R$ ${parseFloat(job.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\nStatus: ${job.status}\nPagamento: ${job.pagamento}`, 10, 10);
   // Itens
   let y = 60;
   (job.itens || []).forEach(i => {
