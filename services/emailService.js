@@ -15,34 +15,40 @@ const nodemailer = require('nodemailer');
 // CONFIGURAÇÃO DO TRANSPORTER
 // ============================================
 
-// Aceita tanto SMTP_* quanto EMAIL_* (Railway usa EMAIL_*)
-const transporterConfig = {
-  host: process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587,
-  secure: false, // true para 465, false para outras portas
-  auth: {
-    user: process.env.SMTP_USER || process.env.EMAIL_USER || '',
-    pass: process.env.SMTP_PASS || process.env.EMAIL_PASS || ''
-  }
-};
-
-// Email remetente
-const emailFrom = process.env.SMTP_FROM_NAME 
-  ? `${process.env.SMTP_FROM_NAME} <${process.env.SMTP_USER || process.env.EMAIL_USER}>`
-  : process.env.EMAIL_FROM || process.env.SMTP_USER || process.env.EMAIL_USER;
-
 let transporter = null;
+let emailFrom = null;
 
 /**
  * Inicializa o transporter de email
  */
 function inicializarEmail() {
-  if (transporterConfig.auth.user && transporterConfig.auth.pass) {
-    transporter = nodemailer.createTransport(transporterConfig);
-    console.log('📧 Serviço de email configurado');
+  // Ler variáveis aqui (não no topo) para garantir que estão carregadas
+  const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
+  const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587;
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || '';
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || '';
+  
+  // Configurar remetente
+  emailFrom = process.env.SMTP_FROM_NAME 
+    ? `${process.env.SMTP_FROM_NAME} <${smtpUser}>`
+    : process.env.EMAIL_FROM || smtpUser;
+
+  console.log(`📧 Tentando configurar email: host=${smtpHost}, user=${smtpUser ? smtpUser.substring(0,5) + '...' : 'NÃO DEFINIDO'}`);
+
+  if (smtpUser && smtpPass) {
+    transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: false,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      }
+    });
+    console.log('✅ Serviço de email configurado com sucesso!');
     return true;
   } else {
-    console.log('⚠️ Serviço de email não configurado (variáveis SMTP_USER e SMTP_PASS não definidas)');
+    console.log('⚠️ Serviço de email não configurado (EMAIL_USER ou EMAIL_PASS não definidos)');
     return false;
   }
 }
