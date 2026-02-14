@@ -63,18 +63,22 @@ function preencherFormularioPerfil(usuario) {
   // Avatar
   const avatarPreview = document.getElementById('configAvatarPreview');
   if (avatarPreview) {
-    if (usuario.avatar) {
-      // Garante que o avatar sempre tenha caminho completo
-      let avatarUrl = usuario.avatar;
-      
+    // Prioriza avatar_base64 (persiste no Railway) sobre avatar (arquivo local)
+    let avatarUrl = null;
+    
+    if (usuario.avatar_base64) {
+      avatarUrl = usuario.avatar_base64; // Já é uma data URL completa
+    } else if (usuario.avatar) {
+      avatarUrl = usuario.avatar;
       // Se não começar com /, adiciona o caminho completo
       if (!avatarUrl.startsWith('/')) {
         avatarUrl = `/uploads/avatars/${avatarUrl}`;
       }
-      
       // Adiciona timestamp para evitar cache
       avatarUrl += `?t=${Date.now()}`;
-      
+    }
+    
+    if (avatarUrl) {
       avatarPreview.innerHTML = `<img src="${avatarUrl}" alt="Avatar" class="config-avatar-img" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\"config-avatar-initials\\">${usuario.nome ? usuario.nome.charAt(0).toUpperCase() : '?'}</div>';">`;
     } else {
       const iniciais = usuario.nome ? usuario.nome.charAt(0).toUpperCase() : '?';

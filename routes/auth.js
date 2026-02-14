@@ -190,7 +190,7 @@ router.get('/me', (req, res) => {
 
     // Busca dados atualizados do funcionário (sem senha_hash)
     const sql = `
-      SELECT id, nome, email, cargo, departamento, status, avatar,
+      SELECT id, nome, email, cargo, departamento, status, avatar, avatar_base64,
              telefone, cpf, cep, logradouro, numero, bairro, cidade, uf,
              observacoes, data_admissao, is_master, acesso_ativo
       FROM funcionarios 
