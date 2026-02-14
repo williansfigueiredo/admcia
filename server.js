@@ -1444,6 +1444,44 @@ app.get('/debug/jobs-datas', (req, res) => {
   });
 });
 
+// Debug: Verificar itens de um job com detalhes de equipamento
+app.get('/debug/job-itens/:id', (req, res) => {
+  const jobId = req.params.id;
+  
+  const sql = `
+    SELECT 
+      ji.id as item_id,
+      ji.job_id,
+      ji.descricao,
+      ji.qtd,
+      ji.equipamento_id,
+      e.nome as equipamento_nome,
+      e.qtd_disponivel,
+      e.qtd_total
+    FROM job_itens ji
+    LEFT JOIN equipamentos e ON ji.equipamento_id = e.id
+    WHERE ji.job_id = ?
+  `;
+  
+  db.query(sql, [jobId], (err, results) => {
+    if (err) return res.json({ error: err.message });
+    
+    const comEquipamento = results.filter(r => r.equipamento_id);
+    const semEquipamento = results.filter(r => !r.equipamento_id);
+    
+    res.json({
+      job_id: jobId,
+      total_itens: results.length,
+      com_equipamento_id: comEquipamento.length,
+      sem_equipamento_id: semEquipamento.length,
+      itens: results,
+      aviso: semEquipamento.length > 0 
+        ? "Atenção: Itens sem equipamento_id não serão devolvidos ao estoque!" 
+        : "Todos os itens têm equipamento_id vinculado"
+    });
+  });
+});
+
 // Debug: Verificar dependências de um job antes de excluir
 app.get('/debug/job-dependencias/:id', (req, res) => {
   const jobId = req.params.id;
@@ -1701,24 +1739,38 @@ app.delete('/jobs/:id', async (req, res) => {
         });
       });
 
-      if (itens.length > 0) {
-        console.log(`📦 Pedido Ativo: Devolvendo ${itens.length} itens ao estoque...`);
+      console.log(`📦 Itens encontrados no job: ${itens.length}`);
+      console.log(`📦 Itens detalhados:`, JSON.stringify(itens));
 
-        for (const item of itens) {
-          if (item.equipamento_id) {
-            await new Promise((resolve, reject) => {
-              db.query("UPDATE equipamentos SET qtd_disponivel = qtd_disponivel + ? WHERE id = ?", 
-                [item.qtd, item.equipamento_id], (err) => {
-                  if (err) reject(err);
-                  else resolve();
-                });
-            });
-          }
+      // Filtra itens que têm equipamento_id
+      const itensComEquipamento = itens.filter(i => i.equipamento_id);
+      console.log(`📦 Itens COM equipamento_id: ${itensComEquipamento.length}`);
+      console.log(`⏭️ Itens SEM equipamento_id (ignorados): ${itens.length - itensComEquipamento.length}`);
+
+      if (itensComEquipamento.length > 0) {
+        console.log(`📦 Pedido Ativo: Devolvendo ${itensComEquipamento.length} equipamento(s) ao estoque...`);
+
+        for (const item of itensComEquipamento) {
+          console.log(`   → Devolvendo: Equipamento ${item.equipamento_id}, Qtd: ${item.qtd}`);
+          await new Promise((resolve, reject) => {
+            db.query("UPDATE equipamentos SET qtd_disponivel = qtd_disponivel + ? WHERE id = ?", 
+              [item.qtd, item.equipamento_id], (err, result) => {
+                if (err) {
+                  console.error(`   ❌ Erro ao devolver equipamento ${item.equipamento_id}:`, err);
+                  reject(err);
+                } else {
+                  console.log(`   ✅ Equipamento ${item.equipamento_id}: +${item.qtd} (affected: ${result.affectedRows})`);
+                  resolve();
+                }
+              });
+          });
         }
-        console.log("✅ Estoque devolvido com sucesso.");
+        console.log("✅ Todo o estoque foi devolvido com sucesso.");
+      } else {
+        console.log(`⚠️ Nenhum item com equipamento_id para devolver.`);
       }
     } else {
-      console.log("🛑 Pedido já inativo. Pulando devolução de estoque.");
+      console.log("🛑 Pedido já inativo (Finalizado/Cancelado). Estoque já foi devolvido anteriormente.");
     }
 
     // 3. APAGA OS ITENS DO PEDIDO
@@ -2157,28 +2209,34 @@ app.post('/jobs/:jobId/devolver-estoque', (req, res) => {
   const { itens } = req.body;
 
   console.log(`\n↩️ [DEVOLVER ESTOQUE] Job ${jobId} - Iniciando devolução...`);
+  console.log(`📋 Total de itens recebidos: ${itens?.length || 0}`);
+  console.log(`📋 Itens:`, JSON.stringify(itens, null, 2));
 
   if (!itens || itens.length === 0) {
-    console.log(`✅ [DEVOLVER ESTOQUE] Sem itens para devolver`);
-    return res.json({ sucesso: true });
+    console.log(`⚠️ [DEVOLVER ESTOQUE] Nenhum item recebido na requisição!`);
+    return res.json({ sucesso: true, mensagem: "Sem itens para devolver" });
+  }
+
+  // Filtra apenas itens que têm equipamento_id
+  const itensComEquipamento = itens.filter(i => i.equipamento_id);
+  console.log(`📦 Itens COM equipamento_id: ${itensComEquipamento.length}`);
+  console.log(`⏭️ Itens SEM equipamento_id (ignorados): ${itens.length - itensComEquipamento.length}`);
+
+  if (itensComEquipamento.length === 0) {
+    console.log(`⚠️ [DEVOLVER ESTOQUE] Nenhum item tem equipamento_id vinculado!`);
+    return res.json({ sucesso: true, mensagem: "Nenhum item com equipamento vinculado" });
   }
 
   let processados = 0;
   let erros = [];
+  let sucessos = [];
 
-  itens.forEach((item, index) => {
-    // Pula se não tiver ID
-    if (!item.equipamento_id) {
-      processados++;
-      verificarFim();
-      return;
-    }
-
+  itensComEquipamento.forEach((item, index) => {
     // Garante que é número para evitar erro de texto '1' + 1 = '11'
     const idEquip = parseInt(item.equipamento_id);
     const qtdDevolver = parseInt(item.qtd);
 
-    console.log(`📦 Processando Item: ID ${idEquip} | Qtd a devolver: ${qtdDevolver}`);
+    console.log(`📦 Processando Item ${index + 1}/${itensComEquipamento.length}: Equipamento ID ${idEquip} | Qtd a devolver: ${qtdDevolver}`);
 
     // SQL BLINDADO: 
     // 1. COALESCE(qtd_disponivel, 0) -> Transforma NULL em 0 antes de somar
@@ -2191,15 +2249,16 @@ app.post('/jobs/:jobId/devolver-estoque', (req, res) => {
 
     db.query(sql, [qtdDevolver, idEquip], (err, result) => {
       if (err) {
-        console.error(`❌ Erro SQL no item ${idEquip}:`, err);
-        erros.push(`Erro técnico no ID ${idEquip}`);
+        console.error(`❌ Erro SQL no equipamento ${idEquip}:`, err);
+        erros.push(`Erro técnico no ID ${idEquip}: ${err.message}`);
       } else {
         // AGORA VERIFICAMOS SE O BANCO REALMENTE ACHOU O ITEM
         if (result.affectedRows === 0) {
           console.warn(`⚠️ ALERTA: Equipamento ID ${idEquip} não foi encontrado no banco! Nada foi alterado.`);
           erros.push(`Equipamento ID ${idEquip} não existe no cadastro.`);
         } else {
-          console.log(`✅ Sucesso: Equipamento ${idEquip} recebeu +${qtdDevolver} (Linhas alteradas: ${result.affectedRows})`);
+          console.log(`✅ Equipamento ${idEquip}: +${qtdDevolver} unidades devolvidas ao estoque`);
+          sucessos.push({ equipamento_id: idEquip, qtd: qtdDevolver });
         }
       }
 
@@ -2209,19 +2268,25 @@ app.post('/jobs/:jobId/devolver-estoque', (req, res) => {
   });
 
   function verificarFim() {
-    if (processados === itens.length) {
-      console.log(`\n📊 [DEVOLVER ESTOQUE] Finalizado. Erros: ${erros.length}`);
+    if (processados === itensComEquipamento.length) {
+      console.log(`\n📊 [DEVOLVER ESTOQUE] Finalizado!`);
+      console.log(`   ✅ Sucessos: ${sucessos.length}`);
+      console.log(`   ❌ Erros: ${erros.length}`);
 
       if (erros.length > 0) {
+        console.error(`❌ [DEVOLVER ESTOQUE] Alguns itens falharam:`, erros);
         return res.status(400).json({
           sucesso: false,
-          mensagem: erros.join('\n')
+          mensagem: erros.join('\n'),
+          detalhes: { sucessos: sucessos.length, erros: erros.length }
         });
       }
 
+      console.log(`✅ [DEVOLVER ESTOQUE] Todos os ${sucessos.length} itens devolvidos com sucesso!`);
       res.json({
         sucesso: true,
-        mensagem: "Estoque devolvido com sucesso"
+        mensagem: `Estoque devolvido: ${sucessos.length} equipamento(s) atualizados`,
+        itens_devolvidos: sucessos
       });
     }
   }

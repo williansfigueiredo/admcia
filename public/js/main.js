@@ -3624,13 +3624,23 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
       const resItens = await fetch(`${API_URL}/jobs/${id}/itens?t=${timestamp}`);
       const dadosItens = await resItens.json();
       const itens = dadosItens.itens || [];
+      
+      console.log(`📦 Total de itens no pedido: ${itens.length}`);
+      console.log(`📦 Itens detalhados:`, itens);
+      
+      // Conta quantos têm equipamento_id
+      const itensComEquipamento = itens.filter(i => i.equipamento_id);
+      console.log(`📦 Itens COM equipamento_id: ${itensComEquipamento.length}`);
+      console.log(`⏭️ Itens SEM equipamento_id: ${itens.length - itensComEquipamento.length}`);
 
       // =================================================================
       // CENÁRIO 1: ERA ATIVO -> VIROU INATIVO (DEVOLVER ESTOQUE)
       // =================================================================
       if (ativos.includes(statusAntigo) && inativos.includes(novoValor)) {
-        if (itens.length > 0) {
-          console.log("↩️ Modo Devolução ativado");
+        console.log("↩️ Modo Devolução ativado - Tentando devolver estoque...");
+        
+        if (itensComEquipamento.length > 0) {
+          console.log(`📦 Enviando ${itensComEquipamento.length} itens para devolução...`);
 
           const resDev = await fetch(`${API_URL}/jobs/${id}/devolver-estoque`, {
             method: 'POST',
@@ -3639,9 +3649,15 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
           });
 
           const jsonDev = await resDev.json();
+          console.log("📦 Resposta da devolução:", jsonDev);
+          
           if (!jsonDev.sucesso) {
             throw new Error("Falha ao devolver estoque: " + jsonDev.mensagem);
           }
+          
+          console.log(`✅ Estoque devolvido com sucesso!`);
+        } else {
+          console.log(`⚠️ Nenhum item com equipamento_id - nada para devolver`);
         }
       }
 
