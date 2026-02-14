@@ -49,8 +49,8 @@ const avatarUpload = multer({
 // MIDDLEWARE DE AUTENTICAÇÃO LOCAL
 // ============================================
 function requireAuth(req, res, next) {
-  const token = req.cookies?.auth_token || 
-                req.headers.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.auth_token ||
+    req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
     return res.status(401).json({ success: false, error: 'Não autenticado' });
@@ -69,8 +69,8 @@ function requireAuth(req, res, next) {
 // MIDDLEWARE REQUIRE MASTER
 // ============================================
 function requireMaster(req, res, next) {
-  const token = req.cookies?.auth_token || 
-                req.headers.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.auth_token ||
+    req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
     return res.status(401).json({ success: false, error: 'Não autenticado' });
@@ -109,10 +109,10 @@ function requireMaster(req, res, next) {
 router.put('/me', requireAuth, (req, res) => {
   const db = req.app.get('db');
   const userId = req.user.id;
-  const { 
+  const {
     nome, cpf, telefone, cargo, departamento, status,
     data_admissao, data_demissao,
-    observacoes, cep, logradouro, numero, bairro, cidade, uf 
+    observacoes, cep, logradouro, numero, bairro, cidade, uf
   } = req.body;
 
   // Trata datas vazias como NULL
@@ -143,7 +143,7 @@ router.put('/me', requireAuth, (req, res) => {
   const values = [
     nome, cpf, telefone, cargo, departamento, status,
     admissao, demissao,
-    observacoes, cep, logradouro, numero, bairro, cidade, uf, 
+    observacoes, cep, logradouro, numero, bairro, cidade, uf,
     userId
   ];
 
@@ -191,15 +191,15 @@ router.post('/me/avatar', requireAuth, (req, res) => {
 
       // Atualiza avatar no banco - SALVA COM CAMINHO COMPLETO
       const avatarComCaminho = `/uploads/avatars/${avatarPath}`;
-      
+
       db.query('UPDATE funcionarios SET avatar = ? WHERE id = ?', [avatarComCaminho, userId], (err) => {
         if (err) {
           console.error('Erro ao atualizar avatar:', err);
           return res.status(500).json({ success: false, error: 'Erro ao salvar avatar' });
         }
 
-        return res.json({ 
-          success: true, 
+        return res.json({
+          success: true,
           message: 'Avatar atualizado!',
           avatar: avatarComCaminho
         });
@@ -301,9 +301,9 @@ router.patch('/:id/acesso', requireMaster, (req, res) => {
       return res.status(404).json({ success: false, error: 'Funcionário não encontrado' });
     }
 
-    return res.json({ 
-      success: true, 
-      message: acesso_ativo ? 'Acesso ativado!' : 'Acesso desativado!' 
+    return res.json({
+      success: true,
+      message: acesso_ativo ? 'Acesso ativado!' : 'Acesso desativado!'
     });
   });
 });
@@ -334,9 +334,9 @@ router.patch('/:id/master', requireMaster, (req, res) => {
       return res.status(404).json({ success: false, error: 'Funcionário não encontrado' });
     }
 
-    return res.json({ 
-      success: true, 
-      message: is_master ? 'Funcionário promovido a Master!' : 'Permissão Master removida!' 
+    return res.json({
+      success: true,
+      message: is_master ? 'Funcionário promovido a Master!' : 'Permissão Master removida!'
     });
   });
 });
@@ -394,7 +394,7 @@ router.post('/:id/reset-senha', requireMaster, async (req, res) => {
 
     // Gera senha temporária
     const senhaTemp = Math.random().toString(36).slice(-8).toUpperCase();
-    
+
     try {
       const senhaHash = await bcrypt.hash(senhaTemp, 10);
 
@@ -425,10 +425,10 @@ router.post('/:id/reset-senha', requireMaster, async (req, res) => {
           }
         }
 
-        return res.json({ 
-          success: true, 
-          message: emailEnviado 
-            ? 'Senha resetada e email enviado!' 
+        return res.json({
+          success: true,
+          message: emailEnviado
+            ? 'Senha resetada e email enviado!'
             : 'Senha resetada com sucesso!',
           senha_temporaria: senhaTemp,
           email_enviado: emailEnviado

@@ -69,16 +69,14 @@ app.get('/invoice', requireAuth, (req, res) => {
 // Suporta variáveis do Railway (MYSQL*) e variáveis customizadas (DB_*)
 // Usar POOL de conexões para reconexão automática (importante para Railway)
 const db = mysql.createPool({
-  host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
-  user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
-  password: process.env.MYSQLPASSWORD || process.env.DB_PASS || '',
-  database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'sistema_gestao_tp',
-  port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
+  host: process.env.MYSQLHOST,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE,
+  port: process.env.MYSQLPORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000
+  queueLimit: 0
 });
 
 // Testar conexão inicial
@@ -87,7 +85,7 @@ db.getConnection((err, connection) => {
   else {
     console.log('Sucesso! Conectado ao banco de dados MySQL (Pool).');
     connection.release(); // Libera a conexão de volta ao pool
-    
+
     // Inicializa serviço de email
     try {
       const emailService = require('./services/emailService');
@@ -95,7 +93,7 @@ db.getConnection((err, connection) => {
     } catch (e) {
       console.log('⚠️ Serviço de email não inicializado:', e.message);
     }
-    
+
     // =====================================================
     // ✅ MIGRAÇÃO JÁ EXECUTADA NO RAILWAY - COMENTADO
     // =====================================================
@@ -452,7 +450,7 @@ db.getConnection((err, connection) => {
     const executarMigracaoComRetry = (sql, nomeColuna, callback, tentativa = 1) => {
       const maxTentativas = 3;
       const delayRetry = 1000 * tentativa; // Aumenta delay a cada tentativa
-      
+
       db.query(sql, (err) => {
         if (err) {
           if (err.code === 'ER_DUP_FIELDNAME') {
@@ -555,7 +553,7 @@ app.get('/jobs/ativos', (req, res) => {
     WHERE j.status IN ('Agendado', 'Em Andamento', 'Confirmado')
     ORDER BY j.data_inicio ASC
   `;
-  
+
   db.query(sql, (err, results) => {
     if (err) {
       console.error("Erro ao buscar jobs ativos:", err);
@@ -667,23 +665,23 @@ app.put('/clientes/:id', (req, res) => {
 
   db.query(sql, values, (err, result) => {
     if (err) return res.status(500).json(err);
-    
+
     // Atualizar contatos: primeiro remove os antigos, depois insere os novos
     const sqlDeleteContatos = "DELETE FROM contatos_clientes WHERE cliente_id = ?";
-    
+
     db.query(sqlDeleteContatos, [id], (err) => {
       if (err) console.error("Erro ao deletar contatos antigos:", err);
-      
+
       // Salvar novos contatos se existirem
       if (d.contatos && Array.isArray(d.contatos) && d.contatos.length > 0) {
         const sqlContatos = `
           INSERT INTO contatos_clientes (cliente_id, nome, cargo, email, telefone)
           VALUES (?, ?, ?, ?, ?)
         `;
-        
+
         let contatosSalvos = 0;
         const totalContatos = d.contatos.length;
-        
+
         d.contatos.forEach(contato => {
           db.query(sqlContatos, [
             id,
@@ -693,9 +691,9 @@ app.put('/clientes/:id', (req, res) => {
             contato.telefone || null
           ], (err) => {
             if (err) console.error("Erro ao salvar contato:", err);
-            
+
             contatosSalvos++;
-            
+
             // Quando todos os contatos forem processados, retorna a resposta
             if (contatosSalvos === totalContatos) {
               res.json({ success: true, message: "Cliente atualizado!" });
@@ -722,7 +720,7 @@ app.get('/clientes', (req, res) => {
 app.get('/clientes/:id/contatos', (req, res) => {
   const clienteId = req.params.id;
   const sql = "SELECT * FROM contatos_clientes WHERE cliente_id = ?";
-  
+
   db.query(sql, [clienteId], (err, contatos) => {
     if (err) return res.status(500).json({ error: err.message });
     return res.json(contatos);
@@ -763,13 +761,13 @@ app.post('/jobs', (req, res) => {
 
   // PRIMEIRO: Buscar configuração do número de pedido
   const sqlConfig = "SELECT chave, valor FROM configuracoes_sistema WHERE chave IN ('pedido_prefixo', 'pedido_numero_atual', 'pedido_incremento')";
-  
+
   db.query(sqlConfig, (errConfig, configResults) => {
     // Se não houver configuração, usa valores padrão
     let prefixo = 'PED';
     let numeroAtual = 1000;
     let incremento = 1;
-    
+
     if (!errConfig && configResults && configResults.length > 0) {
       configResults.forEach(r => {
         if (r.chave === 'pedido_prefixo') prefixo = r.valor;
@@ -777,7 +775,7 @@ app.post('/jobs', (req, res) => {
         if (r.chave === 'pedido_incremento') incremento = parseInt(r.valor) || 1;
       });
     }
-    
+
     const numeroPedido = `${prefixo}-${numeroAtual}`;
     console.log(`📝 Gerando pedido com número: ${numeroPedido}`);
 
@@ -870,149 +868,149 @@ app.post('/jobs', (req, res) => {
       data.pagador_cep || null,
       data.pagador_logradouro || null,
       data.pagador_numero || null,
-    data.pagador_bairro || null,
-    data.pagador_cidade || null,
-    data.pagador_uf || null,
-    data.desconto_valor || 0
-  ];
+      data.pagador_bairro || null,
+      data.pagador_cidade || null,
+      data.pagador_uf || null,
+      data.desconto_valor || 0
+    ];
 
-  db.query(sqlJob, values, (err, result) => {
-    if (err) {
-      console.error("Erro INSERT:", err);
-      return res.status(500).json({ error: err.message });
-    }
-
-    const novoId = result.insertId;
-
-    // =========================================================
-    // 3. IMPLEMENTAÇÃO DA NOVA LÓGICA DE EQUIPE (MÚLTIPLOS)
-    // =========================================================
-    console.log('========================================');
-    console.log('📋 PROCESSANDO EQUIPE DO JOB', novoId);
-    console.log('📋 Operador ID recebido:', data.operador_id);
-    console.log('📋 Equipe recebida:', JSON.stringify(data.equipe, null, 2));
-    console.log('📋 Total de membros recebidos:', data.equipe?.length || 0);
-    console.log('========================================');
-    
-    // Monta a equipe completa (operador + membros adicionais)
-    let equipeCompleta = [];
-    
-    // PRIMEIRO: Adiciona o operador técnico se ele foi enviado
-    if (data.operador_id) {
-      const operadorJaIncluso = data.equipe?.some(m => String(m.funcionario_id) === String(data.operador_id));
-      
-      if (!operadorJaIncluso) {
-        console.log('📋 Operador NÃO está na equipe, adicionando...');
-        equipeCompleta.push({
-          funcionario_id: data.operador_id,
-          funcao: 'Operador Técnico'
-        });
-      } else {
-        console.log('📋 Operador JÁ está na equipe enviada');
+    db.query(sqlJob, values, (err, result) => {
+      if (err) {
+        console.error("Erro INSERT:", err);
+        return res.status(500).json({ error: err.message });
       }
-    }
-    
-    // SEGUNDO: Adiciona os demais membros da equipe
-    if (data.equipe && data.equipe.length > 0) {
-      data.equipe.forEach(membro => {
-        equipeCompleta.push({
-          funcionario_id: membro.funcionario_id,
-          funcao: membro.funcao || 'Técnico'
+
+      const novoId = result.insertId;
+
+      // =========================================================
+      // 3. IMPLEMENTAÇÃO DA NOVA LÓGICA DE EQUIPE (MÚLTIPLOS)
+      // =========================================================
+      console.log('========================================');
+      console.log('📋 PROCESSANDO EQUIPE DO JOB', novoId);
+      console.log('📋 Operador ID recebido:', data.operador_id);
+      console.log('📋 Equipe recebida:', JSON.stringify(data.equipe, null, 2));
+      console.log('📋 Total de membros recebidos:', data.equipe?.length || 0);
+      console.log('========================================');
+
+      // Monta a equipe completa (operador + membros adicionais)
+      let equipeCompleta = [];
+
+      // PRIMEIRO: Adiciona o operador técnico se ele foi enviado
+      if (data.operador_id) {
+        const operadorJaIncluso = data.equipe?.some(m => String(m.funcionario_id) === String(data.operador_id));
+
+        if (!operadorJaIncluso) {
+          console.log('📋 Operador NÃO está na equipe, adicionando...');
+          equipeCompleta.push({
+            funcionario_id: data.operador_id,
+            funcao: 'Operador Técnico'
+          });
+        } else {
+          console.log('📋 Operador JÁ está na equipe enviada');
+        }
+      }
+
+      // SEGUNDO: Adiciona os demais membros da equipe
+      if (data.equipe && data.equipe.length > 0) {
+        data.equipe.forEach(membro => {
+          equipeCompleta.push({
+            funcionario_id: membro.funcionario_id,
+            funcao: membro.funcao || 'Técnico'
+          });
         });
-      });
-    }
-    
-    console.log('📋 Equipe COMPLETA a salvar:', JSON.stringify(equipeCompleta, null, 2));
-    console.log('📋 Total FINAL de membros:', equipeCompleta.length);
-    
-    // SALVA NA TABELA JOB_EQUIPE E NA TABELA ESCALAS
-    if (equipeCompleta.length > 0) {
-      // A. SALVAR NA TABELA JOB_EQUIPE
-      const sqlEquipe = "INSERT INTO job_equipe (job_id, funcionario_id, funcao) VALUES ?";
-      const valoresEquipe = equipeCompleta.map(m => [novoId, m.funcionario_id, m.funcao]);
-      
-      console.log('📋 Valores a inserir em job_equipe:', valoresEquipe);
+      }
 
-      db.query(sqlEquipe, [valoresEquipe], (errEq) => {
-        if (errEq) console.error("❌ Erro ao inserir lista de equipe:", errEq);
-        else console.log(`✅ ${valoresEquipe.length} membros inseridos na equipe do job ${novoId}`);
-      });
+      console.log('📋 Equipe COMPLETA a salvar:', JSON.stringify(equipeCompleta, null, 2));
+      console.log('📋 Total FINAL de membros:', equipeCompleta.length);
 
-      // B. CRIAR ESCALAS AUTOMATICAMENTE PARA CADA MEMBRO DA EQUIPE
-      // Função auxiliar para converter data para formato SQL (evita problema de timezone)
-      const formatarDataSQL = (data) => {
-        if (!data) return null;
-        const d = new Date(data);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
+      // SALVA NA TABELA JOB_EQUIPE E NA TABELA ESCALAS
+      if (equipeCompleta.length > 0) {
+        // A. SALVAR NA TABELA JOB_EQUIPE
+        const sqlEquipe = "INSERT INTO job_equipe (job_id, funcionario_id, funcao) VALUES ?";
+        const valoresEquipe = equipeCompleta.map(m => [novoId, m.funcionario_id, m.funcao]);
 
-      const dataInicio = formatarDataSQL(data.data_inicio) || null;
-      const dataFim = formatarDataSQL(data.data_fim || data.data_inicio) || null;
-      
-      if (dataInicio) {
-        const sqlEscalas = `
+        console.log('📋 Valores a inserir em job_equipe:', valoresEquipe);
+
+        db.query(sqlEquipe, [valoresEquipe], (errEq) => {
+          if (errEq) console.error("❌ Erro ao inserir lista de equipe:", errEq);
+          else console.log(`✅ ${valoresEquipe.length} membros inseridos na equipe do job ${novoId}`);
+        });
+
+        // B. CRIAR ESCALAS AUTOMATICAMENTE PARA CADA MEMBRO DA EQUIPE
+        // Função auxiliar para converter data para formato SQL (evita problema de timezone)
+        const formatarDataSQL = (data) => {
+          if (!data) return null;
+          const d = new Date(data);
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        const dataInicio = formatarDataSQL(data.data_inicio) || null;
+        const dataFim = formatarDataSQL(data.data_fim || data.data_inicio) || null;
+
+        if (dataInicio) {
+          const sqlEscalas = `
           INSERT INTO escalas (funcionario_id, job_id, data_escala, data_inicio, data_fim, tipo, observacao)
           VALUES ?
         `;
-        const valoresEscalas = equipeCompleta.map(m => [
-          m.funcionario_id,
-          novoId,
-          dataInicio,
-          dataInicio,
-          dataFim,
-          'Trabalho',
-          `Job #${novoId} - ${data.descricao || 'Pedido'}`
-        ]);
-        
-        console.log('📅 Criando escalas para equipe:', valoresEscalas);
-        
-        db.query(sqlEscalas, [valoresEscalas], (errEsc) => {
-          if (errEsc) console.error("❌ Erro ao criar escalas:", errEsc);
-          else console.log(`✅ ${valoresEscalas.length} escalas criadas para o job ${novoId}`);
-        });
+          const valoresEscalas = equipeCompleta.map(m => [
+            m.funcionario_id,
+            novoId,
+            dataInicio,
+            dataInicio,
+            dataFim,
+            'Trabalho',
+            `Job #${novoId} - ${data.descricao || 'Pedido'}`
+          ]);
+
+          console.log('📅 Criando escalas para equipe:', valoresEscalas);
+
+          db.query(sqlEscalas, [valoresEscalas], (errEsc) => {
+            if (errEsc) console.error("❌ Erro ao criar escalas:", errEsc);
+            else console.log(`✅ ${valoresEscalas.length} escalas criadas para o job ${novoId}`);
+          });
+        }
       }
-    }
 
-    // Processamento de itens (MANTIDO EXATAMENTE IGUAL)
-    if (data.itens && data.itens.length > 0) {
-      const sqlItens = "INSERT INTO job_itens (job_id, descricao, qtd, valor_unitario, desconto_item, equipamento_id) VALUES ?";
-      const itensFormatados = data.itens.map(i => [
-        novoId,
-        i.descricao,
-        i.qtd,
-        i.valor,
-        i.desconto_item || 0,
-        i.equipamento_id || null
-      ]);
+      // Processamento de itens (MANTIDO EXATAMENTE IGUAL)
+      if (data.itens && data.itens.length > 0) {
+        const sqlItens = "INSERT INTO job_itens (job_id, descricao, qtd, valor_unitario, desconto_item, equipamento_id) VALUES ?";
+        const itensFormatados = data.itens.map(i => [
+          novoId,
+          i.descricao,
+          i.qtd,
+          i.valor,
+          i.desconto_item || 0,
+          i.equipamento_id || null
+        ]);
 
-      db.query(sqlItens, [itensFormatados], (errItens) => {
-        if (errItens) console.error("Erro ao inserir itens:", errItens);
-        
+        db.query(sqlItens, [itensFormatados], (errItens) => {
+          if (errItens) console.error("Erro ao inserir itens:", errItens);
+
+          // Incrementar número do pedido para o próximo
+          const proximoNumero = numeroAtual + incremento;
+          db.query(
+            "INSERT INTO configuracoes_sistema (chave, valor) VALUES ('pedido_numero_atual', ?) ON DUPLICATE KEY UPDATE valor = ?",
+            [String(proximoNumero), String(proximoNumero)],
+            () => { } // Fire and forget
+          );
+
+          res.json({ message: "Job e Equipe salvos com sucesso!", id: novoId, numero_pedido: numeroPedido });
+        });
+      } else {
         // Incrementar número do pedido para o próximo
         const proximoNumero = numeroAtual + incremento;
         db.query(
           "INSERT INTO configuracoes_sistema (chave, valor) VALUES ('pedido_numero_atual', ?) ON DUPLICATE KEY UPDATE valor = ?",
           [String(proximoNumero), String(proximoNumero)],
-          () => {} // Fire and forget
+          () => { } // Fire and forget
         );
-        
+
         res.json({ message: "Job e Equipe salvos com sucesso!", id: novoId, numero_pedido: numeroPedido });
-      });
-    } else {
-      // Incrementar número do pedido para o próximo
-      const proximoNumero = numeroAtual + incremento;
-      db.query(
-        "INSERT INTO configuracoes_sistema (chave, valor) VALUES ('pedido_numero_atual', ?) ON DUPLICATE KEY UPDATE valor = ?",
-        [String(proximoNumero), String(proximoNumero)],
-        () => {} // Fire and forget
-      );
-      
-      res.json({ message: "Job e Equipe salvos com sucesso!", id: novoId, numero_pedido: numeroPedido });
-    }
-  });
+      }
+    });
   }); // Fecha o db.query de configurações
 });
 
@@ -1031,10 +1029,10 @@ app.put('/jobs/:id', (req, res) => {
       console.error(`❌ Erro ao verificar job ${id}:`, errCheck);
       return res.status(500).json({ error: errCheck.message });
     }
-    
+
     if (!jobCheck || jobCheck.length === 0) {
       console.error(`❌ Job ${id} não existe no banco de dados`);
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: `Pedido #${id} não encontrado. Ele pode ter sido excluído. Por favor, recarregue a página.`
       });
     }
@@ -1073,152 +1071,152 @@ app.put('/jobs/:id', (req, res) => {
           WHERE id = ?
       `;
 
-  // 2. ADICIONADO: Valores dos horários no array values
-  const values = [
-    data.descricao || null,
-    data.valor || 0,
-    formatarDataSQL(data.data_job || new Date()), // data_job (mantém a existente ou usa data atual)
-    formatarDataSQL(data.data_inicio) || null, // data_inicio = data do evento
-    formatarDataSQL(data.data_fim) || null, // data_fim = data final do evento
-    data.cliente_id || null,
-    data.operador_id || null,
+    // 2. ADICIONADO: Valores dos horários no array values
+    const values = [
+      data.descricao || null,
+      data.valor || 0,
+      formatarDataSQL(data.data_job || new Date()), // data_job (mantém a existente ou usa data atual)
+      formatarDataSQL(data.data_inicio) || null, // data_inicio = data do evento
+      formatarDataSQL(data.data_fim) || null, // data_fim = data final do evento
+      data.cliente_id || null,
+      data.operador_id || null,
 
-    // NOVOS VALORES
-    data.hora_chegada_prevista || null,
-    data.hora_inicio_evento || null,
-    data.hora_fim_evento || null,
+      // NOVOS VALORES
+      data.hora_chegada_prevista || null,
+      data.hora_inicio_evento || null,
+      data.hora_fim_evento || null,
 
-    data.endereco?.logradouro || null,
-    data.endereco?.numero || null,
-    data.endereco?.bairro || null,
-    data.endereco?.cidade || null,
-    data.endereco?.uf || null,
-    data.endereco?.cep || null,
-    data.solicitante_nome || null,
-    data.solicitante_email || null,
-    data.solicitante_telefone || null,
-    data.producao_local || null,
-    data.producao_contato || null,
-    data.producao_email || null,
-    data.pagador_nome || null,
-    data.pagador_cnpj || null,
-    data.pagador_email || null,
-    pagadorEnderecoCompleto,
-    data.forma_pagamento || null,
-    data.tipo_documento || null,
-    data.observacoes || null,
-    data.motivo_desconto || null,
-    (data.vencimento_texto && data.vencimento_texto.trim() !== '') ? data.vencimento_texto : "À vista",
-    data.pagador_cep || null,
-    data.pagador_logradouro || null,
-    data.pagador_numero || null,
-    data.pagador_bairro || null,
-    data.pagador_cidade || null,
-    data.pagador_uf || null,
-    data.desconto_valor || 0,
-    id
-  ];
+      data.endereco?.logradouro || null,
+      data.endereco?.numero || null,
+      data.endereco?.bairro || null,
+      data.endereco?.cidade || null,
+      data.endereco?.uf || null,
+      data.endereco?.cep || null,
+      data.solicitante_nome || null,
+      data.solicitante_email || null,
+      data.solicitante_telefone || null,
+      data.producao_local || null,
+      data.producao_contato || null,
+      data.producao_email || null,
+      data.pagador_nome || null,
+      data.pagador_cnpj || null,
+      data.pagador_email || null,
+      pagadorEnderecoCompleto,
+      data.forma_pagamento || null,
+      data.tipo_documento || null,
+      data.observacoes || null,
+      data.motivo_desconto || null,
+      (data.vencimento_texto && data.vencimento_texto.trim() !== '') ? data.vencimento_texto : "À vista",
+      data.pagador_cep || null,
+      data.pagador_logradouro || null,
+      data.pagador_numero || null,
+      data.pagador_bairro || null,
+      data.pagador_cidade || null,
+      data.pagador_uf || null,
+      data.desconto_valor || 0,
+      id
+    ];
 
-  db.query(sqlJob, values, (err, result) => {
-    if (err) {
-      console.error("Erro UPDATE Job:", err);
-      return res.status(500).json({ error: err.message });
-    }
+    db.query(sqlJob, values, (err, result) => {
+      if (err) {
+        console.error("Erro UPDATE Job:", err);
+        return res.status(500).json({ error: err.message });
+      }
 
-    // =========================================================
-    // 3. IMPLEMENTAÇÃO DA ATUALIZAÇÃO DA EQUIPE
-    // (Limpa a equipe antiga e insere a nova, igual à lógica dos itens)
-    // =========================================================
+      // =========================================================
+      // 3. IMPLEMENTAÇÃO DA ATUALIZAÇÃO DA EQUIPE
+      // (Limpa a equipe antiga e insere a nova, igual à lógica dos itens)
+      // =========================================================
 
-    // A. LIMPA EQUIPE ANTIGA
-    db.query("DELETE FROM job_equipe WHERE job_id = ?", [id], (errDelEq) => {
-      if (errDelEq) console.error("Erro ao limpar equipe antiga:", errDelEq);
+      // A. LIMPA EQUIPE ANTIGA
+      db.query("DELETE FROM job_equipe WHERE job_id = ?", [id], (errDelEq) => {
+        if (errDelEq) console.error("Erro ao limpar equipe antiga:", errDelEq);
 
-      // B. LIMPA ESCALAS ANTIGAS DESTE JOB (Para recriar atualizado)
-      db.query("DELETE FROM escalas WHERE job_id = ?", [id], (errDelEsc) => {
-        if (errDelEsc) console.error("Erro ao limpar escalas antigas:", errDelEsc);
+        // B. LIMPA ESCALAS ANTIGAS DESTE JOB (Para recriar atualizado)
+        db.query("DELETE FROM escalas WHERE job_id = ?", [id], (errDelEsc) => {
+          if (errDelEsc) console.error("Erro ao limpar escalas antigas:", errDelEsc);
 
-        // C. INSERE DADOS NOVOS (SE HOUVER EQUIPE)
-        if (data.equipe && data.equipe.length > 0) {
+          // C. INSERE DADOS NOVOS (SE HOUVER EQUIPE)
+          if (data.equipe && data.equipe.length > 0) {
 
-          // 1. INSERE NA JOB_EQUIPE
-          const sqlEquipe = "INSERT INTO job_equipe (job_id, funcionario_id, funcao) VALUES ?";
-          const valoresEquipe = data.equipe.map(m => [id, m.funcionario_id, m.funcao]);
+            // 1. INSERE NA JOB_EQUIPE
+            const sqlEquipe = "INSERT INTO job_equipe (job_id, funcionario_id, funcao) VALUES ?";
+            const valoresEquipe = data.equipe.map(m => [id, m.funcionario_id, m.funcao]);
 
-          db.query(sqlEquipe, [valoresEquipe], (errInsEq) => {
-            if (errInsEq) console.error("Erro ao inserir nova equipe:", errInsEq);
-          });
+            db.query(sqlEquipe, [valoresEquipe], (errInsEq) => {
+              if (errInsEq) console.error("Erro ao inserir nova equipe:", errInsEq);
+            });
 
-          // 2. CRIA ESCALAS AUTOMATICAMENTE PARA CADA MEMBRO DA EQUIPE
-          const dataInicio = formatarDataSQL(data.data_inicio) || null;
-          const dataFim = formatarDataSQL(data.data_fim || data.data_inicio) || null;
-          
-          if (dataInicio) {
-            const sqlEscalas = `
+            // 2. CRIA ESCALAS AUTOMATICAMENTE PARA CADA MEMBRO DA EQUIPE
+            const dataInicio = formatarDataSQL(data.data_inicio) || null;
+            const dataFim = formatarDataSQL(data.data_fim || data.data_inicio) || null;
+
+            if (dataInicio) {
+              const sqlEscalas = `
               INSERT INTO escalas (funcionario_id, job_id, data_escala, data_inicio, data_fim, tipo, observacao)
               VALUES ?
             `;
-            const valoresEscalas = data.equipe.map(m => [
-              m.funcionario_id,
-              id,
-              dataInicio,
-              dataInicio,
-              dataFim,
-              'Trabalho',
-              `Job #${id} - ${data.descricao || 'Pedido'}`
-            ]);
-            
-            console.log('📅 Criando escalas atualizadas para equipe:', valoresEscalas);
-            
-            db.query(sqlEscalas, [valoresEscalas], (errEsc) => {
-              if (errEsc) console.error("❌ Erro ao criar escalas:", errEsc);
-              else console.log(`✅ ${valoresEscalas.length} escalas atualizadas para o job ${id}`);
-            });
+              const valoresEscalas = data.equipe.map(m => [
+                m.funcionario_id,
+                id,
+                dataInicio,
+                dataInicio,
+                dataFim,
+                'Trabalho',
+                `Job #${id} - ${data.descricao || 'Pedido'}`
+              ]);
+
+              console.log('📅 Criando escalas atualizadas para equipe:', valoresEscalas);
+
+              db.query(sqlEscalas, [valoresEscalas], (errEsc) => {
+                if (errEsc) console.error("❌ Erro ao criar escalas:", errEsc);
+                else console.log(`✅ ${valoresEscalas.length} escalas atualizadas para o job ${id}`);
+              });
+            }
           }
-        }
+        });
       });
-    });
 
-    // =========================================================
-    // LÓGICA DE ITENS (MANTIDA EXATAMENTE IGUAL)
-    // =========================================================
-    db.query("DELETE FROM job_itens WHERE job_id = ?", [id], (errDel) => {
-      if (errDel) {
-        console.error("Erro ao limpar itens antigos:", errDel);
-        return res.status(500).json({ error: errDel.message });
-      }
+      // =========================================================
+      // LÓGICA DE ITENS (MANTIDA EXATAMENTE IGUAL)
+      // =========================================================
+      db.query("DELETE FROM job_itens WHERE job_id = ?", [id], (errDel) => {
+        if (errDel) {
+          console.error("Erro ao limpar itens antigos:", errDel);
+          return res.status(500).json({ error: errDel.message });
+        }
 
-      // SE NÃO TIVER ITENS NOVOS, TERMINA AQUI
-      if (!data.itens || data.itens.length === 0) {
-        console.log(`Job ${id} atualizado e itens limpos.`);
-        return res.json({ message: "Job atualizado (lista de itens zerada)" });
-      }
+        // SE NÃO TIVER ITENS NOVOS, TERMINA AQUI
+        if (!data.itens || data.itens.length === 0) {
+          console.log(`Job ${id} atualizado e itens limpos.`);
+          return res.json({ message: "Job atualizado (lista de itens zerada)" });
+        }
 
-      // SE TIVER ITENS, INSERE OS NOVOS
-      const sqlItens = `
+        // SE TIVER ITENS, INSERE OS NOVOS
+        const sqlItens = `
                 INSERT INTO job_itens (job_id, descricao, qtd, valor_unitario, desconto_item, equipamento_id)
                 VALUES ?
             `;
 
-      const itensFormatados = data.itens.map(i => [
-        id,
-        i.descricao,
-        i.qtd,
-        i.valor,
-        i.desconto_item || 0,
-        i.equipamento_id || null
-      ]);
+        const itensFormatados = data.itens.map(i => [
+          id,
+          i.descricao,
+          i.qtd,
+          i.valor,
+          i.desconto_item || 0,
+          i.equipamento_id || null
+        ]);
 
-      db.query(sqlItens, [itensFormatados], (errIns) => {
-        if (errIns) {
-          console.error("Erro ao inserir novos itens:", errIns);
-          return res.status(500).json({ error: errIns.message });
-        }
-        console.log(`Job ${id} atualizado com ${itensFormatados.length} novos itens.`);
-        res.json({ message: "Job atualizado com novos itens" });
+        db.query(sqlItens, [itensFormatados], (errIns) => {
+          if (errIns) {
+            console.error("Erro ao inserir novos itens:", errIns);
+            return res.status(500).json({ error: errIns.message });
+          }
+          console.log(`Job ${id} atualizado com ${itensFormatados.length} novos itens.`);
+          res.json({ message: "Job atualizado com novos itens" });
+        });
       });
     });
-  });
   }); // fecha callback da verificação de existência do job
 });
 
@@ -1316,10 +1314,12 @@ app.get('/debug/recalcular-estoque', (req, res) => {
 
 
 // Inicia o servidor
-const PORT = Number(process.env.PORT || 3000);
-app.listen(PORT, () => {
-  console.log("Servidor rodando na porta", PORT);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
+
 
 // Rota para buscar a Frota
 app.get('/veiculos', (req, res) => {
@@ -1396,7 +1396,7 @@ app.get('/debug/jobs-datas', (req, res) => {
 // Debug: Verificar itens de um job com detalhes de equipamento
 app.get('/debug/job-itens/:id', (req, res) => {
   const jobId = req.params.id;
-  
+
   const sql = `
     SELECT 
       ji.id as item_id,
@@ -1411,21 +1411,21 @@ app.get('/debug/job-itens/:id', (req, res) => {
     LEFT JOIN equipamentos e ON ji.equipamento_id = e.id
     WHERE ji.job_id = ?
   `;
-  
+
   db.query(sql, [jobId], (err, results) => {
     if (err) return res.json({ error: err.message });
-    
+
     const comEquipamento = results.filter(r => r.equipamento_id);
     const semEquipamento = results.filter(r => !r.equipamento_id);
-    
+
     res.json({
       job_id: jobId,
       total_itens: results.length,
       com_equipamento_id: comEquipamento.length,
       sem_equipamento_id: semEquipamento.length,
       itens: results,
-      aviso: semEquipamento.length > 0 
-        ? "Atenção: Itens sem equipamento_id não serão devolvidos ao estoque!" 
+      aviso: semEquipamento.length > 0
+        ? "Atenção: Itens sem equipamento_id não serão devolvidos ao estoque!"
         : "Todos os itens têm equipamento_id vinculado"
     });
   });
@@ -1434,18 +1434,18 @@ app.get('/debug/job-itens/:id', (req, res) => {
 // Debug: Verificar dependências de um job antes de excluir
 app.get('/debug/job-dependencias/:id', (req, res) => {
   const jobId = req.params.id;
-  
+
   const queries = {
     job: "SELECT id, descricao, status FROM jobs WHERE id = ?",
     job_itens: "SELECT COUNT(*) as total FROM job_itens WHERE job_id = ?",
     job_equipe: "SELECT COUNT(*) as total FROM job_equipe WHERE job_id = ?",
     escalas: "SELECT COUNT(*) as total FROM escalas WHERE job_id = ?",
   };
-  
+
   const resultados = {};
   let completadas = 0;
   const totalQueries = Object.keys(queries).length;
-  
+
   Object.entries(queries).forEach(([nome, sql]) => {
     db.query(sql, [jobId], (err, results) => {
       if (err) {
@@ -1454,7 +1454,7 @@ app.get('/debug/job-dependencias/:id', (req, res) => {
         resultados[nome] = results[0] || results;
       }
       completadas++;
-      
+
       if (completadas === totalQueries) {
         // Verificar foreign keys
         db.query("SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE REFERENCED_TABLE_NAME = 'jobs' AND TABLE_SCHEMA = DATABASE()", (err, fks) => {
@@ -1473,9 +1473,9 @@ app.get('/debug/job-dependencias/:id', (req, res) => {
 // Debug: Forçar exclusão de job (apenas para emergência)
 app.delete('/debug/forcar-exclusao-job/:id', (req, res) => {
   const jobId = req.params.id;
-  
+
   console.log(`⚠️ EXCLUSÃO FORÇADA do job ${jobId}`);
-  
+
   // Executa todas as exclusões em sequência sem transação
   const queries = [
     `DELETE FROM job_itens WHERE job_id = ${jobId}`,
@@ -1483,17 +1483,17 @@ app.delete('/debug/forcar-exclusao-job/:id', (req, res) => {
     `DELETE FROM escalas WHERE job_id = ${jobId}`,
     `DELETE FROM jobs WHERE id = ${jobId}`
   ];
-  
+
   let executadas = 0;
   const erros = [];
-  
+
   queries.forEach((sql, index) => {
     db.query(sql, (err, result) => {
       if (err) {
         erros.push({ query: index, sql: sql, error: err.message, code: err.code });
       }
       executadas++;
-      
+
       if (executadas === queries.length) {
         if (erros.length > 0) {
           res.json({ success: false, erros: erros });
@@ -1508,17 +1508,17 @@ app.delete('/debug/forcar-exclusao-job/:id', (req, res) => {
 // Debug: Limpar TODOS os jobs (CUIDADO!)
 app.delete('/debug/limpar-todos-jobs', (req, res) => {
   console.log('⚠️ LIMPANDO TODOS OS JOBS DO SISTEMA');
-  
+
   const queries = [
     'DELETE FROM job_itens',
-    'DELETE FROM job_equipe', 
+    'DELETE FROM job_equipe',
     'DELETE FROM escalas WHERE job_id IS NOT NULL',
     'DELETE FROM jobs'
   ];
-  
+
   let executadas = 0;
   const resultados = [];
-  
+
   queries.forEach((sql, index) => {
     db.query(sql, (err, result) => {
       resultados.push({
@@ -1528,7 +1528,7 @@ app.delete('/debug/limpar-todos-jobs', (req, res) => {
         affectedRows: result ? result.affectedRows : 0
       });
       executadas++;
-      
+
       if (executadas === queries.length) {
         const temErro = resultados.some(r => !r.success);
         res.json({
@@ -1610,20 +1610,20 @@ app.post('/clientes', (req, res) => {
       console.error("Erro no cadastro:", err);
       return res.status(500).json({ error: err.message });
     }
-    
+
     const clienteId = result.insertId;
     console.log("Cliente cadastrado com ID:", clienteId);
-    
+
     // Salvar contatos se existirem
     if (d.contatos && Array.isArray(d.contatos) && d.contatos.length > 0) {
       const sqlContatos = `
         INSERT INTO contatos_clientes (cliente_id, nome, cargo, email, telefone)
         VALUES (?, ?, ?, ?, ?)
       `;
-      
+
       let contatosSalvos = 0;
       const totalContatos = d.contatos.length;
-      
+
       d.contatos.forEach(contato => {
         db.query(sqlContatos, [
           clienteId,
@@ -1633,9 +1633,9 @@ app.post('/clientes', (req, res) => {
           contato.telefone || null
         ], (err) => {
           if (err) console.error("Erro ao salvar contato:", err);
-          
+
           contatosSalvos++;
-          
+
           // Quando todos os contatos forem processados, retorna a resposta
           if (contatosSalvos === totalContatos) {
             res.json({ message: "Cadastro realizado!", id: clienteId });
@@ -1702,7 +1702,7 @@ app.delete('/jobs/:id', async (req, res) => {
         for (const item of itensComEquipamento) {
           console.log(`   → Devolvendo: Equipamento ${item.equipamento_id}, Qtd: ${item.qtd}`);
           await new Promise((resolve, reject) => {
-            db.query("UPDATE equipamentos SET qtd_disponivel = qtd_disponivel + ? WHERE id = ?", 
+            db.query("UPDATE equipamentos SET qtd_disponivel = qtd_disponivel + ? WHERE id = ?",
               [item.qtd, item.equipamento_id], (err, result) => {
                 if (err) {
                   console.error(`   ❌ Erro ao devolver equipamento ${item.equipamento_id}:`, err);
@@ -1766,7 +1766,7 @@ app.delete('/jobs/:id', async (req, res) => {
 
   } catch (error) {
     console.error("❌ Erro na exclusão do Job:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Falha ao excluir",
       error: error.message || "Erro desconhecido",
       code: error.code || null,
@@ -2323,7 +2323,7 @@ app.put('/funcionarios/:id', (req, res) => {
 
   db.query(sql, values, (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
-    
+
     // Sincroniza email com tabela usuarios_sistema
     if (d.email) {
       db.query('UPDATE usuarios_sistema SET email = ? WHERE funcionario_id = ?', [d.email, id], (errSync) => {
@@ -2332,7 +2332,7 @@ app.put('/funcionarios/:id', (req, res) => {
         }
       });
     }
-    
+
     res.json({ message: "Funcionário atualizado!" });
   });
 });
@@ -2360,14 +2360,14 @@ app.delete('/funcionarios/:id', (req, res) => {
 
 // 5. UPLOAD DE AVATAR DO FUNCIONÁRIO
 // Configuração para salvar avatar como Base64 no banco (persiste no Railway)
-const uploadAvatarMemory = multer({ 
+const uploadAvatarMemory = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       return cb(null, true);
     } else {
@@ -2378,19 +2378,19 @@ const uploadAvatarMemory = multer({
 
 app.post('/funcionarios/:id/avatar', uploadAvatarMemory.single('avatar'), (req, res) => {
   const funcionarioId = req.params.id;
-  
+
   if (!req.file) {
     return res.status(400).json({ error: 'Nenhum arquivo enviado' });
   }
-  
+
   // Converte o arquivo para Base64
   const base64String = req.file.buffer.toString('base64');
   const mimeType = req.file.mimetype;
   const avatarBase64 = `data:${mimeType};base64,${base64String}`;
-  
+
   // Tenta salvar na coluna avatar_base64, com fallback para avatar
   const sqlPrimario = 'UPDATE funcionarios SET avatar_base64 = ?, avatar = NULL WHERE id = ?';
-  
+
   db.query(sqlPrimario, [avatarBase64, funcionarioId], (err, result) => {
     if (err) {
       // Se coluna avatar_base64 não existe, salva direto na coluna avatar
@@ -2403,10 +2403,10 @@ app.post('/funcionarios/:id/avatar', uploadAvatarMemory.single('avatar'), (req, 
             return res.status(500).json({ error: err2.message });
           }
           console.log('✅ Avatar salvo (fallback) para funcionário:', funcionarioId);
-          res.json({ 
-            success: true, 
+          res.json({
+            success: true,
             avatarUrl: avatarBase64,
-            message: 'Avatar atualizado com sucesso!' 
+            message: 'Avatar atualizado com sucesso!'
           });
         });
         return;
@@ -2414,12 +2414,12 @@ app.post('/funcionarios/:id/avatar', uploadAvatarMemory.single('avatar'), (req, 
       console.error('Erro ao salvar avatar:', err);
       return res.status(500).json({ error: err.message });
     }
-    
+
     console.log('✅ Avatar Base64 salvo para funcionário:', funcionarioId);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       avatarUrl: avatarBase64,
-      message: 'Avatar atualizado com sucesso!' 
+      message: 'Avatar atualizado com sucesso!'
     });
   });
 });
@@ -2523,17 +2523,17 @@ app.get('/agenda', (req, res) => {
     // Função para extrair data YYYY-MM-DD de forma segura (sem problemas de timezone)
     const extrairDataStr = (data) => {
       if (!data) return null;
-      
+
       // Se já é string no formato YYYY-MM-DD, usa direto
       if (typeof data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
         return data;
       }
-      
+
       // Se é string com T (ISO), extrai só a parte da data
       if (typeof data === 'string' && data.includes('T')) {
         return data.split('T')[0];
       }
-      
+
       // Se é objeto Date, converte para string local sem timezone
       const d = new Date(data);
       // Adiciona offset para compensar o UTC
@@ -2548,16 +2548,16 @@ app.get('/agenda', (req, res) => {
     const gerarDiasEntre = (dataInicioStr, dataFimStr) => {
       const dias = [];
       if (!dataInicioStr) return dias;
-      
+
       const fimStr = dataFimStr || dataInicioStr;
-      
+
       // Parse das datas como locais (não UTC)
       const [anoI, mesI, diaI] = dataInicioStr.split('-').map(Number);
       const [anoF, mesF, diaF] = fimStr.split('-').map(Number);
-      
+
       let atual = new Date(anoI, mesI - 1, diaI, 12, 0, 0);
       const fim = new Date(anoF, mesF - 1, diaF, 12, 0, 0);
-      
+
       while (atual <= fim) {
         const y = atual.getFullYear();
         const m = String(atual.getMonth() + 1).padStart(2, '0');
@@ -2565,7 +2565,7 @@ app.get('/agenda', (req, res) => {
         dias.push(`${y}-${m}-${d}`);
         atual.setDate(atual.getDate() + 1);
       }
-      
+
       return dias;
     };
 
@@ -2574,11 +2574,11 @@ app.get('/agenda', (req, res) => {
     escalasRaw.forEach(e => {
       const dataInicioStr = extrairDataStr(e.data_inicio);
       const dataFimStr = e.data_fim ? extrairDataStr(e.data_fim) : dataInicioStr;
-      
+
       if (!dataInicioStr) return;
-      
+
       const dias = gerarDiasEntre(dataInicioStr, dataFimStr);
-      
+
       dias.forEach(dataStr => {
         eventosEscalas.push({
           id: `${e.id}-${dataStr}`,
@@ -2608,18 +2608,18 @@ app.get('/agenda', (req, res) => {
         // Extrai datas como strings YYYY-MM-DD
         const dataInicioStr = job.data_inicio ? extrairDataStr(job.data_inicio) : null;
         const dataFimStr = job.data_fim ? extrairDataStr(job.data_fim) : dataInicioStr;
-        
+
         if (!dataInicioStr) return; // Pula se não tem data
-        
+
         // Gera array de todos os dias entre início e fim
         const dias = gerarDiasEntre(dataInicioStr, dataFimStr);
-        
+
         // Para cada dia do período
         dias.forEach(dataStr => {
           // ⏰ Usa horário cadastrado ou padrão 08:00 se estiver NULL/vazio
           const horaChegada = job.hora_chegada_prevista || '08:00:00';
           const horaFim = job.hora_fim_evento || '18:00:00';
-          
+
           let cor = '#475569';
           if (job.status === 'Agendado') cor = '#0284c7';
           else if (job.status === 'Em Andamento') cor = '#16a34a';
@@ -2648,7 +2648,7 @@ app.get('/agenda', (req, res) => {
 
       const todosEventos = [...eventosEscalas, ...eventosJobs];
       console.log(`✅ Agenda retornou ${todosEventos.length} eventos (${eventosEscalas.length} escalas, ${eventosJobs.length} jobs)`);
-      
+
       res.json(todosEventos);
     });
   });
@@ -2669,7 +2669,7 @@ app.post('/jobs/equipe', (req, res) => {
 app.post('/jobs/:id/equipe/adicionar', (req, res) => {
   const jobId = req.params.id;
   const { funcionario_id, funcao } = req.body;
-  
+
   // Verifica se já existe esse funcionário nesse job
   const sqlCheck = "SELECT id FROM job_equipe WHERE job_id = ? AND funcionario_id = ?";
   db.query(sqlCheck, [jobId, funcionario_id], (errCheck, results) => {
@@ -2677,13 +2677,13 @@ app.post('/jobs/:id/equipe/adicionar', (req, res) => {
       console.error("Erro ao verificar equipe:", errCheck);
       return res.status(500).json({ error: errCheck.message });
     }
-    
+
     // Se já existe, não adiciona novamente
     if (results.length > 0) {
       console.log(`📋 Funcionário ${funcionario_id} já está na equipe do job ${jobId}`);
       return res.json({ message: "Funcionário já está na equipe", alreadyExists: true });
     }
-    
+
     // Se não existe, adiciona
     const sqlInsert = "INSERT INTO job_equipe (job_id, funcionario_id, funcao) VALUES (?, ?, ?)";
     db.query(sqlInsert, [jobId, funcionario_id, funcao || 'Técnico'], (errInsert) => {
@@ -2726,7 +2726,7 @@ app.post('/escalas', (req, res) => {
   // Aceita tanto 'data' (único dia) quanto 'data_inicio'/'data_fim' (período)
   const dataInicio = data.data_inicio || data.data;
   const dataFim = data.data_fim || data.data;
-  
+
   const values = [
     data.funcionario_id,     // ID do funcionário
     dataInicio,              // Data escala (compatibilidade)
@@ -2914,7 +2914,7 @@ app.post('/empresa', (req, res) => {
 // UPLOAD DO LOGO DA EMPRESA
 app.post('/empresa/logo', (req, res) => {
   const { logo } = req.body; // Base64 da imagem
-  
+
   if (!logo) {
     return res.status(400).json({ error: "Logo não informado" });
   }
@@ -2973,21 +2973,21 @@ app.get('/configuracoes', (req, res) => {
 // GERAR PRÓXIMO NÚMERO DO PEDIDO (DEVE VIR ANTES DA ROTA GENÉRICA)
 app.get('/configuracoes/proximo-numero-pedido', (req, res) => {
   const sql = "SELECT chave, valor FROM configuracoes_sistema WHERE chave IN ('pedido_prefixo', 'pedido_numero_atual', 'pedido_incremento')";
-  
+
   db.query(sql, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
-    
+
     const config = {};
     results.forEach(r => {
       config[r.chave] = r.valor;
     });
-    
+
     const prefixo = config.pedido_prefixo || 'PED';
     const numero = parseInt(config.pedido_numero_atual) || 1000;
     const incremento = parseInt(config.pedido_incremento) || 1;
-    
+
     const numeroPedido = `${prefixo}-${numero}`;
-    
+
     res.json({
       numero_pedido: numeroPedido,
       prefixo,
@@ -3013,13 +3013,13 @@ app.get('/configuracoes/:chave', (req, res) => {
 app.put('/configuracoes/:chave', (req, res) => {
   const { chave } = req.params;
   const { valor } = req.body;
-  
+
   const sql = `
     INSERT INTO configuracoes_sistema (chave, valor) 
     VALUES (?, ?)
     ON DUPLICATE KEY UPDATE valor = ?, updated_at = CURRENT_TIMESTAMP
   `;
-  
+
   db.query(sql, [chave, valor, valor], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true, message: 'Configuração atualizada!' });
@@ -3029,9 +3029,9 @@ app.put('/configuracoes/:chave', (req, res) => {
 // SALVAR CONFIGURAÇÃO DO NÚMERO DO PEDIDO
 app.post('/configuracoes/numero-pedido', (req, res) => {
   const { prefixo, numero_inicial, incremento } = req.body;
-  
+
   console.log('📝 Salvando configuração de número de pedido:', { prefixo, numero_inicial, incremento });
-  
+
   // Primeiro, garantir que a tabela existe com a estrutura correta
   const sqlCriarTabela = `
     CREATE TABLE IF NOT EXISTS configuracoes_sistema (
@@ -3044,10 +3044,10 @@ app.post('/configuracoes/numero-pedido', (req, res) => {
       UNIQUE KEY unique_chave (chave)
     )
   `;
-  
+
   db.query(sqlCriarTabela, (errTabela) => {
     if (errTabela) console.warn('Aviso ao verificar tabela:', errTabela.message);
-    
+
     // Agora salvar as configurações usando REPLACE que funciona melhor
     const sqlSalvar = `
       REPLACE INTO configuracoes_sistema (chave, valor, descricao) VALUES 
@@ -3055,19 +3055,19 @@ app.post('/configuracoes/numero-pedido', (req, res) => {
       ('pedido_numero_atual', ?, 'Número atual do pedido'),
       ('pedido_incremento', ?, 'Incremento do pedido')
     `;
-    
+
     const valores = [
       prefixo || 'PED',
       String(numero_inicial || 1000),
       String(incremento || 1)
     ];
-    
+
     db.query(sqlSalvar, valores, (err, result) => {
       if (err) {
         console.error('❌ Erro ao salvar configurações:', err);
         return res.status(500).json({ error: err.message });
       }
-      
+
       console.log('✅ Configurações salvas com sucesso!', result);
       res.json({ success: true, message: 'Configuração do número de pedido salva!' });
     });
@@ -3098,7 +3098,7 @@ app.get('/permissoes', (req, res) => {
     LEFT JOIN usuarios_sistema u ON f.id = u.funcionario_id
     ORDER BY f.nome
   `;
-  
+
   db.query(sql, (err, results) => {
     if (err) {
       console.error("Erro ao buscar permissões:", err);
@@ -3111,7 +3111,7 @@ app.get('/permissoes', (req, res) => {
 // BUSCAR PERMISSÕES DE UM FUNCIONÁRIO
 app.get('/permissoes/:funcionarioId', (req, res) => {
   const { funcionarioId } = req.params;
-  
+
   const sql = `
     SELECT f.id, f.nome, f.cargo, f.email, f.avatar,
            COALESCE(f.is_master, 0) as is_master,
@@ -3129,7 +3129,7 @@ app.get('/permissoes/:funcionarioId', (req, res) => {
     LEFT JOIN usuarios_sistema u ON f.id = u.funcionario_id
     WHERE f.id = ?
   `;
-  
+
   db.query(sql, [funcionarioId], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     if (results.length === 0) return res.status(404).json({ error: 'Funcionário não encontrado' });
@@ -3153,9 +3153,9 @@ app.post('/permissoes/:funcionarioId', (req, res) => {
     email,
     senha
   } = req.body;
-  
+
   console.log(`📝 Salvando permissões para funcionário ${funcionarioId}:`, req.body);
-  
+
   // 1. Inserir/Atualizar permissões
   const sqlPermissoes = `
     INSERT INTO permissoes_funcionarios 
@@ -3174,7 +3174,7 @@ app.post('/permissoes/:funcionarioId', (req, res) => {
       is_master = VALUES(is_master),
       updated_at = CURRENT_TIMESTAMP
   `;
-  
+
   const valoresPermissoes = [
     funcionarioId,
     acesso_sistema ? 1 : 0,
@@ -3187,13 +3187,13 @@ app.post('/permissoes/:funcionarioId', (req, res) => {
     acesso_configuracoes ? 1 : 0,
     is_master ? 1 : 0
   ];
-  
+
   db.query(sqlPermissoes, valoresPermissoes, (err) => {
     if (err) {
       console.error("Erro ao salvar permissões:", err);
       return res.status(500).json({ error: err.message });
     }
-    
+
     // 2.1 Atualiza is_master na tabela funcionarios (sistema novo de login)
     db.query('UPDATE funcionarios SET is_master = ? WHERE id = ?', [is_master ? 1 : 0, funcionarioId], (errMaster) => {
       if (errMaster) {
@@ -3202,17 +3202,17 @@ app.post('/permissoes/:funcionarioId', (req, res) => {
         console.log(`✅ is_master atualizado na tabela funcionarios (${funcionarioId}): ${is_master ? 1 : 0}`);
       }
     });
-    
+
     // 2. Se tem acesso ao sistema e email foi fornecido, criar/atualizar usuário
     if (acesso_sistema && email) {
       let sqlUsuario;
       let valoresUsuario;
-      
+
       if (senha && senha.trim() !== '') {
         // Com nova senha - usar bcrypt para compatibilidade com novo sistema de login
         const senhaHashBcrypt = bcrypt.hashSync(senha, 10);
         const senhaHashLegacy = hashSenha(senha);
-        
+
         // Atualiza senha no novo sistema (tabela funcionarios)
         db.query('UPDATE funcionarios SET senha_hash = ? WHERE id = ?', [senhaHashBcrypt, funcionarioId], (errSenha) => {
           if (errSenha) {
@@ -3221,7 +3221,7 @@ app.post('/permissoes/:funcionarioId', (req, res) => {
             console.log(`✅ Senha atualizada em funcionarios (${funcionarioId}) com bcrypt`);
           }
         });
-        
+
         sqlUsuario = `
           INSERT INTO usuarios_sistema (funcionario_id, email, senha_hash, ativo)
           VALUES (?, ?, ?, 1)
@@ -3246,13 +3246,13 @@ app.post('/permissoes/:funcionarioId', (req, res) => {
         const senhaTmp = hashSenha(gerarSenhaTemporaria());
         valoresUsuario = [funcionarioId, email, senhaTmp];
       }
-      
+
       db.query(sqlUsuario, valoresUsuario, (err2) => {
         if (err2) {
           console.error("Erro ao salvar usuário:", err2);
           return res.status(500).json({ error: 'Permissões salvas, mas erro ao criar usuário: ' + err2.message });
         }
-        
+
         console.log('✅ Permissões e usuário salvos com sucesso!');
         res.json({ success: true, message: 'Permissões e credenciais salvas!' });
       });
@@ -3272,19 +3272,19 @@ app.post('/usuarios/:funcionarioId/resetar-senha', (req, res) => {
   const { funcionarioId } = req.params;
   const novaSenha = gerarSenhaTemporaria();
   const senhaHash = hashSenha(novaSenha);
-  
+
   const sql = "UPDATE usuarios_sistema SET senha_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE funcionario_id = ?";
-  
+
   db.query(sql, [senhaHash, funcionarioId], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
-    
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
-    
+
     // Em produção, enviar por email. Aqui retornamos para exibir
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Senha resetada com sucesso!',
       senha_temporaria: novaSenha // Em produção, NÃO retornar isso - enviar por email
     });
@@ -3298,13 +3298,13 @@ app.post('/usuarios/:funcionarioId/resetar-senha', (req, res) => {
 // LOGIN
 app.post('/auth/login', (req, res) => {
   const { email, senha } = req.body;
-  
+
   if (!email || !senha) {
     return res.status(400).json({ error: 'Email e senha são obrigatórios' });
   }
-  
+
   const senhaHash = hashSenha(senha);
-  
+
   const sql = `
     SELECT u.*, f.nome, f.cargo, f.avatar,
            p.acesso_dashboard, p.acesso_clientes, p.acesso_funcionarios,
@@ -3315,24 +3315,24 @@ app.post('/auth/login', (req, res) => {
     LEFT JOIN permissoes_funcionarios p ON u.funcionario_id = p.funcionario_id
     WHERE u.email = ? AND u.senha_hash = ? AND u.ativo = 1
   `;
-  
+
   db.query(sql, [email, senhaHash], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
-    
+
     if (results.length === 0) {
       return res.status(401).json({ error: 'Email ou senha incorretos' });
     }
-    
+
     const usuario = results[0];
     const token = gerarToken();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
-    
+
     // Criar sessão
     const sqlSessao = `
       INSERT INTO sessoes_usuarios (usuario_id, token, ip_address, user_agent, expires_at)
       VALUES (?, ?, ?, ?, ?)
     `;
-    
+
     db.query(sqlSessao, [
       usuario.id,
       token,
@@ -3344,10 +3344,10 @@ app.post('/auth/login', (req, res) => {
         console.error("Erro ao criar sessão:", err2);
         return res.status(500).json({ error: 'Erro ao criar sessão' });
       }
-      
+
       // Atualiza último login
       db.query("UPDATE usuarios_sistema SET ultimo_login = CURRENT_TIMESTAMP WHERE id = ?", [usuario.id]);
-      
+
       res.json({
         success: true,
         token,
@@ -3377,11 +3377,11 @@ app.post('/auth/login', (req, res) => {
 // LOGOUT
 app.post('/auth/logout', (req, res) => {
   const token = req.headers['authorization']?.replace('Bearer ', '');
-  
+
   if (!token) {
     return res.json({ success: true });
   }
-  
+
   db.query("DELETE FROM sessoes_usuarios WHERE token = ?", [token], () => {
     res.json({ success: true, message: 'Logout realizado!' });
   });
@@ -3390,11 +3390,11 @@ app.post('/auth/logout', (req, res) => {
 // VERIFICAR SESSÃO
 app.get('/auth/verificar', (req, res) => {
   const token = req.headers['authorization']?.replace('Bearer ', '');
-  
+
   if (!token) {
     return res.status(401).json({ error: 'Token não fornecido' });
   }
-  
+
   const sql = `
     SELECT s.*, u.email, u.funcionario_id, f.nome, f.cargo, f.avatar,
            p.acesso_dashboard, p.acesso_clientes, p.acesso_funcionarios,
@@ -3406,22 +3406,22 @@ app.get('/auth/verificar', (req, res) => {
     LEFT JOIN permissoes_funcionarios p ON u.funcionario_id = p.funcionario_id
     WHERE s.token = ? AND s.expires_at > NOW() AND u.ativo = 1
   `;
-  
+
   db.query(sql, [token], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
-    
+
     if (results.length === 0) {
       return res.status(401).json({ error: 'Sessão inválida ou expirada' });
     }
-    
+
     const sessao = results[0];
-    
+
     // Garante que o avatar sempre tenha caminho completo
     let avatarCompleto = sessao.avatar;
     if (avatarCompleto && !avatarCompleto.startsWith('/')) {
       avatarCompleto = `/uploads/avatars/${avatarCompleto}`;
     }
-    
+
     res.json({
       valido: true,
       usuario: {
@@ -3454,11 +3454,11 @@ app.get('/auth/verificar', (req, res) => {
 function verificarPermissao(permissaoNecessaria) {
   return (req, res, next) => {
     const token = req.headers['authorization']?.replace('Bearer ', '');
-    
+
     if (!token) {
       return res.status(401).json({ error: 'Acesso não autorizado' });
     }
-    
+
     const sql = `
       SELECT p.*, u.ativo
       FROM sessoes_usuarios s
@@ -3466,25 +3466,25 @@ function verificarPermissao(permissaoNecessaria) {
       LEFT JOIN permissoes_funcionarios p ON u.funcionario_id = p.funcionario_id
       WHERE s.token = ? AND s.expires_at > NOW() AND u.ativo = 1
     `;
-    
+
     db.query(sql, [token], (err, results) => {
       if (err || results.length === 0) {
         return res.status(401).json({ error: 'Sessão inválida' });
       }
-      
+
       const permissoes = results[0];
-      
+
       // Master ignora verificações
       if (permissoes.is_master) {
         return next();
       }
-      
+
       // Verifica permissão específica
       const campoPermissao = `acesso_${permissaoNecessaria}`;
       if (!permissoes[campoPermissao]) {
         return res.status(403).json({ error: 'Você não tem permissão para acessar esta área.' });
       }
-      
+
       next();
     });
   };
@@ -3498,33 +3498,33 @@ module.exports = { verificarPermissao };
 // =======================================================
 app.get('/migrar-numero-pedido', (req, res) => {
   console.log('🚨 EXECUTANDO MIGRAÇÃO DE EMERGÊNCIA: numero_pedido');
-  
+
   const sqlAdicionarNumeroPedido = `
     ALTER TABLE jobs 
     ADD COLUMN numero_pedido VARCHAR(50)
   `;
-  
+
   db.query(sqlAdicionarNumeroPedido, (err) => {
     if (err) {
       if (err.code === 'ER_DUP_FIELDNAME') {
         console.log('✅ Coluna numero_pedido já existe na tabela jobs.');
-        return res.json({ 
-          success: true, 
+        return res.json({
+          success: true,
           message: 'Coluna numero_pedido já existe na tabela jobs. ✅',
           status: 'JÁ EXISTIA'
         });
       } else {
         console.error('❌ Erro ao adicionar coluna numero_pedido:', err);
-        return res.status(500).json({ 
-          success: false, 
+        return res.status(500).json({
+          success: false,
           error: err.message,
           message: 'Erro ao criar a coluna. Veja os detalhes no console.'
         });
       }
     } else {
       console.log('✅ Coluna numero_pedido criada com sucesso na tabela jobs!');
-      return res.json({ 
-        success: true, 
+      return res.json({
+        success: true,
         message: 'Coluna numero_pedido criada com sucesso! 🎉',
         status: 'CRIADA AGORA'
       });
