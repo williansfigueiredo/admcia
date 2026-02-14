@@ -448,156 +448,68 @@ db.getConnection((err, connection) => {
 
 
     // Migração: Adicionar coluna avatar na tabela funcionarios (se não existir)
-    const sqlAdicionarAvatar = `
-      ALTER TABLE funcionarios 
-      ADD COLUMN avatar VARCHAR(255)
-    `;
-    
-    db.query(sqlAdicionarAvatar, (err) => {
-      if (err) {
-        // Ignora erro se coluna já existe (código 1060 no MySQL)
-        if (err.code === 'ER_DUP_FIELDNAME') {
-          console.log('✅ Coluna avatar já existe na tabela funcionarios.');
+    // FUNÇÃO DE MIGRAÇÃO COM RETRY PARA EVITAR DEADLOCK
+    const executarMigracaoComRetry = (sql, nomeColuna, callback, tentativa = 1) => {
+      const maxTentativas = 3;
+      const delayRetry = 1000 * tentativa; // Aumenta delay a cada tentativa
+      
+      db.query(sql, (err) => {
+        if (err) {
+          if (err.code === 'ER_DUP_FIELDNAME') {
+            console.log(`✅ Coluna ${nomeColuna} já existe.`);
+            if (callback) callback();
+          } else if ((err.code === 'ER_LOCK_DEADLOCK' || err.message.includes('Deadlock')) && tentativa < maxTentativas) {
+            console.log(`⚠️ Deadlock em ${nomeColuna}, tentando novamente em ${delayRetry}ms... (tentativa ${tentativa}/${maxTentativas})`);
+            setTimeout(() => executarMigracaoComRetry(sql, nomeColuna, callback, tentativa + 1), delayRetry);
+          } else {
+            console.error(`⚠️ Erro ao adicionar coluna ${nomeColuna}:`, err.message);
+            if (callback) callback();
+          }
         } else {
-          console.error('⚠️ Erro ao adicionar coluna avatar:', err.message);
+          console.log(`✅ Coluna ${nomeColuna} criada com sucesso.`);
+          if (callback) callback();
         }
-      } else {
-        console.log('✅ Coluna avatar criada com sucesso na tabela funcionarios.');
-      }
-    });
+      });
+    };
 
-    // Migração: Adicionar coluna avatar_base64 LONGTEXT para persistência no Railway
-    const sqlAdicionarAvatarBase64 = `
-      ALTER TABLE funcionarios 
-      ADD COLUMN avatar_base64 LONGTEXT
-    `;
-    
-    db.query(sqlAdicionarAvatarBase64, (err) => {
-      if (err) {
-        if (err.code === 'ER_DUP_FIELDNAME') {
-          console.log('✅ Coluna avatar_base64 já existe na tabela funcionarios.');
-        } else {
-          console.error('⚠️ Erro ao adicionar coluna avatar_base64:', err.message);
-        }
-      } else {
-        console.log('✅ Coluna avatar_base64 criada com sucesso na tabela funcionarios.');
-      }
-    });
-
-    // Migração: Adicionar coluna senha_hash na tabela funcionarios (se não existir)
-    const sqlAdicionarSenhaHash = `
-      ALTER TABLE funcionarios 
-      ADD COLUMN senha_hash VARCHAR(255) NULL
-    `;
-    
-    db.query(sqlAdicionarSenhaHash, (err) => {
-      if (err) {
-        if (err.code === 'ER_DUP_FIELDNAME') {
-          console.log('✅ Coluna senha_hash já existe na tabela funcionarios.');
-        } else {
-          console.error('⚠️ Erro ao adicionar coluna senha_hash:', err.message);
-        }
-      } else {
-        console.log('✅ Coluna senha_hash criada com sucesso na tabela funcionarios.');
-      }
-    });
-
-    // Migração: Adicionar coluna ultimo_login na tabela funcionarios (se não existir)
-    const sqlAdicionarUltimoLogin = `
-      ALTER TABLE funcionarios 
-      ADD COLUMN ultimo_login TIMESTAMP NULL
-    `;
-    
-    db.query(sqlAdicionarUltimoLogin, (err) => {
-      if (err) {
-        if (err.code === 'ER_DUP_FIELDNAME') {
-          console.log('✅ Coluna ultimo_login já existe na tabela funcionarios.');
-        } else {
-          console.error('⚠️ Erro ao adicionar coluna ultimo_login:', err.message);
-        }
-      } else {
-        console.log('✅ Coluna ultimo_login criada com sucesso na tabela funcionarios.');
-      }
-    });
-
-    // Migração: Adicionar coluna is_master (controle de admin)
-    const sqlAdicionarIsMaster = `
-      ALTER TABLE funcionarios 
-      ADD COLUMN is_master TINYINT(1) NOT NULL DEFAULT 0
-    `;
-    
-    db.query(sqlAdicionarIsMaster, (err) => {
-      if (err) {
-        if (err.code === 'ER_DUP_FIELDNAME') {
-          console.log('✅ Coluna is_master já existe na tabela funcionarios.');
-        } else {
-          console.error('⚠️ Erro ao adicionar coluna is_master:', err.message);
-        }
-      } else {
-        console.log('✅ Coluna is_master criada com sucesso na tabela funcionarios.');
-      }
-    });
-
-    // Migração: Adicionar coluna acesso_ativo (controle de acesso)
-    const sqlAdicionarAcessoAtivo = `
-      ALTER TABLE funcionarios 
-      ADD COLUMN acesso_ativo TINYINT(1) NOT NULL DEFAULT 1
-    `;
-    
-    db.query(sqlAdicionarAcessoAtivo, (err) => {
-      if (err) {
-        if (err.code === 'ER_DUP_FIELDNAME') {
-          console.log('✅ Coluna acesso_ativo já existe na tabela funcionarios.');
-        } else {
-          console.error('⚠️ Erro ao adicionar coluna acesso_ativo:', err.message);
-        }
-      } else {
-        console.log('✅ Coluna acesso_ativo criada com sucesso na tabela funcionarios.');
-      }
-    });
-
-    // Migração: Adicionar coluna numero_pedido na tabela jobs
-    const sqlAdicionarNumeroPedido = `
-      ALTER TABLE jobs 
-      ADD COLUMN numero_pedido VARCHAR(50)
-    `;
-    
-    db.query(sqlAdicionarNumeroPedido, (err) => {
-      if (err) {
-        if (err.code === 'ER_DUP_FIELDNAME') {
-          console.log('✅ Coluna numero_pedido já existe na tabela jobs.');
-        } else {
-          console.error('⚠️ Erro ao adicionar coluna numero_pedido:', err.message);
-        }
-      } else {
-        console.log('✅ Coluna numero_pedido criada com sucesso na tabela jobs.');
-      }
-    });
-
-    // Migração: Adicionar colunas data_inicio e data_fim na tabela escalas
-    db.query(`ALTER TABLE escalas ADD COLUMN data_inicio DATE`, (err) => {
-      if (err) {
-        if (err.code === 'ER_DUP_FIELDNAME') {
-          console.log('✅ Coluna data_inicio já existe na tabela escalas.');
-        } else {
-          console.error('⚠️ Erro ao adicionar coluna data_inicio em escalas:', err.message);
-        }
-      } else {
-        console.log('✅ Coluna data_inicio criada com sucesso na tabela escalas.');
-      }
-    });
-
-    db.query(`ALTER TABLE escalas ADD COLUMN data_fim DATE`, (err) => {
-      if (err) {
-        if (err.code === 'ER_DUP_FIELDNAME') {
-          console.log('✅ Coluna data_fim já existe na tabela escalas.');
-        } else {
-          console.error('⚠️ Erro ao adicionar coluna data_fim em escalas:', err.message);
-        }
-      } else {
-        console.log('✅ Coluna data_fim criada com sucesso na tabela escalas.');
-      }
-    });
+    // Executar migrações SEQUENCIALMENTE para evitar deadlocks
+    executarMigracaoComRetry(
+      'ALTER TABLE funcionarios ADD COLUMN avatar VARCHAR(255)',
+      'avatar',
+      () => executarMigracaoComRetry(
+        'ALTER TABLE funcionarios ADD COLUMN avatar_base64 LONGTEXT',
+        'avatar_base64',
+        () => executarMigracaoComRetry(
+          'ALTER TABLE funcionarios ADD COLUMN senha_hash VARCHAR(255) NULL',
+          'senha_hash',
+          () => executarMigracaoComRetry(
+            'ALTER TABLE funcionarios ADD COLUMN ultimo_login TIMESTAMP NULL',
+            'ultimo_login',
+            () => executarMigracaoComRetry(
+              'ALTER TABLE funcionarios ADD COLUMN is_master TINYINT(1) NOT NULL DEFAULT 0',
+              'is_master',
+              () => executarMigracaoComRetry(
+                'ALTER TABLE funcionarios ADD COLUMN acesso_ativo TINYINT(1) NOT NULL DEFAULT 1',
+                'acesso_ativo',
+                () => executarMigracaoComRetry(
+                  'ALTER TABLE jobs ADD COLUMN numero_pedido VARCHAR(50)',
+                  'numero_pedido (jobs)',
+                  () => executarMigracaoComRetry(
+                    'ALTER TABLE escalas ADD COLUMN data_inicio DATE',
+                    'data_inicio (escalas)',
+                    () => executarMigracaoComRetry(
+                      'ALTER TABLE escalas ADD COLUMN data_fim DATE',
+                      'data_fim (escalas)',
+                      () => console.log('✅ Todas as migrações concluídas!')
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    );
   }
 });
 
