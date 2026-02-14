@@ -4533,12 +4533,7 @@ window.verInvoice = function (id) {
   modal.show();
 }
 
-// Função auxiliar para formatar data (caso não tenha)
-function formatarData(dataISO) {
-  if (!dataISO) return "";
-  const d = new Date(dataISO);
-  return d.toLocaleDateString('pt-BR');
-}
+// Função formatarData já definida globalmente no início do arquivo
 
 /* =============================================================
    CADASTRO DE CLIENTES (TELA CHEIA)
