@@ -1,0 +1,22 @@
+name: Deploy DigitalOcean
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            cd /root/admcia
+            git pull origin main
+            npm ci --omit=dev
+            pm2 reload admcia || pm2 start server.js --name admcia
+            pm2 save
