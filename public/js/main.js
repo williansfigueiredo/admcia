@@ -3223,10 +3223,12 @@ function renderizarTabelaContratos(pagina) {
   if (mobileContainer) mobileContainer.innerHTML = "";
   paginaAtual = pagina;
 
-  // Garante que jobsFiltrados existe
-  if (!jobsFiltrados || jobsFiltrados.length === 0) {
+  // CORREÇÃO: NÃO resetar jobsFiltrados quando vazio!
+  // Se está vazio é porque o filtro não encontrou nada.
+  // Só inicializa se ainda não existir (null ou undefined)
+  if (jobsFiltrados === null || jobsFiltrados === undefined) {
     jobsFiltrados = [...window.todosOsJobsCache];
-    console.log('🔄 Resetou jobsFiltrados:', jobsFiltrados.length);
+    console.log('🔄 Inicializou jobsFiltrados:', jobsFiltrados.length);
   }
 
   const inicio = (pagina - 1) * ITENS_POR_PAGINA;
@@ -6914,6 +6916,12 @@ function atualizarKPIsEstoque(itens) {
 
 // 3. FILTRAGEM E BUSCA
 window.filtrarEstoque = function () {
+  // Verifica se o cache existe
+  if (!window.cacheEstoque || !Array.isArray(window.cacheEstoque)) {
+    console.warn('⚠️ cacheEstoque não carregado ainda');
+    return;
+  }
+
   // Pegamos os elementos com segurança (se não existirem, usa valor padrão)
   const inputBusca = document.getElementById('buscaEstoque');
   const inputCat = document.getElementById('filtroCategoriaEstoque');
@@ -6923,6 +6931,9 @@ window.filtrarEstoque = function () {
   const catFiltro = inputCat ? inputCat.value : "";
   const statusFiltro = inputStatus ? inputStatus.value : "";
 
+  console.log('🔍 [FILTRO ESTOQUE] Aplicando:', { termo, catFiltro, statusFiltro });
+  console.log('🔍 [FILTRO ESTOQUE] Itens no cache:', window.cacheEstoque.length);
+
   const filtrados = window.cacheEstoque.filter(item => {
     const nome = (item.nome || "").toLowerCase();
     const marca = (item.marca || "").toLowerCase();
@@ -6931,7 +6942,7 @@ window.filtrarEstoque = function () {
     const status = (item.status || "");
 
     // Filtro de Texto
-    const bateuTexto = nome.includes(termo) || marca.includes(termo) || modelo.includes(termo);
+    const bateuTexto = !termo || nome.includes(termo) || marca.includes(termo) || modelo.includes(termo);
 
     // Filtro de Categoria
     const bateuCat = catFiltro === "" || categoria === catFiltro;
@@ -6941,6 +6952,8 @@ window.filtrarEstoque = function () {
 
     return bateuTexto && bateuCat && bateuStatus;
   });
+
+  console.log('🔍 [FILTRO ESTOQUE] Itens filtrados:', filtrados.length);
 
   // Salva lista filtrada e reseta para página 1
   window.paginacaoEstoque.listaTotalFiltrada = filtrados;
