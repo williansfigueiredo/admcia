@@ -1512,6 +1512,42 @@ app.delete('/debug/forcar-exclusao-job/:id', (req, res) => {
   });
 });
 
+// Debug: Limpar TODOS os jobs (CUIDADO!)
+app.delete('/debug/limpar-todos-jobs', (req, res) => {
+  console.log('⚠️ LIMPANDO TODOS OS JOBS DO SISTEMA');
+  
+  const queries = [
+    'DELETE FROM job_itens',
+    'DELETE FROM job_equipe', 
+    'DELETE FROM escalas WHERE job_id IS NOT NULL',
+    'DELETE FROM jobs'
+  ];
+  
+  let executadas = 0;
+  const resultados = [];
+  
+  queries.forEach((sql, index) => {
+    db.query(sql, (err, result) => {
+      resultados.push({
+        query: sql,
+        success: !err,
+        error: err ? err.message : null,
+        affectedRows: result ? result.affectedRows : 0
+      });
+      executadas++;
+      
+      if (executadas === queries.length) {
+        const temErro = resultados.some(r => !r.success);
+        res.json({
+          success: !temErro,
+          message: temErro ? 'Alguns erros ocorreram' : 'Todos os jobs foram excluídos',
+          detalhes: resultados
+        });
+      }
+    });
+  });
+});
+
 // Rota para Atualizar Status ou Pagamento
 app.post('/jobs/update/:id', (req, res) => {
   const { id } = req.params;
