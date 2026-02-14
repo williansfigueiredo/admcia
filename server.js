@@ -62,6 +62,7 @@ app.get('/dashboard', requireAuth, (req, res) => {
 
 app.get('/invoice', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'invoice.html'));
+  
 });
 
 // --- CONEXÃO COM O BANCO ---
