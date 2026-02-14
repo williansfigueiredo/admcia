@@ -2564,31 +2564,66 @@ app.get('/agenda', (req, res) => {
       return res.status(500).json({ error: err.message });
     }
 
-    // Função para formatar data sem problema de timezone
-    const formatarDataLocal = (data) => {
+    // Função para extrair data YYYY-MM-DD de forma segura (sem problemas de timezone)
+    const extrairDataStr = (data) => {
       if (!data) return null;
+      
+      // Se já é string no formato YYYY-MM-DD, usa direto
+      if (typeof data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
+        return data;
+      }
+      
+      // Se é string com T (ISO), extrai só a parte da data
+      if (typeof data === 'string' && data.includes('T')) {
+        return data.split('T')[0];
+      }
+      
+      // Se é objeto Date, converte para string local sem timezone
       const d = new Date(data);
-      d.setHours(d.getHours() + 12);
+      // Adiciona offset para compensar o UTC
+      d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     };
 
-    // Expande escalas para múltiplos dias (se tiver data_inicio e data_fim)
+    // Função para iterar entre duas datas (retorna array de strings YYYY-MM-DD)
+    const gerarDiasEntre = (dataInicioStr, dataFimStr) => {
+      const dias = [];
+      if (!dataInicioStr) return dias;
+      
+      const fimStr = dataFimStr || dataInicioStr;
+      
+      // Parse das datas como locais (não UTC)
+      const [anoI, mesI, diaI] = dataInicioStr.split('-').map(Number);
+      const [anoF, mesF, diaF] = fimStr.split('-').map(Number);
+      
+      let atual = new Date(anoI, mesI - 1, diaI, 12, 0, 0);
+      const fim = new Date(anoF, mesF - 1, diaF, 12, 0, 0);
+      
+      while (atual <= fim) {
+        const y = atual.getFullYear();
+        const m = String(atual.getMonth() + 1).padStart(2, '0');
+        const d = String(atual.getDate()).padStart(2, '0');
+        dias.push(`${y}-${m}-${d}`);
+        atual.setDate(atual.getDate() + 1);
+      }
+      
+      return dias;
+    };
+
+    // Expande escalas para múltiplos dias
     const eventosEscalas = [];
     escalasRaw.forEach(e => {
-      const dataInicioStr = formatarDataLocal(e.data_inicio);
-      const dataFimStr = e.data_fim ? formatarDataLocal(e.data_fim) : dataInicioStr;
+      const dataInicioStr = extrairDataStr(e.data_inicio);
+      const dataFimStr = e.data_fim ? extrairDataStr(e.data_fim) : dataInicioStr;
       
       if (!dataInicioStr) return;
       
-      const inicio = new Date(dataInicioStr + 'T12:00:00');
-      const fim = new Date((dataFimStr || dataInicioStr) + 'T12:00:00');
+      const dias = gerarDiasEntre(dataInicioStr, dataFimStr);
       
-      for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
-        const dataStr = formatarDataLocal(d);
-        
+      dias.forEach(dataStr => {
         eventosEscalas.push({
           id: `${e.id}-${dataStr}`,
           start: `${dataStr} 08:00:00`,
@@ -2602,7 +2637,7 @@ app.get('/agenda', (req, res) => {
           borderColor: e.borderColor,
           tipo_evento: e.tipo_evento
         });
-      }
+      });
     });
 
     db.query(sqlJobs, (err, jobs) => {
@@ -2614,20 +2649,17 @@ app.get('/agenda', (req, res) => {
       // Expande jobs para todos os dias e membros da equipe
       const eventosJobs = [];
       jobs.forEach(job => {
-        // Usa a string da data diretamente se possível
-        const dataInicioStr = job.data_inicio ? formatarDataLocal(job.data_inicio) : null;
-        const dataFimStr = job.data_fim ? formatarDataLocal(job.data_fim) : dataInicioStr;
+        // Extrai datas como strings YYYY-MM-DD
+        const dataInicioStr = job.data_inicio ? extrairDataStr(job.data_inicio) : null;
+        const dataFimStr = job.data_fim ? extrairDataStr(job.data_fim) : dataInicioStr;
         
         if (!dataInicioStr) return; // Pula se não tem data
         
-        // Para iterar entre as datas
-        const inicio = new Date(dataInicioStr + 'T12:00:00');
-        const fim = new Date((dataFimStr || dataInicioStr) + 'T12:00:00');
+        // Gera array de todos os dias entre início e fim
+        const dias = gerarDiasEntre(dataInicioStr, dataFimStr);
         
-        // Para cada dia entre início e fim
-        for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
-          const dataStr = formatarDataLocal(d);
-          
+        // Para cada dia do período
+        dias.forEach(dataStr => {
           // ⏰ Usa horário cadastrado ou padrão 08:00 se estiver NULL/vazio
           const horaChegada = job.hora_chegada_prevista || '08:00:00';
           const horaFim = job.hora_fim_evento || '18:00:00';
@@ -2643,7 +2675,7 @@ app.get('/agenda', (req, res) => {
             id: `job-${job.job_id}-${job.funcionario_id}-${dataStr}`,
             start: `${dataStr} ${horaChegada}`,
             end: `${dataStr} ${horaFim}`,
-            title: `📋 ${job.funcionario_nome} - ${job.descricao}`, // 📋 Indica Pedido
+            title: `📋 ${job.funcionario_nome} - ${job.descricao}`,
             description: job.status,
             operador_id: job.funcionario_id,
             operador_nome: job.funcionario_nome,
@@ -2655,7 +2687,7 @@ app.get('/agenda', (req, res) => {
             data_inicio_real: dataInicioStr,
             data_fim_real: dataFimStr
           });
-        }
+        });
       });
 
       const todosEventos = [...eventosEscalas, ...eventosJobs];

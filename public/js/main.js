@@ -3904,9 +3904,9 @@ function exportarParaExcel() {
     const cliente = (job.nome_cliente || "").replace(/;/g, " ");
     const descricao = (job.descricao || "").replace(/;/g, " ");
 
-    // Datas
-    const dIni = job.data_job ? new Date(job.data_job).toLocaleDateString('pt-BR') : "";
-    const dFim = job.data_fim ? new Date(job.data_fim).toLocaleDateString('pt-BR') : "";
+    // Datas (usando UTC para evitar problema de timezone)
+    const dIni = job.data_job ? formatarData(job.data_job) : "";
+    const dFim = job.data_fim ? formatarData(job.data_fim) : "";
 
     // Valor
     let valor = parseFloat(job.valor || 0).toFixed(2).replace('.', ',');
@@ -4314,7 +4314,7 @@ function renderizarInvoiceHTML(job) {
                     <strong style="color: #64748b; font-size: 0.7rem; text-transform: uppercase;">Dados do Job</strong>
                     <div style="font-weight: 700; color: #0f172a; margin-top: 5px;">${job.descricao}</div>
                     <div style="font-size: 0.8rem; margin: 5px 0;">
-                        ${new Date(job.data_inicio).toLocaleDateString('pt-BR')} até ${new Date(job.data_fim).toLocaleDateString('pt-BR')}
+                        ${formatarData(job.data_inicio)} até ${formatarData(job.data_fim)}
                     </div>
                     <div style="background: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; display: inline-block;">
                         Técnico: ${operadorHTML}
@@ -8386,7 +8386,7 @@ async function verDetalhesFuncionario(id) {
           <td class="small fw-bold text-primary">#${job.id}</td>
           <td class="small">${job.nome_cliente || 'N/A'}</td>
           <td class="small">${job.equipamento || 'N/A'}</td>
-          <td class="small">${job.data_job ? new Date(job.data_job).toLocaleDateString('pt-BR') : '-'}</td>
+          <td class="small">${job.data_job ? formatarData(job.data_job) : '-'}</td>
           <td class="small"><span class="badge bg-${job.status === 'Finalizado' ? 'success' : 'warning'}">${job.status}</span></td>
           <td class="small text-end fw-bold">R$ ${parseFloat(job.valor || 0).toFixed(2)}</td>
         </tr>`;
@@ -9081,7 +9081,7 @@ document.addEventListener('DOMContentLoaded', function() {
           jobs.forEach(job => {
             const opt = document.createElement('option');
             opt.value = job.id;
-            const dataFormatada = job.data_inicio ? new Date(job.data_inicio).toLocaleDateString('pt-BR') : '';
+            const dataFormatada = job.data_inicio ? formatarData(job.data_inicio) : '';
             opt.text = `#${job.numero_pedido || job.id} - ${job.descricao || 'Sem descrição'} (${dataFormatada})`;
             selectJob.appendChild(opt);
           });
@@ -9356,7 +9356,8 @@ function renderizarTabelaHistorico(lista) {
     return;
   }
 
-  const fmtData = d => d ? new Date(d).toLocaleDateString('pt-BR') : '-';
+  // Usa UTC para evitar problema de timezone (dia 14 virando dia 13)
+  const fmtData = d => d ? formatarData(d) : '-';
 
   // HTML da tabela
   let html = `
