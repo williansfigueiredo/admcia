@@ -1093,37 +1093,55 @@ app.put('/jobs/:id', (req, res) => {
   const data = req.body;
   const id = req.params.id;
 
-  // Função auxiliar para converter data para formato SQL (evita problema de timezone)
-  const formatarDataSQL = (data) => {
-    if (!data) return null;
-    const d = new Date(data);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  console.log(`📝 PUT /jobs/${id} - Iniciando atualização...`);
 
-  // MONTAR ENDEREÇO COMPLETO DO PAGADOR
-  const pagadorEnderecoCompleto = (data.pagador_logradouro || data.endereco?.logradouro)
-    ? `${data.pagador_logradouro || data.endereco?.logradouro}, ${data.pagador_numero || data.endereco?.numero} - ${data.pagador_bairro || data.endereco?.bairro}, ${data.pagador_cidade || data.endereco?.cidade}/${data.pagador_uf || data.endereco?.uf}`
-    : null;
+  // VERIFICAÇÃO: Job existe antes de atualizar?
+  db.query("SELECT id FROM jobs WHERE id = ?", [id], (errCheck, jobCheck) => {
+    if (errCheck) {
+      console.error(`❌ Erro ao verificar job ${id}:`, errCheck);
+      return res.status(500).json({ error: errCheck.message });
+    }
+    
+    if (!jobCheck || jobCheck.length === 0) {
+      console.error(`❌ Job ${id} não existe no banco de dados`);
+      return res.status(404).json({ 
+        error: `Pedido #${id} não encontrado. Ele pode ter sido excluído. Por favor, recarregue a página.`
+      });
+    }
 
-  // 1. ADICIONADO: Campos de horário no UPDATE
-  const sqlJob = `
-        UPDATE jobs SET
-            descricao = ?, valor = ?, data_job = ?, data_inicio = ?, data_fim = ?,
-            cliente_id = ?, operador_id = ?,
-            hora_chegada_prevista = ?, hora_inicio_evento = ?, hora_fim_evento = ?, -- NOVOS CAMPOS
-            logradouro = ?, numero = ?, bairro = ?, cidade = ?, uf = ?, cep = ?,
-            solicitante_nome = ?, solicitante_email = ?, solicitante_telefone = ?,
-            producao_local = ?, producao_contato = ?, producao_email = ?,
-            pagador_nome = ?, pagador_cnpj = ?, pagador_email = ?, pagador_endereco = ?,
-            forma_pagamento = ?, tipo_documento = ?, observacoes = ?,
-            motivo_desconto = ?, vencimento_texto = ?,
-            pagador_cep = ?, pagador_logradouro = ?, pagador_numero = ?, pagador_bairro = ?,
-            pagador_cidade = ?, pagador_uf = ?, desconto_valor = ?
-        WHERE id = ?
-    `;
+    console.log(`✅ Job ${id} existe, prosseguindo com atualização...`);
+
+    // Função auxiliar para converter data para formato SQL (evita problema de timezone)
+    const formatarDataSQL = (data) => {
+      if (!data) return null;
+      const d = new Date(data);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    // MONTAR ENDEREÇO COMPLETO DO PAGADOR
+    const pagadorEnderecoCompleto = (data.pagador_logradouro || data.endereco?.logradouro)
+      ? `${data.pagador_logradouro || data.endereco?.logradouro}, ${data.pagador_numero || data.endereco?.numero} - ${data.pagador_bairro || data.endereco?.bairro}, ${data.pagador_cidade || data.endereco?.cidade}/${data.pagador_uf || data.endereco?.uf}`
+      : null;
+
+    // 1. ADICIONADO: Campos de horário no UPDATE
+    const sqlJob = `
+          UPDATE jobs SET
+              descricao = ?, valor = ?, data_job = ?, data_inicio = ?, data_fim = ?,
+              cliente_id = ?, operador_id = ?,
+              hora_chegada_prevista = ?, hora_inicio_evento = ?, hora_fim_evento = ?, -- NOVOS CAMPOS
+              logradouro = ?, numero = ?, bairro = ?, cidade = ?, uf = ?, cep = ?,
+              solicitante_nome = ?, solicitante_email = ?, solicitante_telefone = ?,
+              producao_local = ?, producao_contato = ?, producao_email = ?,
+              pagador_nome = ?, pagador_cnpj = ?, pagador_email = ?, pagador_endereco = ?,
+              forma_pagamento = ?, tipo_documento = ?, observacoes = ?,
+              motivo_desconto = ?, vencimento_texto = ?,
+              pagador_cep = ?, pagador_logradouro = ?, pagador_numero = ?, pagador_bairro = ?,
+              pagador_cidade = ?, pagador_uf = ?, desconto_valor = ?
+          WHERE id = ?
+      `;
 
   // 2. ADICIONADO: Valores dos horários no array values
   const values = [
@@ -1271,6 +1289,7 @@ app.put('/jobs/:id', (req, res) => {
       });
     });
   });
+  }); // fecha callback da verificação de existência do job
 });
 
 // --- ROTA NOVA: DADOS PARA O GRÁFICO ANUAL ---

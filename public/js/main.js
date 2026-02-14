@@ -9465,6 +9465,25 @@ function renderizarCalendarioFuncionario(listaJobs) {
     calendarFuncionarioInstance.destroy(); // Destroi para recriar limpo com novos eventos
   }
 
+  // Função auxiliar para extrair data YYYY-MM-DD sem problema de timezone
+  const extrairDataStr = (data) => {
+    if (!data) return null;
+    
+    // Se já é string no formato YYYY-MM-DD, usa direto
+    if (typeof data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      return data;
+    }
+    
+    // Se é string com T (ISO), extrai só a parte da data
+    if (typeof data === 'string' && data.includes('T')) {
+      return data.split('T')[0];
+    }
+    
+    // Se é objeto Date, converte para string UTC
+    const d = new Date(data);
+    return d.toISOString().split('T')[0];
+  };
+
   // Filtra e formata os eventos para o calendário
   const eventos = listaJobs.map(job => {
     // Define cor baseada no status
@@ -9474,31 +9493,38 @@ function renderizarCalendarioFuncionario(listaJobs) {
     if (job.status === 'Confirmado') cor = '#ffc107'; // Amarelo
     if (job.status === 'Cancelado') cor = '#dc3545'; // Vermelho
 
+    // Extrai datas como strings YYYY-MM-DD
+    const dataInicioStr = extrairDataStr(job.data_inicio);
+    const dataFimStr = extrairDataStr(job.data_fim) || dataInicioStr;
+
     // Função para combinar data e hora
-    const combinarDataHora = (data, hora) => {
-      if (!data) return null;
-      if (!hora) return data; // Se não tem hora, retorna só a data (all-day)
+    const combinarDataHora = (dataStr, hora) => {
+      if (!dataStr) return null;
+      if (!hora) return dataStr; // Se não tem hora, retorna só a data (all-day)
 
       // Pega só os primeiros 5 caracteres da hora (HH:MM)
       const horaFormatada = hora.substring(0, 5);
-      return `${data}T${horaFormatada}:00`; // Formato ISO com segundos
+      return `${dataStr}T${horaFormatada}:00`; // Formato ISO com segundos
     };
 
     // Calcula data/hora início
-    const dataHoraInicio = combinarDataHora(job.data_inicio, job.hora_inicio_evento);
+    const dataHoraInicio = combinarDataHora(dataInicioStr, job.hora_inicio_evento);
 
     // Calcula data/hora fim
     let dataHoraFim = null;
-    if (job.data_fim) {
+    if (dataFimStr) {
       if (job.hora_fim_evento) {
-        // Se existe hora fim, usa diretamente
-        dataHoraFim = combinarDataHora(job.data_fim, job.hora_fim_evento);
+        dataHoraFim = combinarDataHora(dataFimStr, job.hora_fim_evento);
       } else if (job.hora_inicio_evento) {
-        // Se só tem hora início, assume mesmo dia
-        dataHoraFim = combinarDataHora(job.data_fim, job.hora_inicio_evento);
+        dataHoraFim = combinarDataHora(dataFimStr, job.hora_inicio_evento);
       } else {
-        // Se não tem hora, adiciona 1 dia (comportamento all-day do FullCalendar)
-        dataHoraFim = new Date(new Date(job.data_fim).getTime() + 86400000).toISOString().split('T')[0];
+        // Para eventos all-day, FullCalendar precisa de data_fim + 1 dia
+        const [ano, mes, dia] = dataFimStr.split('-').map(Number);
+        const fimDate = new Date(ano, mes - 1, dia + 1);
+        const y = fimDate.getFullYear();
+        const m = String(fimDate.getMonth() + 1).padStart(2, '0');
+        const d = String(fimDate.getDate()).padStart(2, '0');
+        dataHoraFim = `${y}-${m}-${d}`;
       }
     }
 
@@ -9510,7 +9536,7 @@ function renderizarCalendarioFuncionario(listaJobs) {
       title: `Job #${job.id} - ${job.descricao}`,
       start: dataHoraInicio,
       end: dataHoraFim,
-      allDay: isAllDay, // Explicitly set allDay property
+      allDay: isAllDay,
       backgroundColor: cor,
       borderColor: cor,
       extendedProps: {
