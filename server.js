@@ -466,6 +466,24 @@ db.getConnection((err, connection) => {
       }
     });
 
+    // Migração: Adicionar coluna avatar_base64 LONGTEXT para persistência no Railway
+    const sqlAdicionarAvatarBase64 = `
+      ALTER TABLE funcionarios 
+      ADD COLUMN avatar_base64 LONGTEXT
+    `;
+    
+    db.query(sqlAdicionarAvatarBase64, (err) => {
+      if (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log('✅ Coluna avatar_base64 já existe na tabela funcionarios.');
+        } else {
+          console.error('⚠️ Erro ao adicionar coluna avatar_base64:', err.message);
+        }
+      } else {
+        console.log('✅ Coluna avatar_base64 criada com sucesso na tabela funcionarios.');
+      }
+    });
+
     // Migração: Adicionar coluna senha_hash na tabela funcionarios (se não existir)
     const sqlAdicionarSenhaHash = `
       ALTER TABLE funcionarios 
@@ -2429,23 +2447,9 @@ app.delete('/funcionarios/:id', (req, res) => {
 
 
 // 5. UPLOAD DE AVATAR DO FUNCIONÁRIO
-// Configuração específica para avatars
-const avatarStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = 'uploads/avatars/';
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'avatar-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const uploadAvatar = multer({ 
-  storage: avatarStorage,
+// Configuração para salvar avatar como Base64 no banco (persiste no Railway)
+const uploadAvatarMemory = multer({ 
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
@@ -2460,28 +2464,31 @@ const uploadAvatar = multer({
   }
 });
 
-app.post('/funcionarios/:id/avatar', uploadAvatar.single('avatar'), (req, res) => {
+app.post('/funcionarios/:id/avatar', uploadAvatarMemory.single('avatar'), (req, res) => {
   const funcionarioId = req.params.id;
   
   if (!req.file) {
     return res.status(400).json({ error: 'Nenhum arquivo enviado' });
   }
   
-  const avatarUrl = '/uploads/avatars/' + req.file.filename;
+  // Converte o arquivo para Base64
+  const base64String = req.file.buffer.toString('base64');
+  const mimeType = req.file.mimetype;
+  const avatarBase64 = `data:${mimeType};base64,${base64String}`;
   
-  // Atualiza o caminho do avatar no banco
-  const sql = 'UPDATE funcionarios SET avatar = ? WHERE id = ?';
+  // Salva o Base64 no banco de dados
+  const sql = 'UPDATE funcionarios SET avatar_base64 = ?, avatar = NULL WHERE id = ?';
   
-  db.query(sql, [avatarUrl, funcionarioId], (err, result) => {
+  db.query(sql, [avatarBase64, funcionarioId], (err, result) => {
     if (err) {
       console.error('Erro ao salvar avatar:', err);
       return res.status(500).json({ error: err.message });
     }
     
-    console.log('✅ Avatar salvo:', avatarUrl);
+    console.log('✅ Avatar Base64 salvo para funcionário:', funcionarioId);
     res.json({ 
       success: true, 
-      avatarUrl: avatarUrl,
+      avatarUrl: avatarBase64,
       message: 'Avatar atualizado com sucesso!' 
     });
   });
@@ -3144,7 +3151,7 @@ app.post('/configuracoes/numero-pedido', (req, res) => {
 // BUSCAR TODAS AS PERMISSÕES (Para lista de controle de acesso)
 app.get('/permissoes', (req, res) => {
   const sql = `
-    SELECT f.id, f.nome, f.cargo, f.status, f.email, f.avatar,
+    SELECT f.id, f.nome, f.cargo, f.status, f.email, f.avatar, f.avatar_base64,
            COALESCE(p.acesso_sistema, 0) as acesso_sistema,
            COALESCE(p.acesso_dashboard, 1) as acesso_dashboard,
            COALESCE(p.acesso_clientes, 1) as acesso_clientes,
@@ -3176,7 +3183,7 @@ app.get('/permissoes/:funcionarioId', (req, res) => {
   const { funcionarioId } = req.params;
   
   const sql = `
-    SELECT f.id, f.nome, f.cargo, f.email, f.avatar,
+    SELECT f.id, f.nome, f.cargo, f.email, f.avatar, f.avatar_base64,
            COALESCE(f.is_master, 0) as is_master,
            COALESCE(p.acesso_sistema, 0) as acesso_sistema,
            COALESCE(p.acesso_dashboard, 1) as acesso_dashboard,

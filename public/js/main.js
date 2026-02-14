@@ -2,6 +2,19 @@
    GLOBAL SKELETON LOADER SYSTEM - COM SKELETONS ESPECÍFICOS
    ============================================================= */
 
+/**
+ * Retorna a URL do avatar de um funcionário
+ * Prioriza avatar_base64 (persiste no Railway) sobre avatar (arquivo local)
+ * @param {Object} func - Objeto do funcionário com avatar_base64 e/ou avatar
+ * @returns {string|null} URL do avatar ou null
+ */
+function getAvatarUrl(func) {
+  if (!func) return null;
+  if (func.avatar_base64) return func.avatar_base64;
+  if (func.avatar) return func.avatar;
+  return null;
+}
+
 // Variáveis de controle do skeleton loader
 let skeletonStartTime = null;
 const SKELETON_MIN_DISPLAY_TIME = 2000; // Tempo mínimo de exibição (2000ms = 2 segundos)
@@ -894,15 +907,20 @@ async function loadUserProfileData() {
   }
 
   // Formata dados para uso na UI
+  // Prioridade: avatar_base64 (persiste no Railway) > avatar (caminho antigo)
+  let avatarUrl = null;
+  if (userData.avatar_base64) {
+    avatarUrl = userData.avatar_base64; // Já é uma data URL completa
+  } else if (userData.avatar) {
+    avatarUrl = userData.avatar.startsWith('/') ? userData.avatar : `/uploads/avatars/${userData.avatar}`;
+  }
+  
   const displayData = {
     name: userData.nome || 'Usuário',
     email: userData.email || '',
     role: userData.cargo || 'Funcionário',
     avatar: userData.nome ? userData.nome.charAt(0).toUpperCase() : 'U',
-    // Avatar pode vir como caminho completo (/uploads/...) ou só o nome do arquivo
-    avatarUrl: userData.avatar 
-      ? (userData.avatar.startsWith('/') ? userData.avatar : `/uploads/avatars/${userData.avatar}`)
-      : null
+    avatarUrl: avatarUrl
   };
 
   // Atualiza header
@@ -2867,7 +2885,28 @@ function formatarMoedaK(valor) {
   return parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 function formatarMoeda(valor) { return parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
-function formatarData(dataString) { const data = new Date(dataString); return data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }); }
+
+// Função para formatar data sem problemas de timezone
+function formatarData(dataString) { 
+  if (!dataString) return '-';
+  
+  // Se já é string YYYY-MM-DD, extrai diretamente
+  if (typeof dataString === 'string') {
+    // Remove parte de hora se existir (2026-02-14T00:00:00.000Z -> 2026-02-14)
+    const dataLimpa = dataString.split('T')[0];
+    
+    // Se está no formato YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dataLimpa)) {
+      const [ano, mes, dia] = dataLimpa.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+  }
+  
+  // Fallback: usa UTC para evitar problemas
+  const data = new Date(dataString);
+  return data.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
+
 function getStatusPill(status) {
   let classe = "bg-gray-200 text-muted";
   if (status === "Em Andamento") classe = "bg-green-soft text-green";
@@ -7877,10 +7916,10 @@ window.renderizarFuncionariosCards = function (lista) {
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="d-flex align-items-center">
                             <div class="avatar-square avatar-upload-container" 
-                                 style="background-color: ${corAvatar}; ${func.avatar ? `background-image: url(${func.avatar}); background-size: cover; background-position: center;` : ''}"
+                                 style="background-color: ${corAvatar}; ${getAvatarUrl(func) ? `background-image: url(${getAvatarUrl(func)}); background-size: cover; background-position: center;` : ''}"
                                  onclick="event.stopPropagation(); abrirUploadAvatarFuncionario(${func.id})"
                                  title="Clique para alterar foto">
-                                ${func.avatar ? '' : iniciais}
+                                ${getAvatarUrl(func) ? '' : iniciais}
                                 <div class="avatar-upload-overlay-card">
                                     <i class="bi bi-camera-fill"></i>
                                 </div>
@@ -8200,10 +8239,11 @@ async function handleAvatarFuncionarioUpload(event, funcionarioId) {
   reader.onload = async function (e) {
     const imageUrl = e.target.result;
 
-    // Atualiza avatar visualmente no cache e na tela
+    // Atualiza avatar visualmente no cache e na tela (usa avatar_base64 para consistência)
     const funcionario = window.cacheFuncionarios.find(f => f.id === funcionarioId);
     if (funcionario) {
-      funcionario.avatar = imageUrl;
+      funcionario.avatar_base64 = imageUrl;
+      funcionario.avatar = null; // Limpa avatar antigo
     }
 
     // Re-renderiza os cards para mostrar a nova foto
@@ -9788,7 +9828,7 @@ async function carregarControleAcesso() {
           <td>
             <div class="d-flex align-items-center gap-2">
               <div class="avatar-mini" style="width:35px;height:35px;background:${isMaster ? '#ffc107' : '#0d6efd'};color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:0.75rem;font-weight:bold;">
-                ${f.avatar ? `<img src="${f.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : iniciais}
+                ${getAvatarUrl(f) ? `<img src="${getAvatarUrl(f)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : iniciais}
               </div>
               <div>
                 <strong>${f.nome}</strong>
@@ -9876,8 +9916,8 @@ window.abrirModalPermissoes = async function(funcionarioId) {
     
     // Preenche informações básicas
     const iniciais = (dados.nome || '??').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    document.getElementById('permFuncionarioAvatar').innerHTML = dados.avatar 
-      ? `<img src="${dados.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+    document.getElementById('permFuncionarioAvatar').innerHTML = getAvatarUrl(dados) 
+      ? `<img src="${getAvatarUrl(dados)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
       : iniciais;
     document.getElementById('permFuncionarioNome').textContent = dados.nome || 'Nome não informado';
     document.getElementById('permFuncionarioCargo').textContent = dados.cargo || 'Cargo não informado';
