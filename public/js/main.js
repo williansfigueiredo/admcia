@@ -6466,11 +6466,22 @@ window.abrirDetalhesJob = async function (jobId) {
     if (el) el.value = valor ?? "";
   };
 
+  // Função auxiliar para formatar hora
+  const formatarHora = (h) => (h && h.length >= 5) ? h.substring(0, 5) : '';
+
   set('jobClienteFull', job.cliente_id);
+  set('jobClienteDocumento', job.cliente_documento);
   set('jobOperadorFull', job.operador_id);
   set('jobDescricaoFull', job.descricao);
   set('jobDataInicio', (job.data_inicio || job.data_job || "").slice(0, 10));
   set('jobDataFim', (job.data_fim || "").slice(0, 10));
+  
+  // Horários
+  set('jobHoraChegada', formatarHora(job.hora_chegada_prevista));
+  set('jobHoraInicio', formatarHora(job.hora_inicio_evento));
+  set('jobHoraFim', formatarHora(job.hora_fim_evento));
+  
+  // Contatos
   set('jobSolicitanteNome', job.solicitante_nome);
   set('jobSolicitanteEmail', job.solicitante_email);
   set('jobSolicitanteTelefone', job.solicitante_telefone);
@@ -6483,6 +6494,8 @@ window.abrirDetalhesJob = async function (jobId) {
   set('jobProducaoLocal', job.producao_local);
   set('jobProducaoContato', job.producao_contato);
   set('jobProducaoEmail', job.producao_email);
+  
+  // Financeiro
   set('jobPagador', job.pagador_nome);
   set('jobPagadorCNPJ', job.pagador_cnpj);
   set('jobPagadorEmail', job.pagador_email);
@@ -6495,9 +6508,8 @@ window.abrirDetalhesJob = async function (jobId) {
   set('jobFormaPagamento', job.forma_pagamento);
   set('jobTipoDocumento', job.tipo_documento);
   set('jobObservacoes', job.observacoes);
-  set('descontoTotal', job.desconto_valor || 0);
+  set('descontoTotal', job.desconto_porcentagem || job.desconto_valor || 0);
   set('motivoDesconto', job.motivo_desconto);
-  set('jobClienteDocumento', job.cliente_documento);
 
   // === VENCIMENTO ===
   let vencimentoTratado = job.vencimento_texto || '';
