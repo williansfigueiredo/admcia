@@ -2388,11 +2388,29 @@ app.post('/funcionarios/:id/avatar', uploadAvatarMemory.single('avatar'), (req, 
   const mimeType = req.file.mimetype;
   const avatarBase64 = `data:${mimeType};base64,${base64String}`;
   
-  // Salva o Base64 no banco de dados
-  const sql = 'UPDATE funcionarios SET avatar_base64 = ?, avatar = NULL WHERE id = ?';
+  // Tenta salvar na coluna avatar_base64, com fallback para avatar
+  const sqlPrimario = 'UPDATE funcionarios SET avatar_base64 = ?, avatar = NULL WHERE id = ?';
   
-  db.query(sql, [avatarBase64, funcionarioId], (err, result) => {
+  db.query(sqlPrimario, [avatarBase64, funcionarioId], (err, result) => {
     if (err) {
+      // Se coluna avatar_base64 não existe, salva direto na coluna avatar
+      if (err.code === 'ER_BAD_FIELD_ERROR') {
+        console.log('⚠️ Coluna avatar_base64 não existe, usando coluna avatar');
+        const sqlFallback = 'UPDATE funcionarios SET avatar = ? WHERE id = ?';
+        db.query(sqlFallback, [avatarBase64, funcionarioId], (err2, result2) => {
+          if (err2) {
+            console.error('Erro ao salvar avatar (fallback):', err2);
+            return res.status(500).json({ error: err2.message });
+          }
+          console.log('✅ Avatar salvo (fallback) para funcionário:', funcionarioId);
+          res.json({ 
+            success: true, 
+            avatarUrl: avatarBase64,
+            message: 'Avatar atualizado com sucesso!' 
+          });
+        });
+        return;
+      }
       console.error('Erro ao salvar avatar:', err);
       return res.status(500).json({ error: err.message });
     }
