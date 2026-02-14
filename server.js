@@ -3063,7 +3063,7 @@ app.post('/configuracoes/numero-pedido', (req, res) => {
 // BUSCAR TODAS AS PERMISSÕES (Para lista de controle de acesso)
 app.get('/permissoes', (req, res) => {
   const sql = `
-    SELECT f.id, f.nome, f.cargo, f.status, f.email, f.avatar, f.avatar_base64,
+    SELECT f.id, f.nome, f.cargo, f.status, f.email, f.avatar,
            COALESCE(p.acesso_sistema, 0) as acesso_sistema,
            COALESCE(p.acesso_dashboard, 1) as acesso_dashboard,
            COALESCE(p.acesso_clientes, 1) as acesso_clientes,
@@ -3095,7 +3095,7 @@ app.get('/permissoes/:funcionarioId', (req, res) => {
   const { funcionarioId } = req.params;
   
   const sql = `
-    SELECT f.id, f.nome, f.cargo, f.email, f.avatar, f.avatar_base64,
+    SELECT f.id, f.nome, f.cargo, f.email, f.avatar,
            COALESCE(f.is_master, 0) as is_master,
            COALESCE(p.acesso_sistema, 0) as acesso_sistema,
            COALESCE(p.acesso_dashboard, 1) as acesso_dashboard,
