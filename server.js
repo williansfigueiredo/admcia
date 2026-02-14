@@ -537,6 +537,24 @@ db.getConnection((err, connection) => {
         console.log('✅ Coluna acesso_ativo criada com sucesso na tabela funcionarios.');
       }
     });
+
+    // Migração: Adicionar coluna numero_pedido na tabela jobs
+    const sqlAdicionarNumeroPedido = `
+      ALTER TABLE jobs 
+      ADD COLUMN numero_pedido VARCHAR(50)
+    `;
+    
+    db.query(sqlAdicionarNumeroPedido, (err) => {
+      if (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log('✅ Coluna numero_pedido já existe na tabela jobs.');
+        } else {
+          console.error('⚠️ Erro ao adicionar coluna numero_pedido:', err.message);
+        }
+      } else {
+        console.log('✅ Coluna numero_pedido criada com sucesso na tabela jobs.');
+      }
+    });
   }
 
 
