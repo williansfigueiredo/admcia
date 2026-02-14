@@ -65,12 +65,13 @@ app.get('/invoice', requireAuth, (req, res) => {
 });
 
 // --- CONEXÃO COM O BANCO ---
+// Suporta variáveis do Railway (MYSQL*) e variáveis customizadas (DB_*)
 const db = mysql.createConnection({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASS || '',
-  database: process.env.DB_NAME || 'sistema_gestao_tp',
-  port: Number(process.env.DB_PORT || 3306)
+  host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+  user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+  password: process.env.MYSQLPASSWORD || process.env.DB_PASS || '',
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'sistema_gestao_tp',
+  port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306)
 });
 
 db.connect((err) => {
