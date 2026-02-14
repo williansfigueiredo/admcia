@@ -8903,3 +8903,77 @@ button:hover #iconTheme {
     display: none;
   }
 }
+
+/* =====================================================
+   FUNCIONALIDADE: ESCONDER VALORES SENSÍVEIS (OLHO)
+   Similar aos apps de banco
+   ===================================================== */
+
+/* Estado normal - valores visíveis */
+.sensitive-value {
+  transition: all 0.3s ease;
+}
+
+/* Estado com valores escondidos */
+body.hide-values .sensitive-value {
+  color: transparent !important;
+  text-shadow: none !important;
+  background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  position: relative;
+  user-select: none;
+}
+
+body.hide-values .sensitive-value::after {
+  content: '••••••';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #94a3b8;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+/* Esconde também os trends/percentuais */
+body.hide-values .sensitive-value .bi,
+body.hide-values .sensitive-value span {
+  visibility: hidden;
+}
+
+/* Mini charts também ficam escondidos */
+body.hide-values .mini-chart {
+  opacity: 0.3;
+  filter: blur(4px);
+}
+
+/* Trend pills */
+body.hide-values .trend-pill {
+  opacity: 0.3;
+  filter: blur(3px);
+}
+
+/* Animação do ícone do olho */
+#btnHideValues {
+  transition: transform 0.2s ease;
+}
+
+#btnHideValues:hover {
+  transform: scale(1.1);
+}
+
+#btnHideValues:active {
+  transform: scale(0.95);
+}
+
+/* Dark mode - ajustes */
+[data-bs-theme="dark"] body.hide-values .sensitive-value {
+  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+[data-bs-theme="dark"] body.hide-values .sensitive-value::after {
+  color: #64748b;
+}

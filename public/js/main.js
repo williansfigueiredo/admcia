@@ -9741,6 +9741,51 @@ window.processarVoltarDoJob = function () {
 
 
 /* =============================================================
+   CONTROLE DE VISIBILIDADE DOS VALORES (OLHO)
+   Similar aos apps de banco para esconder saldos
+   ============================================================= */
+
+window.toggleHideValues = function() {
+  const body = document.body;
+  const icon = document.getElementById('iconHideValues');
+  const isHidden = body.classList.toggle('hide-values');
+  
+  // Atualiza o ícone
+  if (icon) {
+    if (isHidden) {
+      icon.className = 'bi bi-eye-slash-fill fs-5 text-secondary';
+      icon.title = 'Mostrar valores';
+    } else {
+      icon.className = 'bi bi-eye-fill fs-5 text-secondary';
+      icon.title = 'Esconder valores';
+    }
+  }
+  
+  // Salva preferência
+  localStorage.setItem('hideValuesPreference', isHidden ? 'hidden' : 'visible');
+  
+  console.log(`👁️ Valores ${isHidden ? 'escondidos' : 'visíveis'}`);
+}
+
+// Carregar preferência de valores escondidos ao iniciar
+function carregarPreferenciaValores() {
+  const preferencia = localStorage.getItem('hideValuesPreference');
+  const body = document.body;
+  const icon = document.getElementById('iconHideValues');
+  
+  if (preferencia === 'hidden') {
+    body.classList.add('hide-values');
+    if (icon) {
+      icon.className = 'bi bi-eye-slash-fill fs-5 text-secondary';
+    }
+  }
+}
+
+// Inicializa quando DOM estiver pronto
+document.addEventListener('DOMContentLoaded', carregarPreferenciaValores);
+
+
+/* =============================================================
    CONTROLE DE TEMA (LIGHT / DARK MODE) - VERSÃO ÍCONE
    ============================================================= */
 
