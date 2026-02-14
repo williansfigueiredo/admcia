@@ -5965,8 +5965,35 @@ window.editarJob = async function (jobId) {
     atualizarValorTotalPedido();
   }
 
+  // 8. GARANTIR QUE ESTÁ EM MODO EDIÇÃO (REABILITAR INPUTS)
+  // Isso é importante caso tenha entrado em modo visualização antes
+  const inputsEditar = document.querySelectorAll('#view-novo-job input, #view-novo-job select, #view-novo-job textarea');
+  inputsEditar.forEach(el => {
+    el.disabled = false;
+    el.style.backgroundColor = '';
+    el.style.cursor = '';
+  });
+
+  // Garantir botões visíveis
   const btnSalvar = document.querySelector('#view-novo-job .btn-success');
-  if (btnSalvar) btnSalvar.innerHTML = '<i class="bi bi-check-lg me-2"></i> Atualizar Pedido';
+  const btnAdicionar = document.querySelector('#view-novo-job button[onclick*="adicionarLinhaItem"]');
+  const btnsRemover = document.querySelectorAll('#view-novo-job .btn-danger');
+
+  if (btnSalvar) {
+    btnSalvar.style.display = 'inline-block';
+    btnSalvar.innerHTML = '<i class="bi bi-check-lg me-2"></i> Atualizar Pedido';
+  }
+  if (btnAdicionar) btnAdicionar.style.display = 'inline-block';
+  btnsRemover.forEach(btn => btn.style.display = 'inline-block');
+  
+  // Restaurar botão cancelar
+  const btnCancelar = document.querySelector('#view-novo-job .btn-outline-secondary');
+  if (btnCancelar) {
+    btnCancelar.textContent = 'Cancelar';
+    btnCancelar.onclick = () => window.voltarDoJob();
+  }
+
+  console.log('✏️ [EDITARJOB] Modo edição ativado - inputs habilitados');
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
