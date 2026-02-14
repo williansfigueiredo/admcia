@@ -25,11 +25,14 @@ async function carregarDadosPerfil() {
   }
 
   try {
+    // 🔄 FORÇA BUSCAR DADOS FRESCOS DO SERVIDOR (ignora cache)
     const response = await fetch(`${CONFIG_API_URL}/api/auth/me`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
       },
-      credentials: 'include'
+      credentials: 'include',
+      cache: 'no-store' // Força não usar cache
     });
 
     if (!response.ok) {
@@ -44,10 +47,22 @@ async function carregarDadosPerfil() {
     
     if (data.success && data.usuario) {
       usuarioLogado = data.usuario;
+      
+      // 🐛 DEBUG: Mostra o que chegou do servidor
+      console.log('📥 Dados recebidos do servidor:', {
+        nome: data.usuario.nome,
+        temAvatar: !!data.usuario.avatar,
+        temAvatarBase64: !!data.usuario.avatar_base64,
+        avatar_base64_preview: data.usuario.avatar_base64 ? data.usuario.avatar_base64.substring(0, 50) + '...' : 'NULO'
+      });
+      
+      // Atualiza localStorage com dados frescos
+      localStorage.setItem('usuario', JSON.stringify(data.usuario));
+      
       preencherFormularioPerfil(usuarioLogado);
       controlarAbaSeguranca(usuarioLogado.is_master);
       
-      console.log('👤 Perfil carregado:', usuarioLogado.nome);
+      console.log('✅ Perfil carregado:', usuarioLogado.nome);
     }
   } catch (error) {
     console.error('❌ Erro ao carregar perfil:', error);
@@ -68,6 +83,7 @@ function preencherFormularioPerfil(usuario) {
     
     if (usuario.avatar_base64) {
       avatarUrl = usuario.avatar_base64; // Já é uma data URL completa
+      console.log('🖼️ Usando avatar_base64 (Railway)');
     } else if (usuario.avatar) {
       avatarUrl = usuario.avatar;
       // Se não começar com /, adiciona o caminho completo
@@ -76,6 +92,9 @@ function preencherFormularioPerfil(usuario) {
       }
       // Adiciona timestamp para evitar cache
       avatarUrl += `?t=${Date.now()}`;
+      console.log('🖼️ Usando avatar (caminho):', avatarUrl);
+    } else {
+      console.log('⚠️ Nenhum avatar encontrado!');
     }
     
     if (avatarUrl) {

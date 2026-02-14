@@ -855,17 +855,8 @@ async function handleLogout() {
  * Carrega dados do usuário logado do servidor/localStorage
  */
 async function loadUserProfileData() {
-  // Tenta carregar do localStorage primeiro
+  // 🔄 NÃO USA CACHE - Sempre busca dados frescos do servidor
   let userData = null;
-  
-  try {
-    const storedUser = localStorage.getItem('usuario');
-    if (storedUser) {
-      userData = JSON.parse(storedUser);
-    }
-  } catch (e) {
-    console.log('Erro ao ler usuário do localStorage');
-  }
 
   // Tenta buscar dados atualizados do servidor
   const token = localStorage.getItem('auth_token');
@@ -873,15 +864,26 @@ async function loadUserProfileData() {
     try {
       const response = await fetch(`${API_URL}/api/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
         },
-        credentials: 'include'
+        credentials: 'include',
+        cache: 'no-store' // Força não usar cache do navegador
       });
 
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.usuario) {
           userData = data.usuario;
+          
+          // 🐛 DEBUG: Mostra o que chegou
+          console.log('📥 Dados da API /me:', {
+            nome: userData.nome,
+            temAvatar: !!userData.avatar,
+            temAvatarBase64: !!userData.avatar_base64,
+            avatar_base64_inicio: userData.avatar_base64 ? userData.avatar_base64.substring(0, 30) + '...' : 'NULO'
+          });
+          
           localStorage.setItem('usuario', JSON.stringify(userData));
         }
       } else if (response.status === 401) {
@@ -911,8 +913,12 @@ async function loadUserProfileData() {
   let avatarUrl = null;
   if (userData.avatar_base64) {
     avatarUrl = userData.avatar_base64; // Já é uma data URL completa
+    console.log('🖼️ Usando avatar_base64 (Base64)');
   } else if (userData.avatar) {
     avatarUrl = userData.avatar.startsWith('/') ? userData.avatar : `/uploads/avatars/${userData.avatar}`;
+    console.log('🖼️ Usando avatar (path):', avatarUrl);
+  } else {
+    console.log('⚠️ Nenhum avatar disponível');
   }
   
   const displayData = {
@@ -922,6 +928,8 @@ async function loadUserProfileData() {
     avatar: userData.nome ? userData.nome.charAt(0).toUpperCase() : 'U',
     avatarUrl: avatarUrl
   };
+
+  console.log('✅ Avatar URL final:', displayData.avatarUrl ? displayData.avatarUrl.substring(0, 50) + '...' : 'NENHUM');
 
   // Atualiza header
   const headerName = document.getElementById('userNameHeader');
