@@ -69,15 +69,18 @@ app.get('/invoice', requireAuth, (req, res) => {
 // Suporta variáveis do Railway (MYSQL*) e variáveis customizadas (DB_*)
 // Usar POOL de conexões para reconexão automática (importante para Railway)
 const db = mysql.createPool({
-  host: process.env.MYSQLHOST,
-  user: process.env.MYSQLUSER,
-  password: process.env.MYSQLPASSWORD,
-  database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT || 3306,
+  host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+  user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+  password: process.env.MYSQLPASSWORD || process.env.DB_PASS || '',
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'sistema_gestao_tp',
+  port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
 });
+
 
 // Testar conexão inicial
 db.getConnection((err, connection) => {
