@@ -15,16 +15,21 @@ const nodemailer = require('nodemailer');
 // CONFIGURAÇÃO DO TRANSPORTER
 // ============================================
 
-// Configuração padrão (substitua com suas credenciais SMTP)
+// Aceita tanto SMTP_* quanto EMAIL_* (Railway usa EMAIL_*)
 const transporterConfig = {
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT) || 587,
+  host: process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587,
   secure: false, // true para 465, false para outras portas
   auth: {
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || ''
+    user: process.env.SMTP_USER || process.env.EMAIL_USER || '',
+    pass: process.env.SMTP_PASS || process.env.EMAIL_PASS || ''
   }
 };
+
+// Email remetente
+const emailFrom = process.env.SMTP_FROM_NAME 
+  ? `${process.env.SMTP_FROM_NAME} <${process.env.SMTP_USER || process.env.EMAIL_USER}>`
+  : process.env.EMAIL_FROM || process.env.SMTP_USER || process.env.EMAIL_USER;
 
 let transporter = null;
 
@@ -199,7 +204,7 @@ async function enviarEmail(destinatario, assunto, htmlContent) {
 
   try {
     const info = await transporter.sendMail({
-      from: `"Sistema de Gestão" <${transporterConfig.auth.user}>`,
+      from: emailFrom,
       to: destinatario,
       subject: assunto,
       html: htmlContent
