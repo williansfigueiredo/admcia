@@ -5995,6 +5995,13 @@ window.editarJob = async function (jobId) {
     btnCancelar.onclick = () => window.voltarDoJob();
   }
 
+  // REMOVER BADGE "MODO VISUALIZAÇÃO" se existir
+  const badgeModoView = document.getElementById('badge-modo-visualizacao');
+  if (badgeModoView) {
+    badgeModoView.remove();
+    console.log('✏️ [EDITARJOB] Badge de visualização removido');
+  }
+
   console.log('✏️ [EDITARJOB] Modo edição ativado - inputs habilitados');
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
