@@ -24,26 +24,29 @@ let emailFrom = null;
 function inicializarEmail() {
   // Ler variáveis aqui (não no topo) para garantir que estão carregadas
   const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587;
+  const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 465;
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || '';
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || '';
+  const useSecure = smtpPort === 465; // SSL para porta 465
   
   // Configurar remetente
   emailFrom = process.env.SMTP_FROM_NAME 
     ? `${process.env.SMTP_FROM_NAME} <${smtpUser}>`
     : process.env.EMAIL_FROM || smtpUser;
 
-  console.log(`📧 Tentando configurar email: host=${smtpHost}, user=${smtpUser ? smtpUser.substring(0,5) + '...' : 'NÃO DEFINIDO'}`);
+  console.log(`📧 Tentando configurar email: host=${smtpHost}, port=${smtpPort}, secure=${useSecure}, user=${smtpUser ? smtpUser.substring(0,5) + '...' : 'NÃO DEFINIDO'}`);
 
   if (smtpUser && smtpPass) {
     transporter = nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: false,
+      secure: useSecure,
       auth: {
         user: smtpUser,
         pass: smtpPass
-      }
+      },
+      connectionTimeout: 10000, // 10 segundos
+      greetingTimeout: 10000
     });
     console.log('✅ Serviço de email configurado com sucesso!');
     return true;
