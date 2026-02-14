@@ -940,7 +940,11 @@ async function loadUserProfileData() {
   if (headerRole) headerRole.textContent = displayData.role;
   if (headerAvatar) {
     if (displayData.avatarUrl) {
-      headerAvatar.style.backgroundImage = `url(${displayData.avatarUrl}?t=${Date.now()})`;
+      // Não adiciona timestamp em URLs base64 (data:image/...)
+      const avatarUrlHeader = displayData.avatarUrl.startsWith('data:') 
+        ? displayData.avatarUrl 
+        : `${displayData.avatarUrl}?t=${Date.now()}`;
+      headerAvatar.style.backgroundImage = `url(${avatarUrlHeader})`;
       headerAvatar.style.backgroundSize = 'cover';
       headerAvatar.style.backgroundPosition = 'center';
       headerAvatar.textContent = '';
@@ -959,7 +963,11 @@ async function loadUserProfileData() {
   if (dropdownEmail) dropdownEmail.textContent = displayData.email;
   if (dropdownAvatar) {
     if (displayData.avatarUrl) {
-      dropdownAvatar.style.backgroundImage = `url(${displayData.avatarUrl}?t=${Date.now()})`;
+      // Não adiciona timestamp em URLs base64 (data:image/...)
+      const avatarUrlDropdown = displayData.avatarUrl.startsWith('data:') 
+        ? displayData.avatarUrl 
+        : `${displayData.avatarUrl}?t=${Date.now()}`;
+      dropdownAvatar.style.backgroundImage = `url(${avatarUrlDropdown})`;
       dropdownAvatar.style.backgroundSize = 'cover';
       dropdownAvatar.style.backgroundPosition = 'center';
       // Limpa texto e mantém apenas o overlay
