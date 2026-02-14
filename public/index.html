@@ -659,17 +659,9 @@
             <i class="bi bi-people"></i>
             <span>Gerenciar Usuários</span>
           </a>
-          <a href="#" class="user-profile-menu-item" onclick="handleProfileMenuClick('invoices', event)">
-            <i class="bi bi-file-earmark-text"></i>
-            <span>Resumo de Faturas</span>
-          </a>
           <a href="#" class="user-profile-menu-item" onclick="handleProfileMenuClick('settings', event)">
             <i class="bi bi-gear"></i>
             <span>Configurações</span>
-          </a>
-          <a href="#" class="user-profile-menu-item" onclick="handleProfileMenuClick('support', event)">
-            <i class="bi bi-question-circle"></i>
-            <span>Suporte</span>
           </a>
         </div>
 
@@ -2072,13 +2064,13 @@
           <div class="row mb-4 align-items-center">
             <div class="col-md-6">
               <div class="d-flex align-items-center gap-3">
-                <div class="upload-area"
-                  style="width: 150px; height: 60px; border: 2px dashed var(--border-color); display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 0.8rem; font-weight: bold;">
+                <div id="logoPreviewPedido" class="upload-area"
+                  style="width: 150px; height: 60px; border: 2px dashed var(--border-color); display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 0.8rem; font-weight: bold; overflow: hidden;">
                   <i class="bi bi-image me-2"></i> SEU LOGO
                 </div>
                 <div>
                   <h3 class="fw-bold text-dark mb-0">PEDIDO DE SERVIÇO</h3>
-                  <div class="text-muted small">Cia do TP - Teleprompter</div>
+                  <div id="nomeEmpresaPedido" class="text-muted small">Cia do TP - Teleprompter</div>
                 </div>
               </div>
             </div>
@@ -2938,11 +2930,7 @@
                   <i class="bi bi-building me-2"></i>Empresa
                 </button>
               </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-aparencia" type="button" role="tab">
-                  <i class="bi bi-palette me-2"></i>Aparência
-                </button>
-              </li>
+
               <li class="nav-item" role="presentation">
                 <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-sistema" type="button" role="tab">
                   <i class="bi bi-sliders me-2"></i>Sistema
@@ -2971,20 +2959,10 @@
                       <div class="d-flex align-items-center gap-3">
                         <div class="config-avatar-preview" id="configAvatarPreview">
                           <div class="config-avatar-initials">P</div>
-                          <input type="file" id="configAvatarInput" accept="image/*" style="display: none;">
                         </div>
-                        <div>
-                          <button type="button" class="btn btn-primary btn-sm mb-2" onclick="document.getElementById('configAvatarInput').click()">
-                            <i class="bi bi-camera me-1"></i>Alterar Foto
-                          </button>
-                          <br>
-                          <button type="button" class="btn btn-outline-danger btn-sm">
-                            <i class="bi bi-trash me-1"></i>Remover
-                          </button>
-                          <p class="text-muted small mt-2 mb-0">
-                            JPG, PNG ou GIF. Máximo 5MB.
-                          </p>
-                        </div>
+                        <p class="text-muted small mb-0">
+                          A foto é definida no cadastro do funcionário.
+                        </p>
                       </div>
                     </div>
 
@@ -2995,17 +2973,17 @@
 
                     <div class="col-md-6">
                       <label class="form-label small fw-bold text-muted">Nome Completo *</label>
-                      <input type="text" class="form-control" id="configNome" value="Patrícia Silva" required>
+                      <input type="text" class="form-control" id="configNome" required>
                     </div>
 
                     <div class="col-md-6">
-                      <label class="form-label small fw-bold text-muted">Cargo</label>
-                      <input type="text" class="form-control" id="configCargo" value="Diretora Comercial">
+                      <label class="form-label small fw-bold text-muted">CPF</label>
+                      <input type="text" class="form-control" id="configCpf" placeholder="000.000.000-00">
                     </div>
 
                     <div class="col-md-6">
                       <label class="form-label small fw-bold text-muted">Email *</label>
-                      <input type="email" class="form-control" id="configEmail" value="patricia@empresa.com" required>
+                      <input type="email" class="form-control" id="configEmail" required>
                     </div>
 
                     <div class="col-md-6">
@@ -3013,9 +2991,118 @@
                       <input type="tel" class="form-control" id="configTelefone" placeholder="(00) 00000-0000">
                     </div>
 
+                    <!-- Informações Profissionais -->
                     <div class="col-12">
-                      <label class="form-label small fw-bold text-muted">Bio</label>
-                      <textarea class="form-control" id="configBio" rows="3" placeholder="Conte um pouco sobre você..."></textarea>
+                      <h6 class="text-primary border-bottom pb-2 mb-3 mt-3">Informações Profissionais</h6>
+                    </div>
+
+                    <div class="col-md-4">
+                      <label class="form-label small fw-bold text-muted">Cargo</label>
+                      <input type="text" class="form-control" id="configCargo">
+                    </div>
+
+                    <div class="col-md-4">
+                      <label class="form-label small fw-bold text-muted">Departamento</label>
+                      <input type="text" class="form-control" id="configDepartamento">
+                    </div>
+
+                    <div class="col-md-4">
+                      <label class="form-label small fw-bold text-muted">Status</label>
+                      <select class="form-select" id="configStatus">
+                        <option value="Ativo">Ativo</option>
+                        <option value="Férias">Férias</option>
+                        <option value="Inativo">Inativo</option>
+                      </select>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold text-muted">Data de Admissão</label>
+                      <div class="input-group">
+                        <input type="date" class="form-control" id="configDataAdmissao">
+                        <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('configDataAdmissao').value = ''; document.getElementById('configDataAdmissao').dispatchEvent(new Event('change'));" title="Limpar data">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold text-muted">Data de Demissão</label>
+                      <div class="input-group">
+                        <input type="date" class="form-control" id="configDataDemissao">
+                        <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('configDataDemissao').value = ''; document.getElementById('configDataDemissao').dispatchEvent(new Event('change'));" title="Limpar data">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Endereço -->
+                    <div class="col-12">
+                      <h6 class="text-primary border-bottom pb-2 mb-3 mt-3">Endereço</h6>
+                    </div>
+
+                    <div class="col-md-3">
+                      <label class="form-label small fw-bold text-muted">CEP</label>
+                      <input type="text" class="form-control" id="configCep" placeholder="00000-000">
+                    </div>
+
+                    <div class="col-md-7">
+                      <label class="form-label small fw-bold text-muted">Logradouro</label>
+                      <input type="text" class="form-control" id="configLogradouro">
+                    </div>
+
+                    <div class="col-md-2">
+                      <label class="form-label small fw-bold text-muted">Número</label>
+                      <input type="text" class="form-control" id="configNumero">
+                    </div>
+
+                    <div class="col-md-4">
+                      <label class="form-label small fw-bold text-muted">Bairro</label>
+                      <input type="text" class="form-control" id="configBairro">
+                    </div>
+
+                    <div class="col-md-5">
+                      <label class="form-label small fw-bold text-muted">Cidade</label>
+                      <input type="text" class="form-control" id="configCidade">
+                    </div>
+
+                    <div class="col-md-3">
+                      <label class="form-label small fw-bold text-muted">UF</label>
+                      <select class="form-select" id="configUf">
+                        <option value="">Selecione</option>
+                        <option value="AC">AC</option>
+                        <option value="AL">AL</option>
+                        <option value="AP">AP</option>
+                        <option value="AM">AM</option>
+                        <option value="BA">BA</option>
+                        <option value="CE">CE</option>
+                        <option value="DF">DF</option>
+                        <option value="ES">ES</option>
+                        <option value="GO">GO</option>
+                        <option value="MA">MA</option>
+                        <option value="MT">MT</option>
+                        <option value="MS">MS</option>
+                        <option value="MG">MG</option>
+                        <option value="PA">PA</option>
+                        <option value="PB">PB</option>
+                        <option value="PR">PR</option>
+                        <option value="PE">PE</option>
+                        <option value="PI">PI</option>
+                        <option value="RJ">RJ</option>
+                        <option value="RN">RN</option>
+                        <option value="RS">RS</option>
+                        <option value="RO">RO</option>
+                        <option value="RR">RR</option>
+                        <option value="SC">SC</option>
+                        <option value="SP">SP</option>
+                        <option value="SE">SE</option>
+                        <option value="TO">TO</option>
+                      </select>
+                    </div>
+
+                    <!-- Observações -->
+                    <div class="col-12">
+                      <label class="form-label small fw-bold text-muted">Observações</label>
+                      <textarea class="form-control" id="configObservacoes" rows="3"></textarea>
                     </div>
 
                     <!-- Botões -->
@@ -3050,7 +3137,7 @@
                             <i class="bi bi-upload me-1"></i>Fazer Upload
                           </button>
                           <br>
-                          <button type="button" class="btn btn-outline-danger btn-sm">
+                          <button type="button" class="btn btn-outline-danger btn-sm" onclick="removerLogoEmpresa()">
                             <i class="bi bi-trash me-1"></i>Remover Logo
                           </button>
                           <p class="text-muted small mt-2 mb-0">
@@ -3174,144 +3261,60 @@
                 </form>
               </div>
 
-              <!-- ===========================
-                   ABA: APARÊNCIA
-                   =========================== -->
-              <div class="tab-pane fade p-4" id="tab-aparencia">
-                <form id="formAparencia">
-                  <div class="row g-4">
-                    
-                    <div class="col-12">
-                      <h6 class="text-primary border-bottom pb-2 mb-3">Personalização Visual</h6>
-                    </div>
 
-                    <!-- Tema -->
-                    <div class="col-md-6">
-                      <label class="form-label small fw-bold text-muted">Tema do Sistema</label>
-                      <div class="d-flex gap-3">
-                        <div class="config-theme-option">
-                          <input type="radio" class="btn-check" name="configTema" id="temaClaro" value="claro" checked>
-                          <label class="btn btn-outline-primary" for="temaClaro">
-                            <i class="bi bi-sun fs-4 d-block mb-2"></i>
-                            Claro
-                          </label>
-                        </div>
-                        <div class="config-theme-option">
-                          <input type="radio" class="btn-check" name="configTema" id="temaEscuro" value="escuro">
-                          <label class="btn btn-outline-primary" for="temaEscuro">
-                            <i class="bi bi-moon-stars fs-4 d-block mb-2"></i>
-                            Escuro
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Cor Primária -->
-                    <div class="col-md-6">
-                      <label class="form-label small fw-bold text-muted">Cor Primária</label>
-                      <div class="d-flex gap-2 align-items-center">
-                        <input type="color" class="form-control form-control-color" id="configCorPrimaria" value="#0d6efd" style="width: 80px; height: 45px;">
-                        <input type="text" class="form-control" id="configCorPrimariaHex" value="#0d6efd" readonly>
-                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('configCorPrimaria').value='#0d6efd'; document.getElementById('configCorPrimariaHex').value='#0d6efd';">
-                          Padrão
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Botões -->
-                    <div class="col-12 d-flex justify-content-end gap-2 border-top pt-3">
-                      <button type="button" class="btn btn-light">Cancelar</button>
-                      <button type="submit" class="btn btn-dark">
-                        <i class="bi bi-check-lg me-1"></i>Salvar Alterações
-                      </button>
-                    </div>
-
-                  </div>
-                </form>
-              </div>
 
               <!-- ===========================
                    ABA: SISTEMA
                    =========================== -->
               <div class="tab-pane fade p-4" id="tab-sistema">
-                <form id="formSistema">
-                  <div class="row g-4">
-                    
-                    <div class="col-12">
-                      <h6 class="text-primary border-bottom pb-2 mb-3">Preferências do Sistema</h6>
-                    </div>
-
-                    <!-- Idioma -->
-                    <div class="col-md-6">
-                      <label class="form-label small fw-bold text-muted">Idioma</label>
-                      <select class="form-select" id="configIdioma">
-                        <option value="pt-BR" selected>Português (Brasil)</option>
-                        <option value="en-US">English (US)</option>
-                        <option value="es-ES">Español</option>
-                      </select>
-                    </div>
-
-                    <!-- Fuso Horário -->
-                    <div class="col-md-6">
-                      <label class="form-label small fw-bold text-muted">Fuso Horário</label>
-                      <select class="form-select" id="configFusoHorario">
-                        <option value="America/Sao_Paulo" selected>América/São Paulo (GMT-3)</option>
-                        <option value="America/Manaus">América/Manaus (GMT-4)</option>
-                        <option value="America/New_York">América/Nova York (GMT-5)</option>
-                        <option value="Europe/London">Europa/Londres (GMT+0)</option>
-                      </select>
-                    </div>
-
-                    <!-- Formato de Data -->
-                    <div class="col-md-6">
-                      <label class="form-label small fw-bold text-muted">Formato de Data</label>
-                      <select class="form-select" id="configFormatoData">
-                        <option value="DD/MM/YYYY" selected>DD/MM/YYYY (31/12/2026)</option>
-                        <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2026)</option>
-                        <option value="YYYY-MM-DD">YYYY-MM-DD (2026-12-31)</option>
-                      </select>
-                    </div>
-
-                    <!-- Moeda -->
-                    <div class="col-md-6">
-                      <label class="form-label small fw-bold text-muted">Moeda Padrão</label>
-                      <select class="form-select" id="configMoeda">
-                        <option value="BRL" selected>Real (R$)</option>
-                        <option value="USD">Dólar (US$)</option>
-                        <option value="EUR">Euro (€)</option>
-                      </select>
-                    </div>
-
-                    <!-- Itens por Página -->
-                    <div class="col-md-6">
-                      <label class="form-label small fw-bold text-muted">Itens por Página</label>
-                      <select class="form-select" id="configItensPorPagina">
-                        <option value="10">10 itens</option>
-                        <option value="25" selected>25 itens</option>
-                        <option value="50">50 itens</option>
-                        <option value="100">100 itens</option>
-                      </select>
-                    </div>
-
-                    <!-- Visualização Padrão -->
-                    <div class="col-md-6">
-                      <label class="form-label small fw-bold text-muted">Visualização de Listas</label>
-                      <select class="form-select" id="configVisualizacao">
-                        <option value="cards" selected>Cards (Grade)</option>
-                        <option value="tabela">Tabela (Lista)</option>
-                      </select>
-                    </div>
-
-                    <!-- Botões -->
-                    <div class="col-12 d-flex justify-content-end gap-2 border-top pt-3">
-                      <button type="button" class="btn btn-light">Cancelar</button>
-                      <button type="submit" class="btn btn-dark">
-                        <i class="bi bi-check-lg me-1"></i>Salvar Alterações
-                      </button>
-                    </div>
-
+                
+                <!-- SEÇÃO 1: Configuração do Número do Pedido -->
+                <div class="row g-4">
+                  <div class="col-12">
+                    <h6 class="text-primary border-bottom pb-2 mb-3">
+                      <i class="bi bi-hash me-2"></i>Configuração do Número do Pedido
+                    </h6>
+                    <p class="text-muted small">Configure como os números de pedidos/contratos serão gerados automaticamente.</p>
                   </div>
-                </form>
+
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Prefixo do Pedido</label>
+                    <input type="text" class="form-control" id="configPedidoPrefixo" placeholder="PED" maxlength="10" value="PED">
+                    <div class="form-text">Ex: PED, JOB, ORC</div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Número Inicial</label>
+                    <input type="number" class="form-control" id="configPedidoNumeroInicial" placeholder="1000" min="1" value="1000">
+                    <div class="form-text">Próximo número disponível</div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Incremento</label>
+                    <select class="form-select" id="configPedidoIncremento">
+                      <option value="1" selected>+1 (padrão)</option>
+                      <option value="5">+5</option>
+                      <option value="10">+10</option>
+                    </select>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="alert alert-info d-flex align-items-center">
+                      <i class="bi bi-info-circle me-2 fs-5"></i>
+                      <div>
+                        <strong>Prévia do próximo número:</strong>
+                        <span id="previewNumeroPedido" class="badge bg-primary ms-2 fs-6">PED-1000</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-dark" onclick="salvarConfigNumeroPedido()">
+                      <i class="bi bi-check-lg me-1"></i>Salvar Configuração
+                    </button>
+                  </div>
+                </div>
+
               </div>
 
               <!-- ===========================
@@ -3343,9 +3346,47 @@
                     </div>
 
                     <div class="col-12">
-                      <button type="button" class="btn btn-dark">
+                      <button type="button" class="btn btn-dark" onclick="alterarSenha()">
                         <i class="bi bi-key me-1"></i>Alterar Senha
                       </button>
+                    </div>
+
+                    <!-- SEÇÃO MASTER: Gerenciamento de Acesso -->
+                    <div class="col-12 mt-4" id="secaoGerenciamentoAcesso" style="display: none;">
+                      <h6 class="text-primary border-bottom pb-2 mb-3">
+                        <i class="bi bi-people-fill me-2"></i>Gerenciamento de Acesso
+                        <span class="badge bg-purple ms-2" style="font-size: 0.65rem;">MASTER</span>
+                      </h6>
+                      
+                      <div class="card border-0 shadow-sm">
+                        <div class="card-body p-0">
+                          <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                              <thead class="table-light">
+                                <tr>
+                                  <th style="min-width: 250px;">Funcionário</th>
+                                  <th>Cargo</th>
+                                  <th>Status</th>
+                                  <th class="text-center">Acesso</th>
+                                  <th class="text-center" style="min-width: 150px;">Ações</th>
+                                </tr>
+                              </thead>
+                              <tbody id="listaControleAcessoMaster">
+                                <tr>
+                                  <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-hourglass-split me-2"></i>Carregando...
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <p class="text-muted small mt-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Funcionários demitidos não podem acessar o sistema. Use os botões para gerenciar permissões.
+                      </p>
                     </div>
 
                     <!-- Zona de Perigo -->
@@ -3762,67 +3803,6 @@
       </div>
     </div>
   </div>
-  <div class="modal fade" id="modalNovaEscala" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px">
-        <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-title fw-bold">Nova Escala de Trabalho</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body pt-4">
-          <form>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Funcionário</label>
-              <select class="form-select">
-                <option selected>Pedro Santos</option>
-                <option>Carlos Silva</option>
-                <option>Ana Costa</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Data</label>
-              <div class="input-group">
-                <input type="text" class="form-control" placeholder="dd/mm/aaaa" />
-                <span class="input-group-text bg-white border-start-0"><i class="bi bi-calendar"></i></span>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Local</label>
-              <input type="text" class="form-control" placeholder="Ex: Espaço Eventos ABC" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Cliente</label>
-              <input type="text" class="form-control" placeholder="Nome do cliente" />
-            </div>
-            <div class="row g-3">
-              <div class="col-6">
-                <label class="form-label small fw-bold text-muted">Início</label>
-                <div class="input-group">
-                  <input type="text" class="form-control" value="08:00" />
-                  <span class="input-group-text bg-white border-start-0"><i class="bi bi-clock"></i></span>
-                </div>
-              </div>
-              <div class="col-6">
-                <label class="form-label small fw-bold text-muted">Término</label>
-                <div class="input-group">
-                  <input type="text" class="form-control" value="18:00" />
-                  <span class="input-group-text bg-white border-start-0"><i class="bi bi-clock"></i></span>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer border-top-0 pt-0 pb-4">
-          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
-            Cancelar
-          </button>
-          <button type="button" class="btn btn-dark" style="background-color: var(--primary-blue)">
-            Criar Escala
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div class="modal fade" id="modalNovoJob" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -3879,7 +3859,271 @@
       </div>
     </div>
   </div>
+
+  <!-- ============================================
+       MODAL: Configuração de Permissões do Funcionário
+       ============================================ -->
+  <div class="modal fade" id="modalPermissoesFuncionario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px">
+        <div class="modal-header border-bottom pb-3">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-shield-lock me-2"></i>Configurar Acesso do Funcionário
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-4">
+          <input type="hidden" id="permFuncionarioId" value="">
+          
+          <!-- Info do Funcionário -->
+          <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-light rounded">
+            <div class="avatar-circle" id="permFuncionarioAvatar" style="width:50px;height:50px;background:#0d6efd;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-weight:bold;font-size:1.2rem;">??</div>
+            <div>
+              <h6 class="mb-0 fw-bold" id="permFuncionarioNome">Nome do Funcionário</h6>
+              <small class="text-muted" id="permFuncionarioCargo">Cargo</small>
+            </div>
+          </div>
+
+          <!-- Credenciais de Login -->
+          <input type="hidden" id="permFuncionarioEmail" value="">
+          <div class="card border border-primary mb-4">
+            <div class="card-header bg-white">
+              <h6 class="mb-0 fw-bold">
+                <i class="bi bi-key me-2 text-primary"></i>Definir Senha de Acesso
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label small fw-bold text-muted">Nova Senha</label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="permFuncionarioSenha" placeholder="Digite a senha inicial">
+                    <button class="btn btn-outline-secondary" type="button" onclick="gerarSenhaTemporariaModal()" title="Gerar senha aleatória">
+                      <i class="bi bi-magic"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" onclick="toggleSenhaVisivel()" title="Mostrar/ocultar senha">
+                      <i class="bi bi-eye" id="iconToggleSenha"></i>
+                    </button>
+                  </div>
+                  <div class="form-text">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Defina uma senha inicial. O funcionário poderá alterá-la em Configurações > Segurança.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Master Admin -->
+          <div class="card border border-warning mb-4">
+            <div class="card-body">
+              <div class="form-check form-switch d-flex align-items-center gap-3">
+                <input class="form-check-input" type="checkbox" id="permIsMaster" style="width: 3em; height: 1.5em;">
+                <label class="form-check-label fw-bold" for="permIsMaster">
+                  <i class="bi bi-crown me-1 text-warning"></i>Definir como MASTER
+                </label>
+              </div>
+              <small class="text-muted d-block mt-2">
+                Usuários MASTER têm acesso total ao sistema, ignorando todas as permissões.
+              </small>
+            </div>
+          </div>
+
+          <!-- Permissões de Acesso -->
+          <div class="card border" id="cardPermissoes">
+            <div class="card-header bg-white">
+              <h6 class="mb-0 fw-bold">
+                <i class="bi bi-unlock me-2"></i>Permissões de Acesso
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="permDashboard" checked>
+                    <label class="form-check-label" for="permDashboard">
+                      <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="permClientes" checked>
+                    <label class="form-check-label" for="permClientes">
+                      <i class="bi bi-people me-1"></i>Clientes
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="permFuncionarios">
+                    <label class="form-check-label" for="permFuncionarios">
+                      <i class="bi bi-person-badge me-1"></i>Funcionários
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="permContratos" checked>
+                    <label class="form-check-label" for="permContratos">
+                      <i class="bi bi-briefcase me-1"></i>Contratos
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="permEstoque">
+                    <label class="form-check-label" for="permEstoque">
+                      <i class="bi bi-box me-1"></i>Estoque
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="permFinanceiro">
+                    <label class="form-check-label" for="permFinanceiro">
+                      <i class="bi bi-currency-dollar me-1"></i>Financeiro
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="permConfiguracoes">
+                    <label class="form-check-label" for="permConfiguracoes">
+                      <i class="bi bi-gear me-1"></i>Configurações
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer border-top pt-3">
+          <button type="button" class="btn btn-outline-danger me-auto" onclick="resetarSenhaFuncionario()">
+            <i class="bi bi-arrow-clockwise me-1"></i>Resetar Senha
+          </button>
+          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-dark" onclick="salvarPermissoesFuncionario()">
+            <i class="bi bi-check-lg me-1"></i>Salvar Permissões
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MODAL: NOVA ESCALA MANUAL
+       ============================================ -->
+  <div class="modal fade" id="modalNovaEscala" tabindex="-1" aria-labelledby="modalNovaEscalaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" id="modalNovaEscalaLabel">
+            <i class="bi bi-calendar-plus me-2 text-primary"></i>Nova Escala Manual
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formNovaEscala">
+            <div class="mb-3">
+              <label for="escalaFuncionario" class="form-label fw-semibold">Funcionário</label>
+              <select class="form-select" id="escalaFuncionario" required>
+                <option value="">Selecione o funcionário...</option>
+              </select>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="escalaDataInicio" class="form-label fw-semibold">Data Início</label>
+                <input type="date" class="form-control" id="escalaDataInicio" required>
+              </div>
+              <div class="col-md-6">
+                <label for="escalaDataFim" class="form-label fw-semibold">Data Fim</label>
+                <input type="date" class="form-control" id="escalaDataFim" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="escalaTipo" class="form-label fw-semibold">Tipo de Escala</label>
+              <select class="form-select" id="escalaTipo" required>
+                <option value="">Selecione o tipo...</option>
+                <option value="Trabalho">Trabalho</option>
+                <option value="Folga">Folga</option>
+                <option value="Férias">Férias</option>
+                <option value="Atestado">Atestado</option>
+                <option value="Falta">Falta</option>
+                <option value="Treinamento">Treinamento</option>
+                <option value="Viagem">Viagem</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="escalaJob" class="form-label fw-semibold">
+                <i class="bi bi-briefcase me-1"></i>Vincular a um Pedido (opcional)
+              </label>
+              <select class="form-select" id="escalaJob">
+                <option value="">Nenhum - Escala avulsa</option>
+              </select>
+              <small class="text-muted">Se selecionado, o funcionário será adicionado à equipe do pedido.</small>
+            </div>
+            
+            <div class="mb-3">
+              <label for="escalaObs" class="form-label fw-semibold">Observações</label>
+              <textarea class="form-control" id="escalaObs" rows="2" placeholder="Observações opcionais..."></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="salvarNovaEscala()">
+            <i class="bi bi-check-lg me-1"></i>Salvar Escala
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal antigo para compatibilidade com clique no calendário -->
+  <div class="modal fade" id="modalNovaEscalaManual" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nova Escala</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="escalaData">
+          <div class="mb-3">
+            <label class="form-label">Funcionário</label>
+            <select class="form-select" id="escalaFuncionarioManual"></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" id="escalaTipoManual">
+              <option value="Trabalho">Trabalho</option>
+              <option value="Folga">Folga</option>
+              <option value="Férias">Férias</option>
+              <option value="Atestado">Atestado</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Observações</label>
+            <textarea class="form-control" id="escalaObsManual" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" onclick="salvarEscalaManual()">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="/public/js/main.js"></script>
+  <script src="/public/js/configuracoes.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

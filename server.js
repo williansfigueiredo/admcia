@@ -1,3 +1,6 @@
+// Carrega variáveis de ambiente do arquivo .env
+require('dotenv').config();
+
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
@@ -5,10 +8,22 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+// --- BIBLIOTECA DE CRIPTOGRAFIA ---
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+// --- BIBLIOTECAS DE AUTENTICAÇÃO ---
+const cookieParser = require('cookie-parser');
+const authRoutes = require('./routes/auth');
+const funcionariosRoutes = require('./routes/funcionarios');
+const { requireAuth, redirectIfAuthenticated } = require('./middleware/requireAuth');
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
+app.use(cookieParser());
 
 // --- LIBERAR PASTA PUBLIC (CSS, JS) ---
 app.use('/public', express.static('public'));
@@ -31,12 +46,21 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// --- SERVIR ARQUIVOS HTML NA RAIZ ---
-app.get('/', (req, res) => {
+// --- ROTA DE LOGIN (PÁGINA) ---
+app.get('/login', redirectIfAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// --- SERVIR ARQUIVOS HTML NA RAIZ (PROTEGIDO) ---
+app.get('/', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/invoice', (req, res) => {
+app.get('/dashboard', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/invoice', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'invoice.html'));
 });
 
@@ -53,6 +77,14 @@ db.connect((err) => {
   if (err) console.error('Erro ao conectar:', err);
   else {
     console.log('Sucesso! Conectado ao banco de dados MySQL.');
+    
+    // Inicializa serviço de email
+    try {
+      const emailService = require('./services/emailService');
+      emailService.inicializarEmail();
+    } catch (e) {
+      console.log('⚠️ Serviço de email não inicializado:', e.message);
+    }
     
     // Criar tabela contatos_clientes se não existir
     const sqlCriarTabela = `
@@ -107,6 +139,78 @@ db.connect((err) => {
         console.log('✅ Coluna avatar criada com sucesso na tabela funcionarios.');
       }
     });
+
+    // Migração: Adicionar coluna senha_hash na tabela funcionarios (se não existir)
+    const sqlAdicionarSenhaHash = `
+      ALTER TABLE funcionarios 
+      ADD COLUMN senha_hash VARCHAR(255) NULL
+    `;
+    
+    db.query(sqlAdicionarSenhaHash, (err) => {
+      if (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log('✅ Coluna senha_hash já existe na tabela funcionarios.');
+        } else {
+          console.error('⚠️ Erro ao adicionar coluna senha_hash:', err.message);
+        }
+      } else {
+        console.log('✅ Coluna senha_hash criada com sucesso na tabela funcionarios.');
+      }
+    });
+
+    // Migração: Adicionar coluna ultimo_login na tabela funcionarios (se não existir)
+    const sqlAdicionarUltimoLogin = `
+      ALTER TABLE funcionarios 
+      ADD COLUMN ultimo_login TIMESTAMP NULL
+    `;
+    
+    db.query(sqlAdicionarUltimoLogin, (err) => {
+      if (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log('✅ Coluna ultimo_login já existe na tabela funcionarios.');
+        } else {
+          console.error('⚠️ Erro ao adicionar coluna ultimo_login:', err.message);
+        }
+      } else {
+        console.log('✅ Coluna ultimo_login criada com sucesso na tabela funcionarios.');
+      }
+    });
+
+    // Migração: Adicionar coluna is_master (controle de admin)
+    const sqlAdicionarIsMaster = `
+      ALTER TABLE funcionarios 
+      ADD COLUMN is_master TINYINT(1) NOT NULL DEFAULT 0
+    `;
+    
+    db.query(sqlAdicionarIsMaster, (err) => {
+      if (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log('✅ Coluna is_master já existe na tabela funcionarios.');
+        } else {
+          console.error('⚠️ Erro ao adicionar coluna is_master:', err.message);
+        }
+      } else {
+        console.log('✅ Coluna is_master criada com sucesso na tabela funcionarios.');
+      }
+    });
+
+    // Migração: Adicionar coluna acesso_ativo (controle de acesso)
+    const sqlAdicionarAcessoAtivo = `
+      ALTER TABLE funcionarios 
+      ADD COLUMN acesso_ativo TINYINT(1) NOT NULL DEFAULT 1
+    `;
+    
+    db.query(sqlAdicionarAcessoAtivo, (err) => {
+      if (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log('✅ Coluna acesso_ativo já existe na tabela funcionarios.');
+        } else {
+          console.error('⚠️ Erro ao adicionar coluna acesso_ativo:', err.message);
+        }
+      } else {
+        console.log('✅ Coluna acesso_ativo criada com sucesso na tabela funcionarios.');
+      }
+    });
   }
 
 
@@ -129,7 +233,14 @@ db.connect((err) => {
 
 });
 
+// --- DISPONIBILIZA DB PARA AS ROTAS ---
+app.set('db', db);
 
+// --- ROTAS DE AUTENTICAÇÃO ---
+app.use('/api/auth', authRoutes);
+
+// --- ROTAS DE FUNCIONÁRIOS (Perfil e Master) ---
+app.use('/api/funcionarios', funcionariosRoutes);
 
 
 // --- ROTAS ---
@@ -152,6 +263,27 @@ app.get('/dashboard/faturamento', (req, res) => {
 // No arquivo server.js
 
 // ATUALIZAÇÃO NO SERVER.JS (Rota de Busca)
+
+// ROTA: BUSCAR JOBS ATIVOS (Agendado, Em Andamento, Confirmado)
+// IMPORTANTE: Esta rota deve vir ANTES da rota /jobs para não conflitar
+app.get('/jobs/ativos', (req, res) => {
+  const sql = `
+    SELECT j.id, j.numero_pedido, j.descricao, j.data_inicio, j.data_fim, j.status,
+           c.nome as nome_cliente
+    FROM jobs j
+    LEFT JOIN clientes c ON j.cliente_id = c.id
+    WHERE j.status IN ('Agendado', 'Em Andamento', 'Confirmado')
+    ORDER BY j.data_inicio ASC
+  `;
+  
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar jobs ativos:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(results);
+  });
+});
 
 app.get('/jobs', (req, res) => {
   // AQUI ESTÁ O SEGREDO: "f.nome as nome_operador"
@@ -349,12 +481,33 @@ app.get('/funcionarios/todos', (req, res) => {
 app.post('/jobs', (req, res) => {
   const data = req.body;
 
-  // 1. ADICIONADO: Colunas de horário no INSERT
-  const sqlJob = `
+  // PRIMEIRO: Buscar configuração do número de pedido
+  const sqlConfig = "SELECT chave, valor FROM configuracoes_sistema WHERE chave IN ('pedido_prefixo', 'pedido_numero_atual', 'pedido_incremento')";
+  
+  db.query(sqlConfig, (errConfig, configResults) => {
+    // Se não houver configuração, usa valores padrão
+    let prefixo = 'PED';
+    let numeroAtual = 1000;
+    let incremento = 1;
+    
+    if (!errConfig && configResults && configResults.length > 0) {
+      configResults.forEach(r => {
+        if (r.chave === 'pedido_prefixo') prefixo = r.valor;
+        if (r.chave === 'pedido_numero_atual') numeroAtual = parseInt(r.valor) || 1000;
+        if (r.chave === 'pedido_incremento') incremento = parseInt(r.valor) || 1;
+      });
+    }
+    
+    const numeroPedido = `${prefixo}-${numeroAtual}`;
+    console.log(`📝 Gerando pedido com número: ${numeroPedido}`);
+
+    // 1. ADICIONADO: Colunas de horário e numero_pedido no INSERT
+    const sqlJob = `
         INSERT INTO jobs (
+            numero_pedido,
             descricao, valor, data_job, data_fim, status, pagamento, cliente_id,
             operador_id, 
-            hora_chegada_prevista, hora_inicio_evento, hora_fim_evento, -- 3 NOVOS
+            hora_chegada_prevista, hora_inicio_evento, hora_fim_evento,
             logradouro, numero, bairro, cidade, uf, cep,
             solicitante_nome, solicitante_email, solicitante_telefone,
             producao_local, producao_contato, producao_email,
@@ -364,8 +517,9 @@ app.post('/jobs', (req, res) => {
             pagador_cep, pagador_logradouro, pagador_numero, pagador_bairro,
             pagador_cidade, pagador_uf, desconto_valor
         ) VALUES (
+            ?,
             ?, ?, ?, ?, ?, ?, ?, ?, 
-            ?, ?, ?,                 -- AS 3 INTERROGAÇÕES NOVAS ESTÃO AQUI
+            ?, ?, ?,
             ?, ?, ?, ?, ?, ?, 
             ?, ?, ?, 
             ?, ?, ?, 
@@ -375,57 +529,57 @@ app.post('/jobs', (req, res) => {
             ?, ?, ?, ?, ?, ?, ?
         )
     `;
-  const pagadorEnderecoCompleto = (data.pagador_logradouro || data.endereco?.logradouro)
-    ? `${data.pagador_logradouro || data.endereco?.logradouro}, ${data.pagador_numero || data.endereco?.numero} - ${data.pagador_bairro || data.endereco?.bairro}, ${data.pagador_cidade || data.endereco?.cidade}/${data.pagador_uf || data.endereco?.uf}`
-    : null;
+    const pagadorEnderecoCompleto = (data.pagador_logradouro || data.endereco?.logradouro)
+      ? `${data.pagador_logradouro || data.endereco?.logradouro}, ${data.pagador_numero || data.endereco?.numero} - ${data.pagador_bairro || data.endereco?.bairro}, ${data.pagador_cidade || data.endereco?.cidade}/${data.pagador_uf || data.endereco?.uf}`
+      : null;
 
-  // 2. Definição dos Valores (Também tem 41 itens)
-  const values = [
-    data.descricao || null,
-    data.valor || 0,
-    data.data_inicio || null, // Note que no banco é data_job, mas salvamos data_inicio
-    data.data_fim || null,
-    "Agendado",
-    "Pendente",
-    data.cliente_id || null,
-    data.operador_id || null,
+    // 2. Definição dos Valores (Incluindo numero_pedido)
+    const values = [
+      numeroPedido,
+      data.descricao || null,
+      data.valor || 0,
+      data.data_inicio || null,
+      data.data_fim || null,
+      "Agendado",
+      "Pendente",
+      data.cliente_id || null,
+      data.operador_id || null,
 
-    // === OS 3 NOVOS VALORES DE HORÁRIO ===
-    data.hora_chegada_prevista || null,
-    data.hora_inicio_evento || null,
-    data.hora_fim_evento || null,
+      data.hora_chegada_prevista || null,
+      data.hora_inicio_evento || null,
+      data.hora_fim_evento || null,
 
-    data.endereco?.logradouro || null,
-    data.endereco?.numero || null,
-    data.endereco?.bairro || null,
-    data.endereco?.cidade || null,
-    data.endereco?.uf || null,
-    data.endereco?.cep || null,
+      data.endereco?.logradouro || null,
+      data.endereco?.numero || null,
+      data.endereco?.bairro || null,
+      data.endereco?.cidade || null,
+      data.endereco?.uf || null,
+      data.endereco?.cep || null,
 
-    data.solicitante_nome || null,
-    data.solicitante_email || null,
-    data.solicitante_telefone || null,
+      data.solicitante_nome || null,
+      data.solicitante_email || null,
+      data.solicitante_telefone || null,
 
-    data.producao_local || null,
-    data.producao_contato || null,
-    data.producao_email || null,
+      data.producao_local || null,
+      data.producao_contato || null,
+      data.producao_email || null,
 
-    data.pagador_nome || null,
-    data.pagador_cnpj || null,
-    data.pagador_email || null,
-    pagadorEnderecoCompleto,
+      data.pagador_nome || null,
+      data.pagador_cnpj || null,
+      data.pagador_email || null,
+      pagadorEnderecoCompleto,
 
-    data.forma_pagamento || null,
-    data.tipo_documento || null,
-    data.observacoes || null,
-    data.data_inicio || null,
-    0, // desconto_porcentagem
-    data.motivo_desconto || null,
-    (data.vencimento_texto && data.vencimento_texto.trim() !== '' && data.vencimento_texto !== 'null') ? data.vencimento_texto : "À vista",
+      data.forma_pagamento || null,
+      data.tipo_documento || null,
+      data.observacoes || null,
+      data.data_inicio || null,
+      0,
+      data.motivo_desconto || null,
+      (data.vencimento_texto && data.vencimento_texto.trim() !== '' && data.vencimento_texto !== 'null') ? data.vencimento_texto : "À vista",
 
-    data.pagador_cep || null,
-    data.pagador_logradouro || null,
-    data.pagador_numero || null,
+      data.pagador_cep || null,
+      data.pagador_logradouro || null,
+      data.pagador_numero || null,
     data.pagador_bairro || null,
     data.pagador_cidade || null,
     data.pagador_uf || null,
@@ -443,28 +597,83 @@ app.post('/jobs', (req, res) => {
     // =========================================================
     // 3. IMPLEMENTAÇÃO DA NOVA LÓGICA DE EQUIPE (MÚLTIPLOS)
     // =========================================================
+    console.log('========================================');
+    console.log('📋 PROCESSANDO EQUIPE DO JOB', novoId);
+    console.log('📋 Operador ID recebido:', data.operador_id);
+    console.log('📋 Equipe recebida:', JSON.stringify(data.equipe, null, 2));
+    console.log('📋 Total de membros recebidos:', data.equipe?.length || 0);
+    console.log('========================================');
+    
+    // Monta a equipe completa (operador + membros adicionais)
+    let equipeCompleta = [];
+    
+    // PRIMEIRO: Adiciona o operador técnico se ele foi enviado
+    if (data.operador_id) {
+      const operadorJaIncluso = data.equipe?.some(m => String(m.funcionario_id) === String(data.operador_id));
+      
+      if (!operadorJaIncluso) {
+        console.log('📋 Operador NÃO está na equipe, adicionando...');
+        equipeCompleta.push({
+          funcionario_id: data.operador_id,
+          funcao: 'Operador Técnico'
+        });
+      } else {
+        console.log('📋 Operador JÁ está na equipe enviada');
+      }
+    }
+    
+    // SEGUNDO: Adiciona os demais membros da equipe
     if (data.equipe && data.equipe.length > 0) {
+      data.equipe.forEach(membro => {
+        equipeCompleta.push({
+          funcionario_id: membro.funcionario_id,
+          funcao: membro.funcao || 'Técnico'
+        });
+      });
+    }
+    
+    console.log('📋 Equipe COMPLETA a salvar:', JSON.stringify(equipeCompleta, null, 2));
+    console.log('📋 Total FINAL de membros:', equipeCompleta.length);
+    
+    // SALVA NA TABELA JOB_EQUIPE E NA TABELA ESCALAS
+    if (equipeCompleta.length > 0) {
       // A. SALVAR NA TABELA JOB_EQUIPE
       const sqlEquipe = "INSERT INTO job_equipe (job_id, funcionario_id, funcao) VALUES ?";
-      const valoresEquipe = data.equipe.map(m => [novoId, m.funcionario_id, m.funcao]);
+      const valoresEquipe = equipeCompleta.map(m => [novoId, m.funcionario_id, m.funcao]);
+      
+      console.log('📋 Valores a inserir em job_equipe:', valoresEquipe);
 
       db.query(sqlEquipe, [valoresEquipe], (errEq) => {
         if (errEq) console.error("❌ Erro ao inserir lista de equipe:", errEq);
-        else console.log("✅ Equipe inserida com sucesso.");
+        else console.log(`✅ ${valoresEquipe.length} membros inseridos na equipe do job ${novoId}`);
       });
 
-      // Escalas não são mais criadas automaticamente - removido
-
-    }
-    // MANTIVE O SEU CÓDIGO ANTIGO COMO FALLBACK (caso não venha a lista 'equipe')
-    else if (data.operador_id) {
-      const sqlEquipe = "INSERT INTO job_equipe (job_id, funcionario_id, funcao) VALUES (?, ?, ?)";
-      db.query(sqlEquipe, [novoId, data.operador_id, 'Operador Principal'], (errEquipe) => {
-        if (errEquipe) console.error("❌ Erro ao inserir na job_equipe:", errEquipe);
-        else console.log("✅ Operador inserido na equipe do Job:", novoId);
-      });
-
-      // Escalas não são mais criadas automaticamente - removido
+      // B. CRIAR ESCALAS AUTOMATICAMENTE PARA CADA MEMBRO DA EQUIPE
+      const dataInicio = data.data_inicio || null;
+      const dataFim = data.data_fim || data.data_inicio || null;
+      
+      if (dataInicio) {
+        const sqlEscalas = `
+          INSERT INTO escalas (funcionario_id, job_id, data_escala, data_inicio, data_fim, tipo, observacao)
+          VALUES ?
+        `;
+        const valoresEscalas = equipeCompleta.map(m => [
+          m.funcionario_id,
+          novoId,
+          dataInicio,
+          dataInicio,
+          dataFim,
+          'Trabalho',
+          `Job #${novoId} - ${data.descricao || 'Pedido'}`
+        ]);
+        
+        console.log('📅 Criando escalas para equipe:', valoresEscalas);
+        
+        db.query(sqlEscalas, [valoresEscalas], (errEsc) => {
+          if (errEsc) console.error("❌ Erro ao criar escalas:", errEsc);
+          else console.log(`✅ ${valoresEscalas.length} escalas criadas para o job ${novoId}`);
+        });
+      }
     }
 
     // Processamento de itens (MANTIDO EXATAMENTE IGUAL)
@@ -481,12 +690,30 @@ app.post('/jobs', (req, res) => {
 
       db.query(sqlItens, [itensFormatados], (errItens) => {
         if (errItens) console.error("Erro ao inserir itens:", errItens);
-        res.json({ message: "Job e Equipe salvos com sucesso!", id: novoId });
+        
+        // Incrementar número do pedido para o próximo
+        const proximoNumero = numeroAtual + incremento;
+        db.query(
+          "INSERT INTO configuracoes_sistema (chave, valor) VALUES ('pedido_numero_atual', ?) ON DUPLICATE KEY UPDATE valor = ?",
+          [String(proximoNumero), String(proximoNumero)],
+          () => {} // Fire and forget
+        );
+        
+        res.json({ message: "Job e Equipe salvos com sucesso!", id: novoId, numero_pedido: numeroPedido });
       });
     } else {
-      res.json({ message: "Job e Equipe salvos com sucesso!", id: novoId });
+      // Incrementar número do pedido para o próximo
+      const proximoNumero = numeroAtual + incremento;
+      db.query(
+        "INSERT INTO configuracoes_sistema (chave, valor) VALUES ('pedido_numero_atual', ?) ON DUPLICATE KEY UPDATE valor = ?",
+        [String(proximoNumero), String(proximoNumero)],
+        () => {} // Fire and forget
+      );
+      
+      res.json({ message: "Job e Equipe salvos com sucesso!", id: novoId, numero_pedido: numeroPedido });
     }
   });
+  }); // Fecha o db.query de configurações
 });
 
 /* =============================================================
@@ -594,7 +821,32 @@ app.put('/jobs/:id', (req, res) => {
             if (errInsEq) console.error("Erro ao inserir nova equipe:", errInsEq);
           });
 
-          // Escalas não são mais criadas automaticamente - removido
+          // 2. CRIA ESCALAS AUTOMATICAMENTE PARA CADA MEMBRO DA EQUIPE
+          const dataInicio = data.data_inicio || null;
+          const dataFim = data.data_fim || data.data_inicio || null;
+          
+          if (dataInicio) {
+            const sqlEscalas = `
+              INSERT INTO escalas (funcionario_id, job_id, data_escala, data_inicio, data_fim, tipo, observacao)
+              VALUES ?
+            `;
+            const valoresEscalas = data.equipe.map(m => [
+              m.funcionario_id,
+              id,
+              dataInicio,
+              dataInicio,
+              dataFim,
+              'Trabalho',
+              `Job #${id} - ${data.descricao || 'Pedido'}`
+            ]);
+            
+            console.log('📅 Criando escalas atualizadas para equipe:', valoresEscalas);
+            
+            db.query(sqlEscalas, [valoresEscalas], (errEsc) => {
+              if (errEsc) console.error("❌ Erro ao criar escalas:", errEsc);
+              else console.log(`✅ ${valoresEscalas.length} escalas atualizadas para o job ${id}`);
+            });
+          }
         }
       });
     });
@@ -975,6 +1227,25 @@ app.delete('/jobs/:id', (req, res) => {
       // 3. APAGA OS ITENS DO PEDIDO (Limpeza do banco)
       await new Promise((resolve, reject) => {
         db.query("DELETE FROM job_itens WHERE job_id = ?", [id], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      // 3.1 APAGA AS ESCALAS ASSOCIADAS AO JOB
+      await new Promise((resolve, reject) => {
+        db.query("DELETE FROM escalas WHERE job_id = ?", [id], (err) => {
+          if (err) reject(err);
+          else {
+            console.log(`📅 Escalas do job ${id} removidas`);
+            resolve();
+          }
+        });
+      });
+
+      // 3.2 APAGA A EQUIPE DO JOB
+      await new Promise((resolve, reject) => {
+        db.query("DELETE FROM job_equipe WHERE job_id = ?", [id], (err) => {
           if (err) reject(err);
           else resolve();
         });
@@ -1496,11 +1767,13 @@ app.post('/funcionarios', (req, res) => {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-  const demissao = d.data_demissao ? d.data_demissao : null;
+  // Trata datas vazias como NULL
+  const demissao = (d.data_demissao && d.data_demissao.trim() !== '') ? d.data_demissao : null;
+  const admissao = (d.data_admissao && d.data_admissao.trim() !== '') ? d.data_admissao : null;
 
   const values = [
     d.nome, d.cargo, d.departamento, d.email, d.telefone,
-    d.cpf, d.data_admissao, demissao, d.endereco,
+    d.cpf, admissao, demissao, d.endereco,
     d.status || 'Ativo', d.observacoes,
     d.cep, d.logradouro, d.numero, d.bairro, d.cidade, d.uf
   ];
@@ -1528,17 +1801,29 @@ app.put('/funcionarios/:id', (req, res) => {
         WHERE id=?
     `;
 
-  const demissao = d.data_demissao ? d.data_demissao : null;
+  // Trata datas vazias como NULL
+  const demissao = (d.data_demissao && d.data_demissao.trim() !== '') ? d.data_demissao : null;
+  const admissao = (d.data_admissao && d.data_admissao.trim() !== '') ? d.data_admissao : null;
 
   const values = [
     d.nome, d.cargo, d.departamento, d.email, d.telefone,
-    d.cpf, d.data_admissao, demissao, d.status, d.observacoes,
+    d.cpf, admissao, demissao, d.status, d.observacoes,
     d.cep, d.logradouro, d.numero, d.bairro, d.cidade, d.uf,
     id
   ];
 
   db.query(sql, values, (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
+    
+    // Sincroniza email com tabela usuarios_sistema
+    if (d.email) {
+      db.query('UPDATE usuarios_sistema SET email = ? WHERE funcionario_id = ?', [d.email, id], (errSync) => {
+        if (errSync) {
+          console.error('Erro ao sincronizar email em usuarios_sistema:', errSync);
+        }
+      });
+    }
+    
     res.json({ message: "Funcionário atualizado!" });
   });
 });
@@ -1623,25 +1908,6 @@ app.post('/funcionarios/:id/avatar', uploadAvatar.single('avatar'), (req, res) =
   });
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Buscar itens de um Job (para cancelar / devolver estoque com segurança)
 app.get('/jobs/:jobId/itens', (req, res) => {
   const { jobId } = req.params;
@@ -1670,13 +1936,13 @@ app.get('/jobs/:jobId/itens', (req, res) => {
 // Busca TUDO (Escalas Manuais + Jobs com Cores IGUAIS aos Pills)
 
 app.get('/agenda', (req, res) => {
-  // Primeiro busca escalas
+  // Primeiro busca escalas MANUAIS (apenas as que NÃO têm job_id)
   const sqlEscalas = `
     SELECT 
       CONCAT('escala-', e.id) as id,
-      CONCAT(e.data_escala, ' 08:00:00') as start, 
-      CONCAT(e.data_escala, ' 17:00:00') as end, 
-      CONCAT('📅 ', f.nome, ' - Escala Manual') as title,
+      COALESCE(e.data_inicio, e.data_escala) as data_inicio,
+      COALESCE(e.data_fim, e.data_escala) as data_fim,
+      CONCAT('📅 ', f.nome, ' - ', e.tipo) as title,
       e.tipo as description,
       f.id as operador_id,
       f.nome as operador_nome,
@@ -1686,6 +1952,7 @@ app.get('/agenda', (req, res) => {
       'escala' as tipo_evento
     FROM escalas e
     JOIN funcionarios f ON e.funcionario_id = f.id
+    WHERE e.job_id IS NULL
   `;
 
   // Depois busca jobs: operador principal + equipe adicional
@@ -1730,11 +1997,36 @@ app.get('/agenda', (req, res) => {
     WHERE j.data_inicio IS NOT NULL
   `;
 
-  db.query(sqlEscalas, (err, escalas) => {
+  db.query(sqlEscalas, (err, escalasRaw) => {
     if (err) {
       console.error("❌ Erro ao buscar escalas:", err);
       return res.status(500).json({ error: err.message });
     }
+
+    // Expande escalas para múltiplos dias (se tiver data_inicio e data_fim)
+    const eventosEscalas = [];
+    escalasRaw.forEach(e => {
+      const inicio = new Date(e.data_inicio);
+      const fim = e.data_fim ? new Date(e.data_fim) : inicio;
+      
+      for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
+        const dataStr = d.toISOString().split('T')[0];
+        
+        eventosEscalas.push({
+          id: `${e.id}-${dataStr}`,
+          start: `${dataStr} 08:00:00`,
+          end: `${dataStr} 17:00:00`,
+          title: e.title,
+          description: e.description,
+          operador_id: e.operador_id,
+          operador_nome: e.operador_nome,
+          localizacao: e.localizacao,
+          backgroundColor: e.backgroundColor,
+          borderColor: e.borderColor,
+          tipo_evento: e.tipo_evento
+        });
+      }
+    });
 
     db.query(sqlJobs, (err, jobs) => {
       if (err) {
@@ -1786,8 +2078,8 @@ app.get('/agenda', (req, res) => {
         }
       });
 
-      const todosEventos = [...escalas, ...eventosJobs];
-      console.log(`✅ Agenda retornou ${todosEventos.length} eventos (${escalas.length} escalas, ${eventosJobs.length} jobs)`);
+      const todosEventos = [...eventosEscalas, ...eventosJobs];
+      console.log(`✅ Agenda retornou ${todosEventos.length} eventos (${eventosEscalas.length} escalas, ${eventosJobs.length} jobs)`);
       
       res.json(todosEventos);
     });
@@ -1802,6 +2094,38 @@ app.post('/jobs/equipe', (req, res) => {
   db.query(sql, [job_id, funcionario_id, funcao], (err) => {
     if (err) return res.status(500).json(err);
     res.json({ message: "Funcionário adicionado ao Job!" });
+  });
+});
+
+// 3.1 ADICIONAR FUNCIONÁRIO À EQUIPE DE UM JOB ESPECÍFICO
+app.post('/jobs/:id/equipe/adicionar', (req, res) => {
+  const jobId = req.params.id;
+  const { funcionario_id, funcao } = req.body;
+  
+  // Verifica se já existe esse funcionário nesse job
+  const sqlCheck = "SELECT id FROM job_equipe WHERE job_id = ? AND funcionario_id = ?";
+  db.query(sqlCheck, [jobId, funcionario_id], (errCheck, results) => {
+    if (errCheck) {
+      console.error("Erro ao verificar equipe:", errCheck);
+      return res.status(500).json({ error: errCheck.message });
+    }
+    
+    // Se já existe, não adiciona novamente
+    if (results.length > 0) {
+      console.log(`📋 Funcionário ${funcionario_id} já está na equipe do job ${jobId}`);
+      return res.json({ message: "Funcionário já está na equipe", alreadyExists: true });
+    }
+    
+    // Se não existe, adiciona
+    const sqlInsert = "INSERT INTO job_equipe (job_id, funcionario_id, funcao) VALUES (?, ?, ?)";
+    db.query(sqlInsert, [jobId, funcionario_id, funcao || 'Técnico'], (errInsert) => {
+      if (errInsert) {
+        console.error("Erro ao adicionar à equipe:", errInsert);
+        return res.status(500).json({ error: errInsert.message });
+      }
+      console.log(`✅ Funcionário ${funcionario_id} adicionado à equipe do job ${jobId}`);
+      res.json({ message: "Funcionário adicionado à equipe com sucesso!" });
+    });
   });
 });
 
@@ -1826,17 +2150,23 @@ app.post('/escalas', (req, res) => {
   console.log("📥 Recebendo tentativa de escala:", data);
 
   const sql = `
-        INSERT INTO escalas (funcionario_id, data_escala, tipo, observacao, job_id)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO escalas (funcionario_id, data_escala, data_inicio, data_fim, tipo, observacao, job_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
   // Mapeamento dos dados
+  // Aceita tanto 'data' (único dia) quanto 'data_inicio'/'data_fim' (período)
+  const dataInicio = data.data_inicio || data.data;
+  const dataFim = data.data_fim || data.data;
+  
   const values = [
     data.funcionario_id,     // ID do funcionário
-    data.data,               // Data (Frontend manda como 'data', banco grava em 'data_escala')
+    dataInicio,              // Data escala (compatibilidade)
+    dataInicio,              // Data início
+    dataFim,                 // Data fim
     data.tipo,               // Tipo (Folga, Trabalho, etc)
     data.obs || null,        // Observação
-    data.job_id || null      // Job ID (opcional, pode ser nulo se for folga manual)
+    data.job_id || null      // Job ID (NULL para escalas avulsas, ID do job se vinculado)
   ];
 
   db.query(sql, values, (err, result) => {
@@ -1897,3 +2227,694 @@ app.get('/funcionarios/:id/historico', (req, res) => {
     res.json(results);
   });
 });
+
+
+// =======================================================
+//          SISTEMA DE CONTROLE DE ACESSO
+// =======================================================
+
+// Função para hash de senha (usando crypto nativo)
+function hashSenha(senha) {
+  return crypto.createHash('sha256').update(senha + 'erp_salt_2026').digest('hex');
+}
+
+// Função para gerar senha temporária
+function gerarSenhaTemporaria() {
+  return crypto.randomBytes(4).toString('hex'); // 8 caracteres
+}
+
+// Função para gerar token de sessão
+function gerarToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+// =======================================================
+//          ROTAS DA EMPRESA
+// =======================================================
+
+// BUSCAR DADOS DA EMPRESA
+app.get('/empresa', (req, res) => {
+  const sql = "SELECT * FROM empresa ORDER BY id DESC LIMIT 1";
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar empresa:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    if (results.length === 0) {
+      return res.json(null);
+    }
+    res.json(results[0]);
+  });
+});
+
+// SALVAR/ATUALIZAR DADOS DA EMPRESA
+app.post('/empresa', (req, res) => {
+  const data = req.body;
+  console.log("📝 Salvando dados da empresa:", data);
+
+  // Primeiro verifica se já existe um registro
+  db.query("SELECT id FROM empresa LIMIT 1", (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    if (results.length > 0) {
+      // Atualiza o registro existente
+      const sql = `
+        UPDATE empresa SET
+          razao_social = ?,
+          nome_fantasia = ?,
+          cnpj = ?,
+          ie = ?,
+          im = ?,
+          email = ?,
+          telefone = ?,
+          website = ?,
+          linkedin = ?,
+          cep = ?,
+          logradouro = ?,
+          numero = ?,
+          complemento = ?,
+          bairro = ?,
+          cidade = ?,
+          estado = ?,
+          logo = COALESCE(?, logo)
+        WHERE id = ?
+      `;
+      const values = [
+        data.razao_social, data.nome_fantasia, data.cnpj, data.ie, data.im,
+        data.email, data.telefone, data.website, data.linkedin,
+        data.cep, data.logradouro, data.numero, data.complemento,
+        data.bairro, data.cidade, data.estado, data.logo || null,
+        results[0].id
+      ];
+
+      db.query(sql, values, (err2, result) => {
+        if (err2) {
+          console.error("Erro ao atualizar empresa:", err2);
+          return res.status(500).json({ error: err2.message });
+        }
+        console.log("✅ Empresa atualizada!");
+        res.json({ success: true, message: "Empresa atualizada com sucesso!" });
+      });
+    } else {
+      // Insere novo registro
+      const sql = `
+        INSERT INTO empresa (
+          razao_social, nome_fantasia, cnpj, ie, im,
+          email, telefone, website, linkedin,
+          cep, logradouro, numero, complemento, bairro, cidade, estado, logo
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      const values = [
+        data.razao_social, data.nome_fantasia, data.cnpj, data.ie, data.im,
+        data.email, data.telefone, data.website, data.linkedin,
+        data.cep, data.logradouro, data.numero, data.complemento,
+        data.bairro, data.cidade, data.estado, data.logo || null
+      ];
+
+      db.query(sql, values, (err2, result) => {
+        if (err2) {
+          console.error("Erro ao inserir empresa:", err2);
+          return res.status(500).json({ error: err2.message });
+        }
+        console.log("✅ Empresa cadastrada com ID:", result.insertId);
+        res.json({ success: true, message: "Empresa cadastrada com sucesso!", id: result.insertId });
+      });
+    }
+  });
+});
+
+// UPLOAD DO LOGO DA EMPRESA
+app.post('/empresa/logo', (req, res) => {
+  const { logo } = req.body; // Base64 da imagem
+  
+  if (!logo) {
+    return res.status(400).json({ error: "Logo não informado" });
+  }
+
+  // Verifica se existe um registro de empresa
+  db.query("SELECT id FROM empresa LIMIT 1", (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    if (results.length > 0) {
+      // Atualiza o logo
+      db.query("UPDATE empresa SET logo = ? WHERE id = ?", [logo, results[0].id], (err2) => {
+        if (err2) return res.status(500).json({ error: err2.message });
+        console.log("✅ Logo da empresa atualizado!");
+        res.json({ success: true, message: "Logo atualizado!" });
+      });
+    } else {
+      // Cria registro só com logo
+      db.query("INSERT INTO empresa (logo) VALUES (?)", [logo], (err2, result) => {
+        if (err2) return res.status(500).json({ error: err2.message });
+        console.log("✅ Logo da empresa cadastrado!");
+        res.json({ success: true, message: "Logo cadastrado!", id: result.insertId });
+      });
+    }
+  });
+});
+
+// REMOVER LOGO DA EMPRESA
+app.delete('/empresa/logo', (req, res) => {
+  db.query("UPDATE empresa SET logo = NULL WHERE id = (SELECT id FROM (SELECT id FROM empresa LIMIT 1) as t)", (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, message: "Logo removido!" });
+  });
+});
+
+// =======================================================
+//          ROTAS DE CONFIGURAÇÕES DO SISTEMA
+// =======================================================
+
+// BUSCAR TODAS AS CONFIGURAÇÕES
+app.get('/configuracoes', (req, res) => {
+  const sql = "SELECT * FROM configuracoes_sistema";
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar configurações:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    // Converte para objeto chave-valor
+    const config = {};
+    results.forEach(row => {
+      config[row.chave] = row.valor;
+    });
+    res.json(config);
+  });
+});
+
+// GERAR PRÓXIMO NÚMERO DO PEDIDO (DEVE VIR ANTES DA ROTA GENÉRICA)
+app.get('/configuracoes/proximo-numero-pedido', (req, res) => {
+  const sql = "SELECT chave, valor FROM configuracoes_sistema WHERE chave IN ('pedido_prefixo', 'pedido_numero_atual', 'pedido_incremento')";
+  
+  db.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    const config = {};
+    results.forEach(r => {
+      config[r.chave] = r.valor;
+    });
+    
+    const prefixo = config.pedido_prefixo || 'PED';
+    const numero = parseInt(config.pedido_numero_atual) || 1000;
+    const incremento = parseInt(config.pedido_incremento) || 1;
+    
+    const numeroPedido = `${prefixo}-${numero}`;
+    
+    res.json({
+      numero_pedido: numeroPedido,
+      prefixo,
+      numero_atual: numero,
+      incremento,
+      proximo: numero + incremento
+    });
+  });
+});
+
+// BUSCAR CONFIGURAÇÃO ESPECÍFICA
+app.get('/configuracoes/:chave', (req, res) => {
+  const { chave } = req.params;
+  const sql = "SELECT valor FROM configuracoes_sistema WHERE chave = ?";
+  db.query(sql, [chave], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) return res.status(404).json({ error: 'Configuração não encontrada' });
+    res.json({ chave, valor: results[0].valor });
+  });
+});
+
+// ATUALIZAR CONFIGURAÇÃO
+app.put('/configuracoes/:chave', (req, res) => {
+  const { chave } = req.params;
+  const { valor } = req.body;
+  
+  const sql = `
+    INSERT INTO configuracoes_sistema (chave, valor) 
+    VALUES (?, ?)
+    ON DUPLICATE KEY UPDATE valor = ?, updated_at = CURRENT_TIMESTAMP
+  `;
+  
+  db.query(sql, [chave, valor, valor], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, message: 'Configuração atualizada!' });
+  });
+});
+
+// SALVAR CONFIGURAÇÃO DO NÚMERO DO PEDIDO
+app.post('/configuracoes/numero-pedido', (req, res) => {
+  const { prefixo, numero_inicial, incremento } = req.body;
+  
+  console.log('📝 Salvando configuração de número de pedido:', { prefixo, numero_inicial, incremento });
+  
+  // Primeiro, garantir que a tabela existe com a estrutura correta
+  const sqlCriarTabela = `
+    CREATE TABLE IF NOT EXISTS configuracoes_sistema (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      chave VARCHAR(100) NOT NULL,
+      valor TEXT,
+      descricao VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_chave (chave)
+    )
+  `;
+  
+  db.query(sqlCriarTabela, (errTabela) => {
+    if (errTabela) console.warn('Aviso ao verificar tabela:', errTabela.message);
+    
+    // Agora salvar as configurações usando REPLACE que funciona melhor
+    const sqlSalvar = `
+      REPLACE INTO configuracoes_sistema (chave, valor, descricao) VALUES 
+      ('pedido_prefixo', ?, 'Prefixo do número do pedido'),
+      ('pedido_numero_atual', ?, 'Número atual do pedido'),
+      ('pedido_incremento', ?, 'Incremento do pedido')
+    `;
+    
+    const valores = [
+      prefixo || 'PED',
+      String(numero_inicial || 1000),
+      String(incremento || 1)
+    ];
+    
+    db.query(sqlSalvar, valores, (err, result) => {
+      if (err) {
+        console.error('❌ Erro ao salvar configurações:', err);
+        return res.status(500).json({ error: err.message });
+      }
+      
+      console.log('✅ Configurações salvas com sucesso!', result);
+      res.json({ success: true, message: 'Configuração do número de pedido salva!' });
+    });
+  });
+});
+
+// =======================================================
+//          ROTAS DE PERMISSÕES DE FUNCIONÁRIOS
+// =======================================================
+
+// BUSCAR TODAS AS PERMISSÕES (Para lista de controle de acesso)
+app.get('/permissoes', (req, res) => {
+  const sql = `
+    SELECT f.id, f.nome, f.cargo, f.status, f.email, f.avatar,
+           COALESCE(p.acesso_sistema, 0) as acesso_sistema,
+           COALESCE(p.acesso_dashboard, 1) as acesso_dashboard,
+           COALESCE(p.acesso_clientes, 1) as acesso_clientes,
+           COALESCE(p.acesso_funcionarios, 0) as acesso_funcionarios,
+           COALESCE(p.acesso_contratos, 1) as acesso_contratos,
+           COALESCE(p.acesso_estoque, 0) as acesso_estoque,
+           COALESCE(p.acesso_financeiro, 0) as acesso_financeiro,
+           COALESCE(p.acesso_configuracoes, 0) as acesso_configuracoes,
+           COALESCE(p.is_master, 0) as is_master,
+           u.email as login_email,
+           u.ativo as usuario_ativo
+    FROM funcionarios f
+    LEFT JOIN permissoes_funcionarios p ON f.id = p.funcionario_id
+    LEFT JOIN usuarios_sistema u ON f.id = u.funcionario_id
+    ORDER BY f.nome
+  `;
+  
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar permissões:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(results);
+  });
+});
+
+// BUSCAR PERMISSÕES DE UM FUNCIONÁRIO
+app.get('/permissoes/:funcionarioId', (req, res) => {
+  const { funcionarioId } = req.params;
+  
+  const sql = `
+    SELECT f.id, f.nome, f.cargo, f.email, f.avatar,
+           COALESCE(f.is_master, 0) as is_master,
+           COALESCE(p.acesso_sistema, 0) as acesso_sistema,
+           COALESCE(p.acesso_dashboard, 1) as acesso_dashboard,
+           COALESCE(p.acesso_clientes, 1) as acesso_clientes,
+           COALESCE(p.acesso_funcionarios, 0) as acesso_funcionarios,
+           COALESCE(p.acesso_contratos, 1) as acesso_contratos,
+           COALESCE(p.acesso_estoque, 0) as acesso_estoque,
+           COALESCE(p.acesso_financeiro, 0) as acesso_financeiro,
+           COALESCE(p.acesso_configuracoes, 0) as acesso_configuracoes,
+           u.email as login_email
+    FROM funcionarios f
+    LEFT JOIN permissoes_funcionarios p ON f.id = p.funcionario_id
+    LEFT JOIN usuarios_sistema u ON f.id = u.funcionario_id
+    WHERE f.id = ?
+  `;
+  
+  db.query(sql, [funcionarioId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) return res.status(404).json({ error: 'Funcionário não encontrado' });
+    res.json(results[0]);
+  });
+});
+
+// SALVAR PERMISSÕES E CREDENCIAIS DE UM FUNCIONÁRIO
+app.post('/permissoes/:funcionarioId', (req, res) => {
+  const { funcionarioId } = req.params;
+  const {
+    acesso_sistema,
+    acesso_dashboard,
+    acesso_clientes,
+    acesso_funcionarios,
+    acesso_contratos,
+    acesso_estoque,
+    acesso_financeiro,
+    acesso_configuracoes,
+    is_master,
+    email,
+    senha
+  } = req.body;
+  
+  console.log(`📝 Salvando permissões para funcionário ${funcionarioId}:`, req.body);
+  
+  // 1. Inserir/Atualizar permissões
+  const sqlPermissoes = `
+    INSERT INTO permissoes_funcionarios 
+    (funcionario_id, acesso_sistema, acesso_dashboard, acesso_clientes, acesso_funcionarios, 
+     acesso_contratos, acesso_estoque, acesso_financeiro, acesso_configuracoes, is_master)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      acesso_sistema = VALUES(acesso_sistema),
+      acesso_dashboard = VALUES(acesso_dashboard),
+      acesso_clientes = VALUES(acesso_clientes),
+      acesso_funcionarios = VALUES(acesso_funcionarios),
+      acesso_contratos = VALUES(acesso_contratos),
+      acesso_estoque = VALUES(acesso_estoque),
+      acesso_financeiro = VALUES(acesso_financeiro),
+      acesso_configuracoes = VALUES(acesso_configuracoes),
+      is_master = VALUES(is_master),
+      updated_at = CURRENT_TIMESTAMP
+  `;
+  
+  const valoresPermissoes = [
+    funcionarioId,
+    acesso_sistema ? 1 : 0,
+    acesso_dashboard ? 1 : 0,
+    acesso_clientes ? 1 : 0,
+    acesso_funcionarios ? 1 : 0,
+    acesso_contratos ? 1 : 0,
+    acesso_estoque ? 1 : 0,
+    acesso_financeiro ? 1 : 0,
+    acesso_configuracoes ? 1 : 0,
+    is_master ? 1 : 0
+  ];
+  
+  db.query(sqlPermissoes, valoresPermissoes, (err) => {
+    if (err) {
+      console.error("Erro ao salvar permissões:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    
+    // 2.1 Atualiza is_master na tabela funcionarios (sistema novo de login)
+    db.query('UPDATE funcionarios SET is_master = ? WHERE id = ?', [is_master ? 1 : 0, funcionarioId], (errMaster) => {
+      if (errMaster) {
+        console.error("Erro ao atualizar is_master em funcionarios:", errMaster);
+      } else {
+        console.log(`✅ is_master atualizado na tabela funcionarios (${funcionarioId}): ${is_master ? 1 : 0}`);
+      }
+    });
+    
+    // 2. Se tem acesso ao sistema e email foi fornecido, criar/atualizar usuário
+    if (acesso_sistema && email) {
+      let sqlUsuario;
+      let valoresUsuario;
+      
+      if (senha && senha.trim() !== '') {
+        // Com nova senha - usar bcrypt para compatibilidade com novo sistema de login
+        const senhaHashBcrypt = bcrypt.hashSync(senha, 10);
+        const senhaHashLegacy = hashSenha(senha);
+        
+        // Atualiza senha no novo sistema (tabela funcionarios)
+        db.query('UPDATE funcionarios SET senha_hash = ? WHERE id = ?', [senhaHashBcrypt, funcionarioId], (errSenha) => {
+          if (errSenha) {
+            console.error("Erro ao atualizar senha em funcionarios:", errSenha);
+          } else {
+            console.log(`✅ Senha atualizada em funcionarios (${funcionarioId}) com bcrypt`);
+          }
+        });
+        
+        sqlUsuario = `
+          INSERT INTO usuarios_sistema (funcionario_id, email, senha_hash, ativo)
+          VALUES (?, ?, ?, 1)
+          ON DUPLICATE KEY UPDATE
+            email = VALUES(email),
+            senha_hash = VALUES(senha_hash),
+            ativo = 1,
+            updated_at = CURRENT_TIMESTAMP
+        `;
+        valoresUsuario = [funcionarioId, email, senhaHashLegacy];
+      } else {
+        // Sem alteração de senha
+        sqlUsuario = `
+          INSERT INTO usuarios_sistema (funcionario_id, email, senha_hash, ativo)
+          VALUES (?, ?, ?, 1)
+          ON DUPLICATE KEY UPDATE
+            email = VALUES(email),
+            ativo = 1,
+            updated_at = CURRENT_TIMESTAMP
+        `;
+        // Senha temporária se for novo usuário
+        const senhaTmp = hashSenha(gerarSenhaTemporaria());
+        valoresUsuario = [funcionarioId, email, senhaTmp];
+      }
+      
+      db.query(sqlUsuario, valoresUsuario, (err2) => {
+        if (err2) {
+          console.error("Erro ao salvar usuário:", err2);
+          return res.status(500).json({ error: 'Permissões salvas, mas erro ao criar usuário: ' + err2.message });
+        }
+        
+        console.log('✅ Permissões e usuário salvos com sucesso!');
+        res.json({ success: true, message: 'Permissões e credenciais salvas!' });
+      });
+    } else if (!acesso_sistema) {
+      // Se removeu acesso, desativar usuário
+      db.query("UPDATE usuarios_sistema SET ativo = 0 WHERE funcionario_id = ?", [funcionarioId], () => {
+        res.json({ success: true, message: 'Permissões salvas! Acesso ao sistema desativado.' });
+      });
+    } else {
+      res.json({ success: true, message: 'Permissões salvas!' });
+    }
+  });
+});
+
+// RESETAR SENHA DO FUNCIONÁRIO
+app.post('/usuarios/:funcionarioId/resetar-senha', (req, res) => {
+  const { funcionarioId } = req.params;
+  const novaSenha = gerarSenhaTemporaria();
+  const senhaHash = hashSenha(novaSenha);
+  
+  const sql = "UPDATE usuarios_sistema SET senha_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE funcionario_id = ?";
+  
+  db.query(sql, [senhaHash, funcionarioId], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+    
+    // Em produção, enviar por email. Aqui retornamos para exibir
+    res.json({ 
+      success: true, 
+      message: 'Senha resetada com sucesso!',
+      senha_temporaria: novaSenha // Em produção, NÃO retornar isso - enviar por email
+    });
+  });
+});
+
+// =======================================================
+//          ROTAS DE AUTENTICAÇÃO
+// =======================================================
+
+// LOGIN
+app.post('/auth/login', (req, res) => {
+  const { email, senha } = req.body;
+  
+  if (!email || !senha) {
+    return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+  }
+  
+  const senhaHash = hashSenha(senha);
+  
+  const sql = `
+    SELECT u.*, f.nome, f.cargo, f.avatar,
+           p.acesso_dashboard, p.acesso_clientes, p.acesso_funcionarios,
+           p.acesso_contratos, p.acesso_estoque, p.acesso_financeiro,
+           p.acesso_configuracoes, p.is_master
+    FROM usuarios_sistema u
+    INNER JOIN funcionarios f ON u.funcionario_id = f.id
+    LEFT JOIN permissoes_funcionarios p ON u.funcionario_id = p.funcionario_id
+    WHERE u.email = ? AND u.senha_hash = ? AND u.ativo = 1
+  `;
+  
+  db.query(sql, [email, senhaHash], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    if (results.length === 0) {
+      return res.status(401).json({ error: 'Email ou senha incorretos' });
+    }
+    
+    const usuario = results[0];
+    const token = gerarToken();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+    
+    // Criar sessão
+    const sqlSessao = `
+      INSERT INTO sessoes_usuarios (usuario_id, token, ip_address, user_agent, expires_at)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+    
+    db.query(sqlSessao, [
+      usuario.id,
+      token,
+      req.ip || 'unknown',
+      req.headers['user-agent'] || 'unknown',
+      expiresAt
+    ], (err2) => {
+      if (err2) {
+        console.error("Erro ao criar sessão:", err2);
+        return res.status(500).json({ error: 'Erro ao criar sessão' });
+      }
+      
+      // Atualiza último login
+      db.query("UPDATE usuarios_sistema SET ultimo_login = CURRENT_TIMESTAMP WHERE id = ?", [usuario.id]);
+      
+      res.json({
+        success: true,
+        token,
+        usuario: {
+          id: usuario.id,
+          funcionario_id: usuario.funcionario_id,
+          nome: usuario.nome,
+          cargo: usuario.cargo,
+          email: usuario.email,
+          avatar: usuario.avatar,
+          permissoes: {
+            dashboard: usuario.acesso_dashboard,
+            clientes: usuario.acesso_clientes,
+            funcionarios: usuario.acesso_funcionarios,
+            contratos: usuario.acesso_contratos,
+            estoque: usuario.acesso_estoque,
+            financeiro: usuario.acesso_financeiro,
+            configuracoes: usuario.acesso_configuracoes,
+            is_master: usuario.is_master
+          }
+        }
+      });
+    });
+  });
+});
+
+// LOGOUT
+app.post('/auth/logout', (req, res) => {
+  const token = req.headers['authorization']?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.json({ success: true });
+  }
+  
+  db.query("DELETE FROM sessoes_usuarios WHERE token = ?", [token], () => {
+    res.json({ success: true, message: 'Logout realizado!' });
+  });
+});
+
+// VERIFICAR SESSÃO
+app.get('/auth/verificar', (req, res) => {
+  const token = req.headers['authorization']?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Token não fornecido' });
+  }
+  
+  const sql = `
+    SELECT s.*, u.email, u.funcionario_id, f.nome, f.cargo, f.avatar,
+           p.acesso_dashboard, p.acesso_clientes, p.acesso_funcionarios,
+           p.acesso_contratos, p.acesso_estoque, p.acesso_financeiro,
+           p.acesso_configuracoes, p.is_master
+    FROM sessoes_usuarios s
+    INNER JOIN usuarios_sistema u ON s.usuario_id = u.id
+    INNER JOIN funcionarios f ON u.funcionario_id = f.id
+    LEFT JOIN permissoes_funcionarios p ON u.funcionario_id = p.funcionario_id
+    WHERE s.token = ? AND s.expires_at > NOW() AND u.ativo = 1
+  `;
+  
+  db.query(sql, [token], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    if (results.length === 0) {
+      return res.status(401).json({ error: 'Sessão inválida ou expirada' });
+    }
+    
+    const sessao = results[0];
+    
+    res.json({
+      valido: true,
+      usuario: {
+        id: sessao.usuario_id,
+        funcionario_id: sessao.funcionario_id,
+        nome: sessao.nome,
+        cargo: sessao.cargo,
+        email: sessao.email,
+        avatar: sessao.avatar,
+        permissoes: {
+          dashboard: sessao.acesso_dashboard,
+          clientes: sessao.acesso_clientes,
+          funcionarios: sessao.acesso_funcionarios,
+          contratos: sessao.acesso_contratos,
+          estoque: sessao.acesso_estoque,
+          financeiro: sessao.acesso_financeiro,
+          configuracoes: sessao.acesso_configuracoes,
+          is_master: sessao.is_master
+        }
+      }
+    });
+  });
+});
+
+// =======================================================
+//          MIDDLEWARE DE VERIFICAÇÃO DE PERMISSÃO
+// =======================================================
+
+// Função middleware para verificar permissão (uso futuro)
+function verificarPermissao(permissaoNecessaria) {
+  return (req, res, next) => {
+    const token = req.headers['authorization']?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Acesso não autorizado' });
+    }
+    
+    const sql = `
+      SELECT p.*, u.ativo
+      FROM sessoes_usuarios s
+      INNER JOIN usuarios_sistema u ON s.usuario_id = u.id
+      LEFT JOIN permissoes_funcionarios p ON u.funcionario_id = p.funcionario_id
+      WHERE s.token = ? AND s.expires_at > NOW() AND u.ativo = 1
+    `;
+    
+    db.query(sql, [token], (err, results) => {
+      if (err || results.length === 0) {
+        return res.status(401).json({ error: 'Sessão inválida' });
+      }
+      
+      const permissoes = results[0];
+      
+      // Master ignora verificações
+      if (permissoes.is_master) {
+        return next();
+      }
+      
+      // Verifica permissão específica
+      const campoPermissao = `acesso_${permissaoNecessaria}`;
+      if (!permissoes[campoPermissao]) {
+        return res.status(403).json({ error: 'Você não tem permissão para acessar esta área.' });
+      }
+      
+      next();
+    });
+  };
+}
+
+// Exportar para uso em outras partes se necessário
+module.exports = { verificarPermissao };

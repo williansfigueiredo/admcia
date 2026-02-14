@@ -624,6 +624,50 @@ function closeUserProfileMenu() {
 }
 
 /**
+ * Navega para a página de Configurações e ativa uma aba específica
+ * @param {string} tabId - ID da aba a ser ativada (ex: 'tab-perfil', 'tab-seguranca')
+ */
+function navegarParaConfiguracoes(tabId = 'tab-perfil') {
+  console.log('🔍 Navegando para Configurações → Aba:', tabId);
+
+  // Esconde todas as seções
+  document.querySelectorAll('.view-section').forEach(view => {
+    view.classList.remove('active');
+  });
+
+  // Mostra Configurações
+  const viewConfiguracoes = document.getElementById('view-configuracoes');
+  if (!viewConfiguracoes) {
+    console.error('❌ Elemento #view-configuracoes não encontrado!');
+    return;
+  }
+
+  viewConfiguracoes.classList.add('active');
+
+  // Ativa a aba específica usando Bootstrap tabs
+  setTimeout(() => {
+    const tabButton = document.querySelector(`[data-bs-target="#${tabId}"]`);
+    if (tabButton) {
+      const tab = new bootstrap.Tab(tabButton);
+      tab.show();
+      console.log(`✅ Aba ${tabId} ativada!`);
+    } else {
+      console.warn(`⚠️ Botão da aba #${tabId} não encontrado`);
+    }
+
+    // Carregar dados se for aba de perfil
+    if (tabId === 'tab-perfil' && typeof carregarDadosPerfil === 'function') {
+      carregarDadosPerfil();
+    }
+  }, 100);
+
+  // Remove ativo do menu lateral
+  document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
+
+  console.log('✅ Configurações exibida com sucesso!');
+}
+
+/**
  * Handler para itens do menu de perfil
  * @param {string} action - Ação a ser executada
  * @param {Event} event - Evento do click
@@ -636,45 +680,24 @@ function handleProfileMenuClick(action, event) {
 
   switch (action) {
     case 'account':
-      // TODO: Implementar página/modal de edição de perfil
-      alert('🔧 Funcionalidade "Conta" em desenvolvimento');
+      // Navega para Configurações → Aba Perfil
+      navegarParaConfiguracoes('tab-perfil');
       break;
 
     case 'manage-users':
-      // TODO: Implementar gerenciamento de usuários
-      alert('🔧 Funcionalidade "Gerenciar Usuários" em desenvolvimento');
-      break;
-
-    case 'invoices':
-      // TODO: Implementar resumo de faturas
-      alert('🔧 Funcionalidade "Resumo de Faturas" em desenvolvimento');
+      // Navega para Configurações → Aba Segurança
+      navegarParaConfiguracoes('tab-seguranca');
       break;
 
     case 'settings':
-      // Navega para página de Configurações
-      console.log('🔍 Iniciando navegação para Configurações...');
-
-      // Esconde todas as seções
-      document.querySelectorAll('.view-section').forEach(view => {
-        view.classList.remove('active');
-      });
-
-      // Mostra Configurações
-      const viewConfiguracoes = document.getElementById('view-configuracoes');
-      if (viewConfiguracoes) {
-        viewConfiguracoes.classList.add('active');
-        console.log('✅ Configurações exibida com sucesso!');
-      } else {
-        console.error('❌ Elemento #view-configuracoes não encontrado!');
-      }
-
-      // Remove ativo do menu lateral
-      document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
-      break;
-
-    case 'support':
-      // TODO: Implementar suporte
-      alert('🔧 Funcionalidade "Suporte" em desenvolvimento');
+      // Navega para Configurações (aba padrão)
+      navegarParaConfiguracoes('tab-perfil');
+      
+      // Carregar outras configurações
+      setTimeout(() => {
+        if (typeof carregarConfigNumeroPedido === 'function') carregarConfigNumeroPedido();
+        if (typeof carregarControleAcesso === 'function') carregarControleAcesso();
+      }, 100);
       break;
 
     default:
@@ -696,7 +719,7 @@ function triggerAvatarUpload() {
  * Processa o upload da foto de avatar
  * @param {Event} event - Evento do input file
  */
-function handleAvatarUpload(event) {
+async function handleAvatarUpload(event) {
   const file = event.target.files[0];
 
   if (!file) return;
@@ -707,44 +730,53 @@ function handleAvatarUpload(event) {
     return;
   }
 
-  // Valida tamanho (max 5MB)
-  const maxSize = 5 * 1024 * 1024; // 5MB
+  // Valida tamanho (max 2MB)
+  const maxSize = 2 * 1024 * 1024; // 2MB
   if (file.size > maxSize) {
-    alert('⚠️ A imagem deve ter no máximo 5MB');
+    alert('⚠️ A imagem deve ter no máximo 2MB');
     return;
   }
 
-  // Cria preview da imagem
-  const reader = new FileReader();
+  // Faz upload para o servidor
+  const token = localStorage.getItem('auth_token');
+  if (!token) {
+    alert('Sessão expirada. Faça login novamente.');
+    return;
+  }
 
-  reader.onload = function (e) {
-    const imageUrl = e.target.result;
+  const formData = new FormData();
+  formData.append('avatar', file);
 
-    // Atualiza avatar no header
-    const headerAvatar = document.getElementById('userAvatarHeader');
-    if (headerAvatar) {
-      headerAvatar.style.backgroundImage = `url(${imageUrl})`;
-      headerAvatar.style.backgroundSize = 'cover';
-      headerAvatar.style.backgroundPosition = 'center';
-      headerAvatar.textContent = '';
+  try {
+    const response = await fetch(`${API_URL}/api/funcionarios/me/avatar`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      credentials: 'include',
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      console.log('✅ Avatar salvo no servidor:', result.avatar);
+      alert('✅ Foto de perfil atualizada com sucesso!');
+      
+      // Atualiza dados do usuário na UI
+      loadUserProfileData();
+      
+      // Atualiza preview na aba de configurações se existir
+      if (typeof carregarDadosPerfil === 'function') {
+        carregarDadosPerfil();
+      }
+    } else {
+      throw new Error(result.error || 'Erro ao salvar avatar');
     }
-
-    // Atualiza avatar no dropdown
-    const dropdownAvatar = document.getElementById('userAvatarDropdown');
-    if (dropdownAvatar) {
-      dropdownAvatar.style.backgroundImage = `url(${imageUrl})`;
-      dropdownAvatar.style.backgroundSize = 'cover';
-      dropdownAvatar.style.backgroundPosition = 'center';
-      dropdownAvatar.textContent = '';
-    }
-
-    console.log('📸 Foto de perfil atualizada (preview)');
-
-    // TODO: Enviar imagem para o servidor
-    // uploadAvatarToServer(file);
-  };
-
-  reader.readAsDataURL(file);
+  } catch (error) {
+    console.error('❌ Erro ao fazer upload do avatar:', error);
+    alert('❌ Erro ao salvar foto: ' + error.message);
+  }
 }
 
 /**
@@ -777,28 +809,100 @@ async function uploadAvatarToServer(file) {
 /**
  * Handler para logout
  */
-function handleLogout() {
+async function handleLogout() {
   closeUserProfileMenu();
 
-  // TODO: Implementar lógica real de logout (limpar sessão, redirect, etc)
   if (confirm('Tem certeza que deseja sair do sistema?')) {
+    try {
+      // Chama endpoint de logout
+      const token = localStorage.getItem('auth_token');
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.log('Erro ao fazer logout:', error);
+    }
+
+    // Limpa dados locais
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('usuario');
+
     console.log('🚪 Logout realizado');
-    alert('🚪 Logout realizado com sucesso!\n\n(Em produção, redirecionaria para tela de login)');
-    // window.location.href = '/login'; // Descomentar quando tiver rota de login
+    
+    // Redireciona para login
+    window.location.href = '/login';
   }
 }
 
 /**
  * Carrega dados do usuário logado do servidor/localStorage
  */
-function loadUserProfileData() {
-  // TODO: Substituir por dados reais do backend/sessão
-  const userData = {
-    name: 'Patrícia',
-    email: 'patricia@empresa.com',
-    role: 'Diretora Comercial',
-    avatar: 'P', // Pode ser URL de imagem ou inicial
-    avatarUrl: null // URL da foto se existir
+async function loadUserProfileData() {
+  // Tenta carregar do localStorage primeiro
+  let userData = null;
+  
+  try {
+    const storedUser = localStorage.getItem('usuario');
+    if (storedUser) {
+      userData = JSON.parse(storedUser);
+    }
+  } catch (e) {
+    console.log('Erro ao ler usuário do localStorage');
+  }
+
+  // Tenta buscar dados atualizados do servidor
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.usuario) {
+          userData = data.usuario;
+          localStorage.setItem('usuario', JSON.stringify(userData));
+        }
+      } else if (response.status === 401) {
+        // Token expirado - redireciona para login
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('usuario');
+        window.location.href = '/login';
+        return;
+      }
+    } catch (error) {
+      console.log('Erro ao buscar dados do usuário:', error);
+    }
+  }
+
+  // Se não tem dados, usa fallback
+  if (!userData) {
+    userData = {
+      nome: 'Usuário',
+      email: 'usuario@sistema.com',
+      cargo: 'Funcionário',
+      avatar: null
+    };
+  }
+
+  // Formata dados para uso na UI
+  const displayData = {
+    name: userData.nome || 'Usuário',
+    email: userData.email || '',
+    role: userData.cargo || 'Funcionário',
+    avatar: userData.nome ? userData.nome.charAt(0).toUpperCase() : 'U',
+    // Avatar pode vir como caminho completo (/uploads/...) ou só o nome do arquivo
+    avatarUrl: userData.avatar 
+      ? (userData.avatar.startsWith('/') ? userData.avatar : `/uploads/avatars/${userData.avatar}`)
+      : null
   };
 
   // Atualiza header
@@ -806,15 +910,17 @@ function loadUserProfileData() {
   const headerRole = document.getElementById('userRoleHeader');
   const headerAvatar = document.getElementById('userAvatarHeader');
 
-  if (headerName) headerName.textContent = userData.name;
-  if (headerRole) headerRole.textContent = userData.role;
+  if (headerName) headerName.textContent = displayData.name;
+  if (headerRole) headerRole.textContent = displayData.role;
   if (headerAvatar) {
-    if (userData.avatarUrl) {
-      headerAvatar.style.backgroundImage = `url(${userData.avatarUrl})`;
+    if (displayData.avatarUrl) {
+      headerAvatar.style.backgroundImage = `url(${displayData.avatarUrl}?t=${Date.now()})`;
       headerAvatar.style.backgroundSize = 'cover';
+      headerAvatar.style.backgroundPosition = 'center';
       headerAvatar.textContent = '';
     } else {
-      headerAvatar.textContent = userData.avatar;
+      headerAvatar.style.backgroundImage = '';
+      headerAvatar.textContent = displayData.avatar;
     }
   }
 
@@ -823,19 +929,25 @@ function loadUserProfileData() {
   const dropdownEmail = document.getElementById('userEmailDropdown');
   const dropdownAvatar = document.getElementById('userAvatarDropdown');
 
-  if (dropdownName) dropdownName.textContent = userData.name;
-  if (dropdownEmail) dropdownEmail.textContent = userData.email;
+  if (dropdownName) dropdownName.textContent = displayData.name;
+  if (dropdownEmail) dropdownEmail.textContent = displayData.email;
   if (dropdownAvatar) {
-    if (userData.avatarUrl) {
-      dropdownAvatar.style.backgroundImage = `url(${userData.avatarUrl})`;
+    if (displayData.avatarUrl) {
+      dropdownAvatar.style.backgroundImage = `url(${displayData.avatarUrl}?t=${Date.now()})`;
       dropdownAvatar.style.backgroundSize = 'cover';
-      dropdownAvatar.textContent = '';
+      dropdownAvatar.style.backgroundPosition = 'center';
+      // Limpa texto e mantém apenas o overlay
+      const overlay = dropdownAvatar.querySelector('.avatar-upload-overlay');
+      dropdownAvatar.innerHTML = '';
+      if (overlay) dropdownAvatar.appendChild(overlay.cloneNode(true));
+      else dropdownAvatar.innerHTML = '<div class="avatar-upload-overlay"><i class="bi bi-camera-fill"></i></div>';
     } else {
-      dropdownAvatar.textContent = userData.avatar;
+      dropdownAvatar.style.backgroundImage = '';
+      dropdownAvatar.innerHTML = displayData.avatar + '<div class="avatar-upload-overlay"><i class="bi bi-camera-fill"></i></div>';
     }
   }
 
-  console.log('👤 Dados do usuário carregados:', userData);
+  console.log('👤 Dados do usuário carregados:', displayData);
 }
 
 // Event listeners para fechar dropdown
@@ -1992,10 +2104,74 @@ window.salvarNovoJob = async function () {
     const itens = window.extrairItensComEquipamento();
     job.itens = itens;
 
+    // 4. Pega a Equipe do Job (Funcionários escalados)
+    // COMBINA: Operador Técnico + Equipe do Evento
+    const selectOperadorEl = document.getElementById('jobOperadorFull');
+    const operadorId = selectOperadorEl?.value;
+    let equipeCompleta = [];
+    
+    console.log('========================================');
+    console.log('📋 MONTANDO EQUIPE PARA SALVAR');
+    console.log('📋 Select Operador Element:', selectOperadorEl);
+    console.log('📋 Operador Técnico ID (value):', operadorId);
+    console.log('📋 Operador Técnico ID tipo:', typeof operadorId);
+    console.log('📋 Operador Técnico é truthy?:', !!operadorId);
+    console.log('📋 Equipe do Evento (window.equipeDoJob):', JSON.stringify(window.equipeDoJob));
+    console.log('📋 Tamanho da equipe do evento:', (window.equipeDoJob || []).length);
+    console.log('========================================');
+    
+    // PRIMEIRO: Adiciona o Operador Técnico (se selecionado)
+    if (operadorId && operadorId !== '' && operadorId !== 'undefined') {
+      const optionSelecionada = selectOperadorEl?.options[selectOperadorEl.selectedIndex];
+      const nomeOperador = optionSelecionada?.text || optionSelecionada?.textContent || 'Operador';
+      
+      console.log('✅ Adicionando OPERADOR TÉCNICO:', { id: operadorId, nome: nomeOperador });
+      
+      equipeCompleta.push({
+        funcionario_id: String(operadorId),
+        nome: nomeOperador,
+        cargo: 'Operador',
+        funcao: 'Operador Técnico'
+      });
+    } else {
+      console.log('⚠️ OPERADOR NÃO SELECIONADO OU VAZIO! operadorId =', operadorId);
+    }
+    
+    // SEGUNDO: Adiciona a Equipe do Evento (se houver membros)
+    if (window.equipeDoJob && window.equipeDoJob.length > 0) {
+      window.equipeDoJob.forEach(membro => {
+        // Verifica se o membro já não é o operador (evita duplicidade)
+        if (String(membro.funcionario_id) !== String(operadorId)) {
+          console.log('✅ Adicionando MEMBRO DA EQUIPE:', membro);
+          equipeCompleta.push({
+            funcionario_id: String(membro.funcionario_id),
+            nome: membro.nome,
+            cargo: membro.cargo || 'Técnico',
+            funcao: membro.funcao || 'Técnico'
+          });
+        } else {
+          console.log('⚠️ Membro já é o operador, ignorando duplicação:', membro);
+        }
+      });
+    }
+    
+    job.equipe = equipeCompleta;
+    
+    console.log('========================================');
+    console.log('📋 EQUIPE FINAL A SER ENVIADA:');
+    console.log('📋 Total de membros:', equipeCompleta.length);
+    equipeCompleta.forEach((m, i) => {
+      console.log(`   ${i + 1}. ${m.nome} (ID: ${m.funcionario_id}) - ${m.funcao}`);
+    });
+    console.log('📋 JSON da equipe:', JSON.stringify(equipeCompleta));
+    console.log('========================================');
+
     // Edição ou Criação?
     const isEdit = window.__jobEditandoId != null;
     const url = isEdit ? `${API_URL}/jobs/${window.__jobEditandoId}` : `${API_URL}/jobs`;
     const method = isEdit ? 'PUT' : 'POST';
+
+    console.log('📋 Job completo a enviar:', JSON.stringify(job, null, 2));
 
     // 4. Envia para o servidor
     const res = await fetch(url, {
@@ -2646,7 +2822,26 @@ window.switchView = async function (viewId) {
         // 4. Garante que o botão mostre "Salvar" e não "Atualizar"
         const btnSalvar = document.querySelector('#view-novo-job .btn-success');
         if (btnSalvar) btnSalvar.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> SALVAR PEDIDO';
+
+        // 5. Limpa a equipe do job anterior
+        window.equipeDoJob = [];
+        const tabelaEquipe = document.getElementById('tabela-equipe-job');
+        if (tabelaEquipe) tabelaEquipe.innerHTML = '';
+
+        // 6. Carrega o próximo número do pedido automaticamente
+        carregarProximoNumeroPedido();
+        
+        // 7. Carrega o logo e nome da empresa
+        carregarLogoNoPedido();
       }
+    }
+
+    // Configurações
+    if (viewId === 'configuracoes') {
+      // Carrega dados do perfil do usuário logado
+      if (typeof carregarDadosPerfil === 'function') carregarDadosPerfil();
+      if (typeof carregarConfigNumeroPedido === 'function') carregarConfigNumeroPedido();
+      if (typeof carregarControleAcesso === 'function') carregarControleAcesso();
     }
     // --------------------------------
   } finally {
@@ -2878,15 +3073,17 @@ function aplicarFiltrosContratos() {
 
   // 2. Filtra a lista
   jobsFiltrados = window.todosOsJobsCache.filter(job => {
-    // A) VERIFICAÇÃO DE TEXTO (Nome do Job, Cliente ou ID)
+    // A) VERIFICAÇÃO DE TEXTO (Nome do Job, Cliente, ID ou Número do Pedido)
     const desc = (job.descricao || "").toLowerCase();      // Nome do Job
     const cliente = (job.nome_cliente || "").toLowerCase(); // Nome do Cliente
     const idString = String(job.id);                        // Número do ID
+    const numeroPedido = (job.numero_pedido || "").toLowerCase(); // Número customizado do pedido
 
-    // O texto digitado existe em ALGUM desses 3 lugares?
+    // O texto digitado existe em ALGUM desses 4 lugares?
     const bateuTexto = desc.includes(texto) ||
       cliente.includes(texto) ||
-      idString.includes(texto);
+      idString.includes(texto) ||
+      numeroPedido.includes(texto);
 
     // B) Verifica Status
     let bateuStatus = true;
@@ -3000,10 +3197,11 @@ function renderizarTabelaContratos(pagina) {
 
       // Desktop: table row
       const tr = document.createElement('tr');
+      const numeroPedidoDisplay = job.numero_pedido || `PED-${job.id}`;
       tr.innerHTML = `
                 <td>
                     <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">${job.descricao}</div>
-                    <div class="small text-muted text-truncate" style="max-width: 250px;">${job.nome_cliente || 'Cliente'}</div>
+                    <div class="small text-muted text-truncate" style="max-width: 250px;">${job.nome_cliente || 'Cliente'} <span class="badge bg-secondary ms-1" style="font-size:10px;">${numeroPedidoDisplay}</span></div>
                 </td>
                 <td>
                     <div class="text-dark small fw-bold">${textoData}</div>
@@ -3052,7 +3250,7 @@ function renderizarTabelaContratos(pagina) {
           </div>
           <div class="contrato-header">
             <div class="contrato-title">${job.descricao}</div>
-            <div class="contrato-client">${job.nome_cliente || 'Cliente'}</div>
+            <div class="contrato-client">${job.nome_cliente || 'Cliente'} <span class="badge bg-secondary ms-1" style="font-size:10px;">${numeroPedidoDisplay}</span></div>
           </div>
           <div class="contrato-meta">
             <span class="contrato-date">${textoData}</span>
@@ -3861,16 +4059,18 @@ async function abrirModalInvoice(jobId) {
   }
 
   try {
-    // 1. FAZ AS BUSCAS NECESSÁRIAS (Template + Equipe + Lista de Funcionários para achar o nome do Operador)
-    const [resTemplate, resEquipe, resFuncionarios] = await Promise.all([
+    // 1. FAZ AS BUSCAS NECESSÁRIAS (Template + Equipe + Lista de Funcionários + Empresa)
+    const [resTemplate, resEquipe, resFuncionarios, resEmpresa] = await Promise.all([
       fetch(`${API_URL}/invoice`),
       fetch(`${API_URL}/jobs/${id}/equipe`),
-      fetch(`${API_URL}/funcionarios`) // Buscamos a lista para encontrar o nome do Operador pelo ID
+      fetch(`${API_URL}/funcionarios`), // Buscamos a lista para encontrar o nome do Operador pelo ID
+      fetch(`${API_URL}/empresa`) // Busca dados da empresa
     ]);
 
     let template = await resTemplate.text();
     const equipe = await resEquipe.json();
     const todosFuncionarios = await resFuncionarios.json();
+    const empresa = await resEmpresa.json();
 
     // 2. Lógica para achar o Nome do Operador Responsável
     let nomeOperador = "Não informado";
@@ -3914,9 +4114,12 @@ async function abrirModalInvoice(jobId) {
     }
 
     // 7. SUBSTITUIÇÕES NO TEMPLATE
+    // Usa numero_pedido customizado se existir, senão usa ID formatado
+    const numeroPedidoDisplay = job.numero_pedido || `PED-${String(job.id).padStart(4, '0')}`;
+    
     template = template
       // Dados Básicos
-      .replace('{{ID_JOB}}', String(job.id).padStart(4, '0'))
+      .replace('{{ID_JOB}}', numeroPedidoDisplay)
       .replace('{{DATA_HOJE}}', new Date().toLocaleDateString('pt-BR'))
       .replace('{{NOME_CLIENTE}}', job.nome_cliente || 'Não informado')
       .replace('{{DOC_CLIENTE}}', job.cliente_documento || '')
@@ -3957,6 +4160,19 @@ async function abrirModalInvoice(jobId) {
       .replace('{{HORA_FIM}}', fmtHora(job.hora_fim_evento))
       .replace('{{NOME_OPERADOR}}', nomeOperador)  // <-- AQUI ENTRA O NOME DO OPERADOR
       .replace('{{LISTA_EQUIPE}}', htmlEquipe);
+
+    // 7.1 SUBSTITUIÇÕES DA EMPRESA
+    const logoEmpresaHtml = empresa && empresa.logo 
+      ? `<img src="${empresa.logo}" alt="Logo" style="max-width: 60px; max-height: 60px; border-radius: 8px;">`
+      : 'LOGO';
+    const nomeEmpresaDisplay = empresa && empresa.nome_fantasia 
+      ? empresa.nome_fantasia 
+      : (empresa && empresa.razao_social ? empresa.razao_social : 'Nome da Empresa');
+    
+    template = template
+      .replace('{{LOGO_EMPRESA}}', logoEmpresaHtml)
+      .replace('{{NOME_EMPRESA}}', nomeEmpresaDisplay)
+      .replace('{{SLOGAN_EMPRESA}}', ''); // Pode adicionar campo de slogan no futuro
 
 
     // 8. Tabela de Itens
@@ -8004,6 +8220,12 @@ async function uploadAvatarFuncionarioToServer(file, funcionarioId) {
 
       // Recarrega lista de funcionários para pegar URL real do servidor
       await carregarFuncionarios();
+      
+      // Atualiza perfil do usuário logado (dropdown e configurações)
+      loadUserProfileData();
+      if (typeof carregarDadosPerfil === 'function') {
+        carregarDadosPerfil();
+      }
 
       alert('✅ Foto de perfil atualizada com sucesso!');
     } else {
@@ -8286,8 +8508,8 @@ window.salvarFuncionario = function () {
     status: val('rhStatus'),
     departamento: val('rhDepartamento'),
     cargo: val('rhCargo'),
-    data_admissao: val('rhAdmissao'),
-    data_demissao: val('rhDemissao')
+    data_admissao: val('rhAdmissao') || null,
+    data_demissao: val('rhDemissao') || null
   };
 
   if (!dados.nome) return alert("O Nome é obrigatório!");
@@ -8686,12 +8908,12 @@ window.toggleFuncView = function (modo) {
   }
 };
 
-// 3. ABRIR MODAL MANUAL (Mantido igual)
+// 3. ABRIR MODAL MANUAL (para clique no calendário)
 window.abrirModalEscalaManual = function (data) {
   const campoData = document.getElementById('escalaData');
   if (campoData) campoData.value = data;
 
-  const select = document.getElementById('escalaFuncionario');
+  const select = document.getElementById('escalaFuncionarioManual');
   select.innerHTML = '<option>Carregando...</option>';
 
   fetch(`${API_URL}/funcionarios/todos`)
@@ -8710,13 +8932,13 @@ window.abrirModalEscalaManual = function (data) {
     });
 };
 
-// 4. SALVAR ESCALA MANUAL (Mantido igual)
+// 4. SALVAR ESCALA MANUAL (do modal antigo - clique no calendário)
 window.salvarEscalaManual = function () {
   const dados = {
     data: document.getElementById('escalaData').value,
-    funcionario_id: document.getElementById('escalaFuncionario').value,
-    tipo: document.getElementById('escalaTipo').value,
-    obs: document.getElementById('escalaObs').value
+    funcionario_id: document.getElementById('escalaFuncionarioManual').value,
+    tipo: document.getElementById('escalaTipoManual').value,
+    obs: document.getElementById('escalaObsManual').value
   };
 
   fetch(`${API_URL}/escalas`, {
@@ -8738,7 +8960,124 @@ window.salvarEscalaManual = function () {
     .catch(err => alert("Erro ao salvar: " + err));
 };
 
+// 5. SALVAR NOVA ESCALA (do modal principal - botão Nova Escala)
+window.salvarNovaEscala = async function () {
+  const funcionarioId = document.getElementById('escalaFuncionario').value;
+  const dataInicio = document.getElementById('escalaDataInicio').value;
+  const dataFim = document.getElementById('escalaDataFim').value;
+  const tipo = document.getElementById('escalaTipo').value;
+  const obs = document.getElementById('escalaObs').value;
+  const jobId = document.getElementById('escalaJob').value;
 
+  // Validação
+  if (!funcionarioId || !dataInicio || !dataFim || !tipo) {
+    alert("Preencha todos os campos obrigatórios!");
+    return;
+  }
+
+  try {
+    // Se tem job selecionado, adiciona funcionário à equipe do job também
+    if (jobId) {
+      // 1. Adiciona na job_equipe
+      await fetch(`${API_URL}/jobs/${jobId}/equipe/adicionar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          funcionario_id: funcionarioId,
+          funcao: tipo === 'Trabalho' ? 'Técnico' : tipo
+        })
+      });
+    }
+
+    // 2. Cria a escala
+    const dados = {
+      funcionario_id: funcionarioId,
+      data_inicio: dataInicio,
+      data_fim: dataFim,
+      tipo: tipo,
+      obs: obs,
+      job_id: jobId || null
+    };
+
+    const res = await fetch(`${API_URL}/escalas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+
+    await res.json();
+    alert("Escala salva com sucesso!");
+
+    // Fecha modal
+    const el = document.getElementById('modalNovaEscala');
+    const modal = bootstrap.Modal.getInstance(el);
+    if (modal) modal.hide();
+
+    // Limpa formulário
+    document.getElementById('formNovaEscala').reset();
+
+    // Recarrega calendário
+    if (calendar) calendar.refetchEvents();
+
+  } catch (err) {
+    console.error("Erro ao salvar escala:", err);
+    alert("Erro ao salvar: " + err);
+  }
+};
+
+// 6. Carregar funcionários e jobs quando modal de escala abrir
+document.addEventListener('DOMContentLoaded', function() {
+  const modalEscala = document.getElementById('modalNovaEscala');
+  if (modalEscala) {
+    modalEscala.addEventListener('show.bs.modal', function() {
+      // Carregar funcionários
+      const select = document.getElementById('escalaFuncionario');
+      select.innerHTML = '<option value="">Carregando...</option>';
+      
+      fetch(`${API_URL}/funcionarios/todos`)
+        .then(r => r.json())
+        .then(lista => {
+          select.innerHTML = '<option value="">Selecione o funcionário...</option>';
+          lista.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.id;
+            opt.text = f.nome + (f.cargo ? ` (${f.cargo})` : '');
+            select.appendChild(opt);
+          });
+        })
+        .catch(err => {
+          console.error("Erro ao carregar funcionários:", err);
+          select.innerHTML = '<option value="">Erro ao carregar</option>';
+        });
+      
+      // Carregar jobs ativos (Agendado, Em Andamento, Confirmado)
+      const selectJob = document.getElementById('escalaJob');
+      selectJob.innerHTML = '<option value="">Carregando jobs...</option>';
+      
+      fetch(`${API_URL}/jobs/ativos`)
+        .then(r => r.json())
+        .then(jobs => {
+          selectJob.innerHTML = '<option value="">Nenhum - Escala avulsa</option>';
+          jobs.forEach(job => {
+            const opt = document.createElement('option');
+            opt.value = job.id;
+            const dataFormatada = job.data_inicio ? new Date(job.data_inicio).toLocaleDateString('pt-BR') : '';
+            opt.text = `#${job.numero_pedido || job.id} - ${job.descricao || 'Sem descrição'} (${dataFormatada})`;
+            selectJob.appendChild(opt);
+          });
+        })
+        .catch(err => {
+          console.error("Erro ao carregar jobs:", err);
+          selectJob.innerHTML = '<option value="">Nenhum - Escala avulsa</option>';
+        });
+      
+      // Define data início como hoje
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('escalaDataInicio').value = hoje;
+      document.getElementById('escalaDataFim').value = hoje;
+    });
+  }
+});
 
 window.recarregarCalendario = function () {
   console.log("🔄 Recarregando calendário...");
@@ -8758,10 +9097,15 @@ window.equipeDoJob = []; // Array temporário para guardar a equipe
 
 // 1. Carregar Funcionários no Select da Equipe (Chame isso dentro de carregarOpcoesDoFormulario)
 function carregarSelectEquipe(listaFuncionarios) {
+  console.log('🟡 carregarSelectEquipe chamada com', listaFuncionarios?.length, 'funcionários');
+  
   const select = document.getElementById('selectFuncionarioEquipe');
 
   // Se o elemento não existir no HTML, para a execução para não dar erro
-  if (!select) return;
+  if (!select) {
+    console.log('🟡 Select selectFuncionarioEquipe NÃO encontrado!');
+    return;
+  }
 
   select.innerHTML = '<option value="">-- Selecione o Técnico/Produtor --</option>';
 
@@ -8781,25 +9125,35 @@ function carregarSelectEquipe(listaFuncionarios) {
 
     select.appendChild(option);
   });
+  
+  console.log('🟡 Select populado com', select.options.length - 1, 'funcionários');
 }
 // 2. Adicionar Funcionário na Tabela Visual
 window.adicionarFuncionarioEquipe = function () {
+  console.log('🔵 Função adicionarFuncionarioEquipe chamada!');
+  
   const select = document.getElementById('selectFuncionarioEquipe');
   const inputFuncao = document.getElementById('inputFuncaoEquipe');
 
+  console.log('🔵 Select encontrado:', select);
+  console.log('🔵 Select value:', select?.value);
+
   const id = select.value;
-  const funcao = inputFuncao.value.trim() || 'Técnico';
+  const funcao = inputFuncao?.value?.trim() || 'Técnico';
 
   if (!id) return alert("Selecione um funcionário!");
 
   // Evitar duplicados
-  if (window.equipeDoJob.some(m => m.funcionario_id == id)) {
+  if (window.equipeDoJob.some(m => String(m.funcionario_id) === String(id))) {
     return alert("Este funcionário já está na equipe!");
   }
 
   const option = select.options[select.selectedIndex];
-  const nome = option.getAttribute('data-nome');
-  const cargo = option.getAttribute('data-cargo');
+  // Usar o texto da opção se data-nome não estiver disponível
+  const nome = option.getAttribute('data-nome') || option.textContent || 'Sem Nome';
+  const cargo = option.getAttribute('data-cargo') || 'Técnico';
+
+  console.log('🔵 Dados do funcionário:', { id, nome, cargo, funcao });
 
   // Adiciona ao array
   window.equipeDoJob.push({
@@ -8809,11 +9163,14 @@ window.adicionarFuncionarioEquipe = function () {
     funcao: funcao
   });
 
+  console.log('🔵 Array equipeDoJob APÓS adicionar:', JSON.stringify(window.equipeDoJob, null, 2));
+  console.log('🔵 Total de membros na equipe:', window.equipeDoJob.length);
+
   renderizarTabelaEquipe();
 
   // Limpa campos
   select.value = "";
-  inputFuncao.value = "Técnico";
+  if (inputFuncao) inputFuncao.value = "Técnico";
 };
 
 // 3. Renderizar Tabela
@@ -9331,3 +9688,804 @@ function carregarTemaSalvo() {
 }
 
 carregarTemaSalvo();
+
+
+/* =============================================================
+   SISTEMA DE CONTROLE DE ACESSO E PERMISSÕES
+   ============================================================= */
+
+// Variável global para armazenar permissões do usuário logado
+window.usuarioLogado = null;
+window.permissoesUsuario = null;
+
+/**
+ * Carrega a lista de funcionários com permissões para a aba Sistema
+ */
+async function carregarControleAcesso() {
+  const tbody = document.getElementById('listaControleAcesso');
+  if (!tbody) return;
+  
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="5" class="text-center text-muted py-4">
+        <i class="bi bi-arrow-clockwise spin me-2"></i>Carregando funcionários...
+      </td>
+    </tr>
+  `;
+  
+  try {
+    const response = await fetch(`${API_URL}/permissoes`);
+    if (!response.ok) throw new Error('Erro ao buscar permissões');
+    
+    const funcionarios = await response.json();
+    
+    if (funcionarios.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">
+            Nenhum funcionário cadastrado
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    tbody.innerHTML = funcionarios.map(f => {
+      const iniciais = (f.nome || '??').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      const statusClass = f.status === 'Ativo' ? 'bg-success' : f.status === 'Férias' ? 'bg-warning' : 'bg-secondary';
+      const temAcesso = f.acesso_sistema || f.login_email;
+      const isMaster = f.is_master;
+      
+      return `
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="avatar-mini" style="width:35px;height:35px;background:${isMaster ? '#ffc107' : '#0d6efd'};color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:0.75rem;font-weight:bold;">
+                ${f.avatar ? `<img src="${f.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : iniciais}
+              </div>
+              <div>
+                <strong>${f.nome}</strong>
+                ${isMaster ? '<span class="badge bg-warning text-dark ms-1" title="Usuário Master"><i class="bi bi-crown"></i></span>' : ''}
+                ${f.login_email ? `<br><small class="text-muted">${f.login_email}</small>` : ''}
+              </div>
+            </div>
+          </td>
+          <td>${f.cargo || '-'}</td>
+          <td><span class="badge ${statusClass}">${f.status || 'Ativo'}</span></td>
+          <td class="text-center">
+            <div class="form-check form-switch d-flex justify-content-center">
+              <input class="form-check-input" type="checkbox" 
+                     ${temAcesso ? 'checked' : ''} 
+                     onchange="toggleAcessoSistema(${f.id}, this.checked)"
+                     style="width: 2.5em; height: 1.25em;">
+            </div>
+          </td>
+          <td class="text-center">
+            <button class="btn btn-outline-primary btn-sm" onclick="abrirModalPermissoes(${f.id})" title="Configurar Permissões">
+              <i class="bi bi-shield-lock"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+    
+  } catch (error) {
+    console.error('Erro ao carregar controle de acesso:', error);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center text-danger py-4">
+          <i class="bi bi-exclamation-triangle me-2"></i>Erro ao carregar. 
+          <a href="#" onclick="carregarControleAcesso()">Tentar novamente</a>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+/**
+ * Toggle rápido de acesso ao sistema
+ */
+window.toggleAcessoSistema = async function(funcionarioId, temAcesso) {
+  try {
+    const response = await fetch(`${API_URL}/permissoes/${funcionarioId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acesso_sistema: temAcesso })
+    });
+    
+    if (!response.ok) throw new Error('Erro ao atualizar');
+    
+    console.log(`✅ Acesso do funcionário ${funcionarioId} ${temAcesso ? 'ativado' : 'desativado'}`);
+    
+    // Se ativou, abre modal para configurar detalhes
+    if (temAcesso) {
+      abrirModalPermissoes(funcionarioId);
+    }
+    
+  } catch (error) {
+    console.error('Erro ao toggle acesso:', error);
+    alert('❌ Erro ao atualizar acesso: ' + error.message);
+    carregarControleAcesso(); // Recarrega para reverter
+  }
+};
+
+/**
+ * Abre modal de configuração de permissões
+ */
+window.abrirModalPermissoes = async function(funcionarioId) {
+  const modal = new bootstrap.Modal(document.getElementById('modalPermissoesFuncionario'));
+  
+  // Limpa dados anteriores
+  document.getElementById('permFuncionarioId').value = funcionarioId;
+  document.getElementById('permFuncionarioEmail').value = '';
+  document.getElementById('permFuncionarioSenha').value = '';
+  document.getElementById('permIsMaster').checked = false;
+  
+  try {
+    const response = await fetch(`${API_URL}/permissoes/${funcionarioId}`);
+    if (!response.ok) throw new Error('Erro ao buscar dados');
+    
+    const dados = await response.json();
+    
+    // Preenche informações básicas
+    const iniciais = (dados.nome || '??').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    document.getElementById('permFuncionarioAvatar').innerHTML = dados.avatar 
+      ? `<img src="${dados.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+      : iniciais;
+    document.getElementById('permFuncionarioNome').textContent = dados.nome || 'Nome não informado';
+    document.getElementById('permFuncionarioCargo').textContent = dados.cargo || 'Cargo não informado';
+    
+    // Preenche email de login
+    document.getElementById('permFuncionarioEmail').value = dados.login_email || dados.email || '';
+    
+    // Preenche permissões
+    document.getElementById('permIsMaster').checked = dados.is_master == 1;
+    document.getElementById('permDashboard').checked = dados.acesso_dashboard == 1;
+    document.getElementById('permClientes').checked = dados.acesso_clientes == 1;
+    document.getElementById('permFuncionarios').checked = dados.acesso_funcionarios == 1;
+    document.getElementById('permContratos').checked = dados.acesso_contratos == 1;
+    document.getElementById('permEstoque').checked = dados.acesso_estoque == 1;
+    document.getElementById('permFinanceiro').checked = dados.acesso_financeiro == 1;
+    document.getElementById('permConfiguracoes').checked = dados.acesso_configuracoes == 1;
+    
+    // Se é master, esconde card de permissões específicas
+    toggleCardPermissoes(dados.is_master == 1);
+    
+    modal.show();
+    
+  } catch (error) {
+    console.error('Erro ao abrir modal:', error);
+    alert('❌ Erro ao carregar dados do funcionário');
+  }
+};
+
+/**
+ * Mostra/esconde card de permissões baseado em is_master
+ */
+function toggleCardPermissoes(isMaster) {
+  const card = document.getElementById('cardPermissoes');
+  if (card) {
+    card.style.opacity = isMaster ? '0.5' : '1';
+    card.style.pointerEvents = isMaster ? 'none' : 'auto';
+  }
+}
+
+// Event listener para checkbox is_master
+document.addEventListener('DOMContentLoaded', () => {
+  const checkMaster = document.getElementById('permIsMaster');
+  if (checkMaster) {
+    checkMaster.addEventListener('change', (e) => {
+      toggleCardPermissoes(e.target.checked);
+    });
+  }
+});
+
+/**
+ * Salva permissões do funcionário
+ */
+window.salvarPermissoesFuncionario = async function() {
+  const funcionarioId = document.getElementById('permFuncionarioId').value;
+  
+  const dados = {
+    acesso_sistema: true,
+    email: document.getElementById('permFuncionarioEmail').value,
+    senha: document.getElementById('permFuncionarioSenha').value,
+    is_master: document.getElementById('permIsMaster').checked,
+    acesso_dashboard: document.getElementById('permDashboard').checked,
+    acesso_clientes: document.getElementById('permClientes').checked,
+    acesso_funcionarios: document.getElementById('permFuncionarios').checked,
+    acesso_contratos: document.getElementById('permContratos').checked,
+    acesso_estoque: document.getElementById('permEstoque').checked,
+    acesso_financeiro: document.getElementById('permFinanceiro').checked,
+    acesso_configuracoes: document.getElementById('permConfiguracoes').checked
+  };
+  
+  if (!dados.email) {
+    alert('⚠️ O email de login é obrigatório');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/permissoes/${funcionarioId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+    
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Erro ao salvar');
+    }
+    
+    alert('✅ Permissões salvas com sucesso!');
+    
+    // Fecha modal e recarrega lista
+    bootstrap.Modal.getInstance(document.getElementById('modalPermissoesFuncionario')).hide();
+    carregarControleAcesso();
+    
+  } catch (error) {
+    console.error('Erro ao salvar permissões:', error);
+    alert('❌ Erro: ' + error.message);
+  }
+};
+
+/**
+ * Gera senha temporária
+ */
+window.gerarSenhaTemporaria = function() {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let senha = '';
+  for (let i = 0; i < 8; i++) {
+    senha += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  document.getElementById('permFuncionarioSenha').value = senha;
+  document.getElementById('permFuncionarioSenha').type = 'text';
+  
+  setTimeout(() => {
+    document.getElementById('permFuncionarioSenha').type = 'password';
+  }, 3000);
+};
+
+/**
+ * Gera senha temporária no modal (alias)
+ */
+window.gerarSenhaTemporariaModal = function() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let senha = '';
+  for (let i = 0; i < 8; i++) {
+    senha += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  const input = document.getElementById('permFuncionarioSenha');
+  input.value = senha;
+  input.type = 'text'; // Mostra a senha gerada
+  
+  // Atualiza ícone
+  const icon = document.getElementById('iconToggleSenha');
+  if (icon) icon.className = 'bi bi-eye-slash';
+};
+
+/**
+ * Alterna visibilidade da senha no modal
+ */
+window.toggleSenhaVisivel = function() {
+  const input = document.getElementById('permFuncionarioSenha');
+  const icon = document.getElementById('iconToggleSenha');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) icon.className = 'bi bi-eye-slash';
+  } else {
+    input.type = 'password';
+    if (icon) icon.className = 'bi bi-eye';
+  }
+};
+
+/**
+ * Reseta senha do funcionário
+ */
+window.resetarSenhaFuncionario = async function() {
+  const funcionarioId = document.getElementById('permFuncionarioId').value;
+  const nome = document.getElementById('permFuncionarioNome').textContent;
+  
+  if (!confirm(`Resetar senha de ${nome}? Uma nova senha temporária será gerada.`)) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/usuarios/${funcionarioId}/resetar-senha`, {
+      method: 'POST'
+    });
+    
+    if (!response.ok) throw new Error('Erro ao resetar');
+    
+    const result = await response.json();
+    
+    alert(`✅ Senha resetada!\n\nNova senha temporária: ${result.senha_temporaria}\n\n⚠️ Anote esta senha! Ela só será exibida uma vez.`);
+    
+  } catch (error) {
+    console.error('Erro ao resetar senha:', error);
+    alert('❌ Erro: ' + error.message);
+  }
+};
+
+/* =============================================================
+   CONFIGURAÇÃO DO NÚMERO DO PEDIDO
+   ============================================================= */
+
+/**
+ * Carrega configuração do número do pedido
+ */
+async function carregarConfigNumeroPedido() {
+  try {
+    const response = await fetch(`${API_URL}/configuracoes/proximo-numero-pedido`);
+    if (!response.ok) {
+      // Se falhar, usa valores padrão
+      atualizarPreviewNumeroPedido();
+      return;
+    }
+    
+    const config = await response.json();
+    
+    document.getElementById('configPedidoPrefixo').value = config.prefixo || 'PED';
+    document.getElementById('configPedidoNumeroInicial').value = config.numero_atual || 1000;
+    document.getElementById('configPedidoIncremento').value = config.incremento || 1;
+    
+    atualizarPreviewNumeroPedido();
+    
+  } catch (error) {
+    console.error('Erro ao carregar config número pedido:', error);
+    atualizarPreviewNumeroPedido();
+  }
+}
+
+/**
+ * Atualiza preview do número do pedido
+ */
+function atualizarPreviewNumeroPedido() {
+  const prefixo = document.getElementById('configPedidoPrefixo')?.value || 'PED';
+  const numero = document.getElementById('configPedidoNumeroInicial')?.value || 1000;
+  
+  const preview = document.getElementById('previewNumeroPedido');
+  if (preview) {
+    preview.textContent = `${prefixo}-${numero}`;
+  }
+}
+
+/**
+ * Carrega o próximo número do pedido no formulário de criação
+ */
+async function carregarProximoNumeroPedido() {
+  const campoNumeroPedido = document.getElementById('jobNumber');
+  if (!campoNumeroPedido) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/configuracoes/proximo-numero-pedido`);
+    if (!response.ok) {
+      campoNumeroPedido.value = 'PED-1000';
+      return;
+    }
+    
+    const config = await response.json();
+    const proximoNumero = `${config.prefixo || 'PED'}-${config.numero_atual || 1000}`;
+    campoNumeroPedido.value = proximoNumero;
+    
+    console.log('📋 Próximo número do pedido:', proximoNumero);
+    
+  } catch (error) {
+    console.error('Erro ao carregar próximo número do pedido:', error);
+    campoNumeroPedido.value = 'PED-1000';
+  }
+}
+
+// Event listeners para atualizar preview em tempo real
+document.addEventListener('DOMContentLoaded', () => {
+  const inputPrefixo = document.getElementById('configPedidoPrefixo');
+  const inputNumero = document.getElementById('configPedidoNumeroInicial');
+  
+  if (inputPrefixo) inputPrefixo.addEventListener('input', atualizarPreviewNumeroPedido);
+  if (inputNumero) inputNumero.addEventListener('input', atualizarPreviewNumeroPedido);
+});
+
+/**
+ * Salva configuração do número do pedido
+ */
+window.salvarConfigNumeroPedido = async function() {
+  const prefixo = document.getElementById('configPedidoPrefixo').value.trim().toUpperCase() || 'PED';
+  const numero = parseInt(document.getElementById('configPedidoNumeroInicial').value) || 1000;
+  const incremento = parseInt(document.getElementById('configPedidoIncremento').value) || 1;
+  
+  console.log('📝 Salvando config:', { prefixo, numero, incremento });
+  
+  try {
+    const response = await fetch(`${API_URL}/configuracoes/numero-pedido`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prefixo,
+        numero_inicial: numero,
+        incremento
+      })
+    });
+    
+    const data = await response.json();
+    console.log('📥 Resposta do servidor:', data);
+    
+    if (!response.ok) throw new Error(data.error || 'Erro ao salvar');
+    
+    alert('✅ Configuração do número de pedido salva com sucesso!');
+    
+    // Recarrega a configuração para garantir sincronização
+    await carregarConfigNumeroPedido();
+    
+  } catch (error) {
+    console.error('Erro ao salvar config:', error);
+    alert('❌ Erro: ' + error.message);
+  }
+};
+
+/* =============================================================
+   CONTROLE DE VISIBILIDADE DO MENU BASEADO EM PERMISSÕES
+   ============================================================= */
+
+/**
+ * Aplica permissões de visibilidade ao menu lateral
+ */
+function aplicarPermissoesMenu(permissoes) {
+  if (!permissoes) return;
+  
+  // Se é master, mostra tudo
+  if (permissoes.is_master) {
+    document.querySelectorAll('.sidebar .nav-item, .sidebar .submenu-link').forEach(el => {
+      el.style.display = '';
+    });
+    return;
+  }
+  
+  // Mapeia links do menu para permissões
+  const mapeamento = {
+    'link-principal': permissoes.dashboard,
+    'link-financeiro': permissoes.financeiro,
+    'link-clientes': permissoes.clientes,
+    'menuComercial': permissoes.clientes,
+    'link-contratos': permissoes.contratos
+  };
+  
+  // Aplica visibilidade
+  Object.entries(mapeamento).forEach(([id, permitido]) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = permitido ? '' : 'none';
+    }
+  });
+  
+  // Links de menu por onclick/data
+  if (!permissoes.funcionarios) {
+    document.querySelectorAll('[onclick*="funcionarios"]').forEach(el => {
+      el.closest('.nav-item, .submenu-link')?.style.setProperty('display', 'none');
+    });
+  }
+  
+  if (!permissoes.estoque) {
+    document.querySelectorAll('[onclick*="estoque"]').forEach(el => {
+      el.closest('.nav-item, .submenu-link')?.style.setProperty('display', 'none');
+    });
+  }
+  
+  if (!permissoes.configuracoes) {
+    document.querySelectorAll('[onclick*="configuracoes"], [onclick*="settings"]').forEach(el => {
+      el.closest('.nav-item, .submenu-link')?.style.setProperty('display', 'none');
+    });
+  }
+}
+
+/**
+ * Verifica se usuário tem permissão para acessar uma view
+ */
+function verificarPermissaoView(viewId) {
+  const permissoes = window.permissoesUsuario;
+  
+  // Se não há sistema de login ativo, permite tudo
+  if (!permissoes) return true;
+  
+  // Master tem acesso total
+  if (permissoes.is_master) return true;
+  
+  // Mapeia views para permissões
+  const mapeamento = {
+    'principal': 'dashboard',
+    'financeiro': 'financeiro',
+    'clientes': 'clientes',
+    'cadastro-cliente': 'clientes',
+    'contratos': 'contratos',
+    'novo-job': 'contratos',
+    'visualizar-job': 'contratos',
+    'funcionarios': 'funcionarios',
+    'cadastro-funcionario': 'funcionarios',
+    'estoque': 'estoque',
+    'novo-item': 'estoque',
+    'configuracoes': 'configuracoes'
+  };
+  
+  const permissaoNecessaria = mapeamento[viewId];
+  
+  if (!permissaoNecessaria) return true; // Views não mapeadas são permitidas
+  
+  return permissoes[permissaoNecessaria];
+}
+
+/**
+ * Exibe mensagem de acesso negado
+ */
+function exibirAcessoNegado() {
+  const content = document.querySelector('.main-content');
+  if (content) {
+    content.innerHTML = `
+      <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
+        <i class="bi bi-shield-x text-danger" style="font-size: 5rem;"></i>
+        <h3 class="mt-4 text-danger">Acesso Negado</h3>
+        <p class="text-muted">Você não tem permissão para acessar esta área.</p>
+        <button class="btn btn-primary" onclick="switchView('principal')">
+          <i class="bi bi-house me-2"></i>Voltar ao Dashboard
+        </button>
+      </div>
+    `;
+  }
+}
+
+/* =============================================================
+   INICIALIZAÇÃO DO CONTROLE DE ACESSO
+   ============================================================= */
+
+// Carrega configurações quando a aba Sistema é aberta
+document.addEventListener('DOMContentLoaded', () => {
+  // Observer para detectar quando a aba Sistema é ativada
+  const tabSistema = document.querySelector('[data-bs-target="#tab-sistema"]');
+  if (tabSistema) {
+    tabSistema.addEventListener('shown.bs.tab', () => {
+      console.log('🔧 Aba Sistema ativada, carregando dados...');
+      carregarConfigNumeroPedido();
+      carregarControleAcesso();
+    });
+  }
+  
+  // Também carrega ao abrir configurações pela primeira vez
+  const viewConfiguracoes = document.getElementById('view-configuracoes');
+  if (viewConfiguracoes) {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.target.classList.contains('active')) {
+          setTimeout(() => {
+            carregarConfigNumeroPedido();
+            carregarControleAcesso();
+          }, 300);
+        }
+      });
+    });
+    
+    observer.observe(viewConfiguracoes, { attributes: true, attributeFilter: ['class'] });
+  }
+});
+
+// =======================================================
+//          FUNÇÕES DA EMPRESA
+// =======================================================
+
+// Variável global para armazenar o logo da empresa
+window.logoEmpresa = null;
+
+// CARREGAR DADOS DA EMPRESA
+async function carregarDadosEmpresa() {
+  try {
+    const res = await fetch(`${API_URL}/empresa`);
+    const empresa = await res.json();
+    
+    if (empresa) {
+      // Preenche os campos do formulário
+      document.getElementById('configRazaoSocial').value = empresa.razao_social || '';
+      document.getElementById('configNomeFantasia').value = empresa.nome_fantasia || '';
+      document.getElementById('configCNPJ').value = empresa.cnpj || '';
+      document.getElementById('configIE').value = empresa.ie || '';
+      document.getElementById('configIM').value = empresa.im || '';
+      document.getElementById('configEmailEmpresa').value = empresa.email || '';
+      document.getElementById('configTelefoneEmpresa').value = empresa.telefone || '';
+      document.getElementById('configWebsite').value = empresa.website || '';
+      document.getElementById('configLinkedIn').value = empresa.linkedin || '';
+      document.getElementById('configCEP').value = empresa.cep || '';
+      document.getElementById('configLogradouro').value = empresa.logradouro || '';
+      document.getElementById('configNumero').value = empresa.numero || '';
+      document.getElementById('configComplemento').value = empresa.complemento || '';
+      document.getElementById('configBairro').value = empresa.bairro || '';
+      document.getElementById('configCidade').value = empresa.cidade || '';
+      document.getElementById('configEstado').value = empresa.estado || '';
+      
+      // Carrega o logo
+      if (empresa.logo) {
+        window.logoEmpresa = empresa.logo;
+        const preview = document.getElementById('configLogoPreview');
+        preview.innerHTML = `<img src="${empresa.logo}" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+      }
+      
+      console.log('✅ Dados da empresa carregados!');
+    }
+  } catch (err) {
+    console.error('Erro ao carregar dados da empresa:', err);
+  }
+}
+
+// SALVAR DADOS DA EMPRESA
+async function salvarDadosEmpresa(e) {
+  if (e) e.preventDefault();
+  
+  const dados = {
+    razao_social: document.getElementById('configRazaoSocial').value,
+    nome_fantasia: document.getElementById('configNomeFantasia').value,
+    cnpj: document.getElementById('configCNPJ').value,
+    ie: document.getElementById('configIE').value,
+    im: document.getElementById('configIM').value,
+    email: document.getElementById('configEmailEmpresa').value,
+    telefone: document.getElementById('configTelefoneEmpresa').value,
+    website: document.getElementById('configWebsite').value,
+    linkedin: document.getElementById('configLinkedIn').value,
+    cep: document.getElementById('configCEP').value,
+    logradouro: document.getElementById('configLogradouro').value,
+    numero: document.getElementById('configNumero').value,
+    complemento: document.getElementById('configComplemento').value,
+    bairro: document.getElementById('configBairro').value,
+    cidade: document.getElementById('configCidade').value,
+    estado: document.getElementById('configEstado').value,
+    logo: window.logoEmpresa
+  };
+  
+  try {
+    const res = await fetch(`${API_URL}/empresa`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+    
+    const result = await res.json();
+    
+    if (result.success) {
+      alert('✅ Dados da empresa salvos com sucesso!');
+    } else {
+      alert('❌ Erro ao salvar: ' + (result.error || 'Erro desconhecido'));
+    }
+  } catch (err) {
+    console.error('Erro ao salvar empresa:', err);
+    alert('❌ Erro ao salvar dados da empresa');
+  }
+}
+
+// UPLOAD DO LOGO
+function setupLogoUpload() {
+  const inputLogo = document.getElementById('configLogoInput');
+  if (!inputLogo) return;
+  
+  inputLogo.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Verifica tamanho (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('⚠️ Imagem muito grande! Máximo 2MB.');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+      const base64 = event.target.result;
+      
+      // Atualiza preview
+      const preview = document.getElementById('configLogoPreview');
+      preview.innerHTML = `<img src="${base64}" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+      
+      // Salva no banco
+      try {
+        const res = await fetch(`${API_URL}/empresa/logo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ logo: base64 })
+        });
+        
+        const result = await res.json();
+        if (result.success) {
+          window.logoEmpresa = base64;
+          console.log('✅ Logo salvo!');
+        }
+      } catch (err) {
+        console.error('Erro ao salvar logo:', err);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// REMOVER LOGO
+window.removerLogoEmpresa = async function() {
+  if (!confirm('Tem certeza que deseja remover o logo?')) return;
+  
+  try {
+    await fetch(`${API_URL}/empresa/logo`, { method: 'DELETE' });
+    
+    window.logoEmpresa = null;
+    const preview = document.getElementById('configLogoPreview');
+    preview.innerHTML = '<i class="bi bi-image text-muted" style="font-size: 2rem;"></i>';
+    
+    console.log('✅ Logo removido!');
+  } catch (err) {
+    console.error('Erro ao remover logo:', err);
+  }
+};
+
+// OBTER LOGO DA EMPRESA (para usar em pedidos)
+async function obterLogoEmpresa() {
+  if (window.logoEmpresa) return window.logoEmpresa;
+  
+  try {
+    const res = await fetch(`${API_URL}/empresa`);
+    const empresa = await res.json();
+    if (empresa && empresa.logo) {
+      window.logoEmpresa = empresa.logo;
+      return empresa.logo;
+    }
+  } catch (err) {
+    console.error('Erro ao obter logo:', err);
+  }
+  return null;
+}
+
+// CARREGAR LOGO E NOME DA EMPRESA NO PEDIDO
+async function carregarLogoNoPedido() {
+  try {
+    const res = await fetch(`${API_URL}/empresa`);
+    const empresa = await res.json();
+    
+    // Preenche o logo no pedido
+    const logoContainer = document.getElementById('logoPreviewPedido');
+    if (logoContainer) {
+      if (empresa && empresa.logo) {
+        logoContainer.innerHTML = `<img src="${empresa.logo}" alt="Logo" class="img-fluid" style="max-height: 60px;">`;
+      } else {
+        logoContainer.innerHTML = '<i class="bi bi-image text-muted" style="font-size: 2rem;"></i>';
+      }
+    }
+    
+    // Preenche o nome da empresa no pedido
+    const nomeEmpresa = document.getElementById('nomeEmpresaPedido');
+    if (nomeEmpresa) {
+      if (empresa && empresa.nome_fantasia) {
+        nomeEmpresa.textContent = empresa.nome_fantasia;
+      } else if (empresa && empresa.razao_social) {
+        nomeEmpresa.textContent = empresa.razao_social;
+      } else {
+        nomeEmpresa.textContent = 'Nome da Empresa';
+      }
+    }
+    
+    console.log('✅ Logo e nome da empresa carregados no pedido');
+  } catch (err) {
+    console.error('Erro ao carregar logo no pedido:', err);
+  }
+}
+
+// Inicialização - Carrega dados da empresa quando abrir aba Empresa
+document.addEventListener('DOMContentLoaded', function() {
+  // Form de empresa
+  const formEmpresa = document.getElementById('formEditarEmpresa');
+  if (formEmpresa) {
+    formEmpresa.addEventListener('submit', salvarDadosEmpresa);
+  }
+  
+  // Setup do upload de logo
+  setupLogoUpload();
+  
+  // Observer para carregar dados quando abrir aba Empresa
+  const tabEmpresa = document.querySelector('[data-bs-target="#tab-empresa"]');
+  if (tabEmpresa) {
+    tabEmpresa.addEventListener('click', function() {
+      setTimeout(() => {
+        carregarDadosEmpresa();
+      }, 100);
+    });
+  }
+});

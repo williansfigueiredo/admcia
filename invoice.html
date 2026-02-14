@@ -31,6 +31,17 @@
     font-weight: bold;
     border-radius: 8px;
     font-size: 0.8rem;
+    overflow: hidden;
+  }
+
+  .logo-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .logo-box:has(img) {
+    background: transparent;
   }
 
   .info-grid {
@@ -126,10 +137,10 @@
 <div class="invoice-container">
   <div class="invoice-header">
     <div style="display: flex; align-items: center; gap: 15px;">
-      <div class="logo-box">LOGO</div>
+      <div class="logo-box" id="invoice-logo">{{LOGO_EMPRESA}}</div>
       <div>
-        <div style="font-size: 1.4rem; font-weight: 800; color: #0f172a;">Cia do TP</div>
-        <div style="font-size: 0.8rem; color: #666;">Teleprompter</div>
+        <div style="font-size: 1.4rem; font-weight: 800; color: #0f172a;">{{NOME_EMPRESA}}</div>
+        <div style="font-size: 0.8rem; color: #666;">{{SLOGAN_EMPRESA}}</div>
       </div>
     </div>
     <div style="text-align: right;">
