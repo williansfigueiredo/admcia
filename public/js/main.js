@@ -3363,20 +3363,20 @@ function renderizarTabelaContratos(pagina) {
     menu.id = "menu-acoes-flutuante";
     menu.className = "menu-acoes-flutuante";
     menu.innerHTML = `
-  <button type="button" class="menu-item item-gray" onclick="window.setJobOrigin('contratos'); abrirDetalhesJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
+  <button type="button" class="menu-item item-gray" onclick="event.stopPropagation(); window.setJobOrigin('contratos'); abrirDetalhesJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
     <i class="bi bi-eye"></i>
     <span>Detalhes</span>
   </button>
-  <button type="button" class="menu-item item-blue" onclick="window.setJobOrigin('contratos'); editarJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
+  <button type="button" class="menu-item item-blue" onclick="event.stopPropagation(); window.setJobOrigin('contratos'); window.editarJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
     <i class="bi bi-pencil-square"></i>
     <span>Editar</span>
   </button>
-  <button type="button" class="menu-item item-green" onclick="abrirModalInvoice(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
+  <button type="button" class="menu-item item-green" onclick="event.stopPropagation(); abrirModalInvoice(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
     <i class="bi bi-file-earmark-text"></i>
     <span>Gerar Invoice</span>
   </button>
   <div class="divider"></div>
-  <button type="button" class="menu-item item-red" onclick="excluirJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
+  <button type="button" class="menu-item item-red" onclick="event.stopPropagation(); excluirJob(${jobId}); document.getElementById('menu-acoes-flutuante')?.remove();">
     <i class="bi bi-trash3"></i>
     <span>Apagar</span>
   </button>
