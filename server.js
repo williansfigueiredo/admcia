@@ -1775,10 +1775,14 @@ app.delete('/jobs/:id', (req, res) => {
       console.error("❌ SQL Error Code:", error.code);
       console.error("❌ SQL Error Errno:", error.errno);
       db.rollback(() => {
-        const mensagemErro = error.code === 'ER_ROW_IS_REFERENCED_2' 
-          ? "Não é possível excluir: existem registros relacionados a este pedido"
-          : (error.message || "Erro desconhecido ao excluir");
-        res.status(500).json({ message: mensagemErro });
+        // Retorna erro detalhado para debug
+        res.status(500).json({ 
+          message: "Falha ao excluir",
+          error: error.message || "Erro desconhecido",
+          code: error.code || null,
+          errno: error.errno || null,
+          sqlMessage: error.sqlMessage || null
+        });
       });
     }
   });
@@ -2508,14 +2512,30 @@ app.get('/agenda', (req, res) => {
       return res.status(500).json({ error: err.message });
     }
 
+    // Função para formatar data sem problema de timezone
+    const formatarDataLocal = (data) => {
+      if (!data) return null;
+      const d = new Date(data);
+      d.setHours(d.getHours() + 12);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     // Expande escalas para múltiplos dias (se tiver data_inicio e data_fim)
     const eventosEscalas = [];
     escalasRaw.forEach(e => {
-      const inicio = new Date(e.data_inicio);
-      const fim = e.data_fim ? new Date(e.data_fim) : inicio;
+      const dataInicioStr = formatarDataLocal(e.data_inicio);
+      const dataFimStr = e.data_fim ? formatarDataLocal(e.data_fim) : dataInicioStr;
+      
+      if (!dataInicioStr) return;
+      
+      const inicio = new Date(dataInicioStr + 'T12:00:00');
+      const fim = new Date((dataFimStr || dataInicioStr) + 'T12:00:00');
       
       for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
-        const dataStr = d.toISOString().split('T')[0];
+        const dataStr = formatarDataLocal(d);
         
         eventosEscalas.push({
           id: `${e.id}-${dataStr}`,
@@ -2542,16 +2562,19 @@ app.get('/agenda', (req, res) => {
       // Expande jobs para todos os dias e membros da equipe
       const eventosJobs = [];
       jobs.forEach(job => {
-        const inicio = new Date(job.data_inicio);
-        const fim = job.data_fim ? new Date(job.data_fim) : inicio;
+        // Usa a string da data diretamente se possível
+        const dataInicioStr = job.data_inicio ? formatarDataLocal(job.data_inicio) : null;
+        const dataFimStr = job.data_fim ? formatarDataLocal(job.data_fim) : dataInicioStr;
         
-        // Formata datas originais como strings YYYY-MM-DD
-        const dataInicioOriginal = inicio.toISOString().split('T')[0];
-        const dataFimOriginal = fim.toISOString().split('T')[0];
+        if (!dataInicioStr) return; // Pula se não tem data
+        
+        // Para iterar entre as datas
+        const inicio = new Date(dataInicioStr + 'T12:00:00');
+        const fim = new Date((dataFimStr || dataInicioStr) + 'T12:00:00');
         
         // Para cada dia entre início e fim
         for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
-          const dataStr = d.toISOString().split('T')[0];
+          const dataStr = formatarDataLocal(d);
           
           // ⏰ Usa horário cadastrado ou padrão 08:00 se estiver NULL/vazio
           const horaChegada = job.hora_chegada_prevista || '08:00:00';
@@ -2577,8 +2600,8 @@ app.get('/agenda', (req, res) => {
             borderColor: cor,
             tipo_evento: 'job',
             // 📅 Datas reais do job (período completo) em formato string
-            data_inicio_real: dataInicioOriginal,
-            data_fim_real: dataFimOriginal
+            data_inicio_real: dataInicioStr,
+            data_fim_real: dataFimStr
           });
         }
       });

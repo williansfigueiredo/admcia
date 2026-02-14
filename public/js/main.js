@@ -5874,10 +5874,14 @@ window.excluirJob = function (jobId) {
   fetch(`${API_URL}/jobs/${jobId}`, { method: "DELETE" })
     .then(async (res) => {
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Falha ao excluir.");
+      if (!res.ok) {
+        console.error("❌ Erro ao excluir job:", data);
+        throw new Error(data.error || data.message || data.sqlMessage || "Falha ao excluir.");
+      }
       return data;
     })
     .then(() => {
+      alert("Pedido excluído com sucesso!");
       // Recarrega lista e cards sem mexer na lógica atual
       if (typeof atualizarDashboard === "function") atualizarDashboard();
       if (typeof carregarGestaoContratos === "function") carregarGestaoContratos();
@@ -5885,7 +5889,7 @@ window.excluirJob = function (jobId) {
       if (typeof updateStatusIndicators === "function") updateStatusIndicators();
     })
     .catch(err => {
-      console.error(err);
+      console.error("❌ Erro completo:", err);
       alert("Não foi possível apagar o pedido: " + err.message);
     });
 };
