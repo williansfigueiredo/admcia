@@ -6646,7 +6646,32 @@ window.abrirDetalhesJob = async function (jobId) {
     });
   }
 
-  // 🟣 PASSO 8: BADGE DE VISUALIZAÇÃO
+  // � PASSO 8: CARREGAR EQUIPE DO BANCO
+  window.equipeDoJob = [];
+  try {
+    const resEq = await fetch(`${API_URL}/jobs/${jobId}/equipe`);
+    const equipeBanco = await resEq.json();
+
+    window.equipeDoJob = equipeBanco.map(e => ({
+      funcionario_id: e.funcionario_id,
+      nome: e.nome,
+      cargo: e.cargo,
+      funcao: e.funcao
+    }));
+
+    if (typeof renderizarTabelaEquipe === 'function') {
+      renderizarTabelaEquipe();
+    }
+    console.log('👥 [DETALHES] Equipe carregada:', window.equipeDoJob.length, 'membros');
+  } catch (err) {
+    console.error("Erro ao carregar equipe:", err);
+    window.equipeDoJob = [];
+    if (typeof renderizarTabelaEquipe === 'function') {
+      renderizarTabelaEquipe();
+    }
+  }
+
+  // 🟣 PASSO 9: BADGE DE VISUALIZAÇÃO
   const header = document.querySelector('#view-novo-job .d-flex');
   const badgeAntigo = document.getElementById('badge-modo-visualizacao');
   if (badgeAntigo) badgeAntigo.remove();
@@ -9130,8 +9155,18 @@ window.salvarNovaEscala = async function () {
   }
 
   try {
-    // NÃO adiciona na job_equipe - é apenas uma escala manual vinculada
-    // O funcionário aparecerá apenas nos dias da escala, não em todos os dias do job
+    // Se tem job selecionado, adiciona funcionário à equipe do job
+    if (jobId) {
+      await fetch(`${API_URL}/jobs/${jobId}/equipe/adicionar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          funcionario_id: funcionarioId,
+          funcao: tipo
+        })
+      });
+      console.log('✅ Funcionário adicionado à equipe do job');
+    }
 
     // Cria a escala com as datas selecionadas pelo usuário
     const dados = {
