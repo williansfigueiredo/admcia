@@ -2589,8 +2589,8 @@ app.get('/agenda', (req, res) => {
       let titulo = `${icone} ${e.funcionario_nome}`;
       
       // Marca que esse funcionário tem escala vinculada a este job (para evitar duplicação)
-      // Apenas se for trabalho do job
-      if (e.job_id && e.tipo_escala === 'Trabalho') {
+      // Marca TODAS as escalas com job_id para evitar que apareça duplicado do sqlJobs
+      if (e.job_id) {
         escalasComJob.add(`${e.operador_id}-${e.job_id}`);
       }
       
