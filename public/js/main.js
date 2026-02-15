@@ -9931,7 +9931,39 @@ function renderizarCalendarioFuncionario(listaJobs) {
   calendarFuncionarioInstance.render();
 }
 
-window.abrirJobVisualizacaoPeloHistorico = function (jobId) {
+window.abrirJobVisualizacaoPeloHistorico = function (eventoId) {
+  // Extrai o tipo e o ID do formato "tipo-id"
+  const partes = eventoId.split('-');
+  const tipoRegistro = partes[0]; // 'escala' ou 'job'
+  const idNumerico = partes.slice(1).join('-'); // Pega o resto (caso tenha hífens no ID)
+
+  // Se for escala manual, mostra detalhes da escala em vez de abrir o job
+  if (tipoRegistro === 'escala') {
+    // Busca a escala no cache do histórico
+    const escala = window.historicoCacheFuncionario?.find(e => 
+      e.tipo_registro === 'escala' && String(e.id) === String(idNumerico)
+    );
+    
+    if (escala) {
+      // Mostra modal com detalhes da escala
+      const dataInicio = formatarData(escala.data_inicio);
+      const dataFim = escala.data_fim ? formatarData(escala.data_fim) : dataInicio;
+      const tipoEscala = escala.funcao || escala.tipo || 'Escala';
+      
+      alert(`📅 Escala Manual\n\n` +
+            `Tipo: ${tipoEscala}\n` +
+            `Job: #${escala.job_id || '-'} - ${escala.descricao || 'Sem descrição'}\n` +
+            `Período: ${dataInicio} até ${dataFim}\n` +
+            `Status: ${escala.status || 'Ativo'}`);
+    } else {
+      alert('Escala não encontrada.');
+    }
+    return;
+  }
+
+  // Se for job, continua com o fluxo normal
+  const jobId = idNumerico;
+  
   // 1. Identifica qual funcionário estamos editando
   const idFuncionario = window.idClienteEdicao || window.idFuncionarioAtual;
 
