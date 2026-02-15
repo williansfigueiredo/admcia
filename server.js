@@ -2582,13 +2582,15 @@ app.get('/agenda', (req, res) => {
       const dias = gerarDiasEntre(dataInicioStr, dataFimStr);
 
       // Monta o título com ícone correto:
-      // 📋 = veio de um pedido (tem job_id)
-      // 📅 = escala manual avulsa (não tem job_id)
-      const icone = e.job_id ? '📋' : '📅';
+      // 📋 = trabalho de um pedido (tem job_id E tipo é "Trabalho")
+      // 📅 = escala manual/avulsa ou tipo diferente de Trabalho (Treinamento, Folga, Férias, etc.)
+      const isTrabalhoDeJob = e.job_id && e.tipo_escala === 'Trabalho';
+      const icone = isTrabalhoDeJob ? '📋' : '📅';
       let titulo = `${icone} ${e.funcionario_nome}`;
       
       // Marca que esse funcionário tem escala vinculada a este job (para evitar duplicação)
-      if (e.job_id) {
+      // Apenas se for trabalho do job
+      if (e.job_id && e.tipo_escala === 'Trabalho') {
         escalasComJob.add(`${e.operador_id}-${e.job_id}`);
       }
       
