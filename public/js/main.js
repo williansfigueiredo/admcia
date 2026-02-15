@@ -4982,66 +4982,58 @@ async function carregarListaClientes() {
 
 // 2. Função de Filtragem (O que você pediu!)
 // 2. Função de Filtragem (Texto + Tipo PF/PJ + Status)
-window.filtrarClientes = async function () {
-  // Mostra skeleton durante o filtro
-  showGlobalSkeleton('clientes');
+window.filtrarClientes = function () {
+  // Pega o texto digitado (minúsculo)
+  const texto = document.getElementById('inputBuscaCliente').value.toLowerCase().trim();
+  // Pega o tipo selecionado no dropdown (PF, PJ ou Vazio)
+  const tipoSelecionado = document.getElementById('filtroTipoCliente').value;
+  // Pega o status selecionado (Ativo, Inativo, Bloqueado ou Vazio)
+  const statusSelecionado = document.getElementById('filtroStatusCliente').value;
 
-  try {
-    // Pega o texto digitado (minúsculo)
-    const texto = document.getElementById('inputBuscaCliente').value.toLowerCase().trim();
-    // Pega o tipo selecionado no dropdown (PF, PJ ou Vazio)
-    const tipoSelecionado = document.getElementById('filtroTipoCliente').value;
-    // Pega o status selecionado (Ativo, Inativo, Bloqueado ou Vazio)
-    const statusSelecionado = document.getElementById('filtroStatusCliente').value;
+  console.log('🔍 Filtros aplicados:', { texto, tipoSelecionado, statusSelecionado });
 
-    console.log('🔍 Filtros aplicados:', { texto, tipoSelecionado, statusSelecionado });
+  // Se não tiver nenhum filtro, mostra tudo
+  if (texto === "" && tipoSelecionado === "" && statusSelecionado === "") {
+    console.log('📋 Mostrando todos os clientes:', window.cacheClientes.length);
+    renderizarClientesComPaginacao(window.cacheClientes);
+    return;
+  }
 
-    // Se não tiver nenhum filtro, mostra tudo
-    if (texto === "" && tipoSelecionado === "" && statusSelecionado === "") {
-      console.log('📋 Mostrando todos os clientes:', window.cacheClientes.length);
-      renderizarClientesComPaginacao(window.cacheClientes);
-      return;
+  const filtrados = window.cacheClientes.filter(cli => {
+    // --- 1. FILTRO DE TIPO (PF ou PJ) ---
+    // Consideramos PJ se o documento formatado tiver mais de 14 caracteres (CNPJ tem 18, CPF tem 14)
+    const isPJ = cli.documento && cli.documento.length > 14;
+
+    if (tipoSelecionado === "PF" && isPJ) return false; // Se quer PF mas é PJ, esconde
+    if (tipoSelecionado === "PJ" && !isPJ) return false; // Se quer PJ mas é PF, esconde
+
+    // --- 2. FILTRO DE STATUS ---
+    if (statusSelecionado !== "" && cli.status !== statusSelecionado) return false;
+
+    // --- 3. FILTRO DE TEXTO (Nome, Doc, Email, etc) ---
+    if (texto !== "") {
+      const nomeEmpresa = (cli.nome || "").toLowerCase();
+      const nomeFantasia = (cli.nome_fantasia || "").toLowerCase();
+      const doc = (cli.documento || "").replace(/\D/g, ""); // Só números
+      const docFormatado = (cli.documento || "").toLowerCase();
+      const responsavel = (cli.contato1_nome || "").toLowerCase();
+      const email = (cli.email || cli.contato1_email || "").toLowerCase();
+
+      // Retorna VERDADEIRO se achar o texto em algum lugar
+      return nomeEmpresa.includes(texto) ||
+        nomeFantasia.includes(texto) ||
+        doc.includes(texto) ||
+        docFormatado.includes(texto) ||
+        responsavel.includes(texto) ||
+        email.includes(texto);
     }
 
-    const filtrados = window.cacheClientes.filter(cli => {
-      // --- 1. FILTRO DE TIPO (PF ou PJ) ---
-      // Consideramos PJ se o documento formatado tiver mais de 14 caracteres (CNPJ tem 18, CPF tem 14)
-      const isPJ = cli.documento && cli.documento.length > 14;
+    // Se passou pelos filtros e não tem texto digitado, mostra o cliente
+    return true;
+  });
 
-      if (tipoSelecionado === "PF" && isPJ) return false; // Se quer PF mas é PJ, esconde
-      if (tipoSelecionado === "PJ" && !isPJ) return false; // Se quer PJ mas é PF, esconde
-
-      // --- 2. FILTRO DE STATUS ---
-      if (statusSelecionado !== "" && cli.status !== statusSelecionado) return false;
-
-      // --- 3. FILTRO DE TEXTO (Nome, Doc, Email, etc) ---
-      if (texto !== "") {
-        const nomeEmpresa = (cli.nome || "").toLowerCase();
-        const nomeFantasia = (cli.nome_fantasia || "").toLowerCase();
-        const doc = (cli.documento || "").replace(/\D/g, ""); // Só números
-        const docFormatado = (cli.documento || "").toLowerCase();
-        const responsavel = (cli.contato1_nome || "").toLowerCase();
-        const email = (cli.email || cli.contato1_email || "").toLowerCase();
-
-        // Retorna VERDADEIRO se achar o texto em algum lugar
-        return nomeEmpresa.includes(texto) ||
-          nomeFantasia.includes(texto) ||
-          doc.includes(texto) ||
-          docFormatado.includes(texto) ||
-          responsavel.includes(texto) ||
-          email.includes(texto);
-      }
-
-      // Se passou pelos filtros e não tem texto digitado, mostra o cliente
-      return true;
-    });
-
-    console.log('✅ Clientes filtrados:', filtrados.length);
-    renderizarClientesComPaginacao(filtrados);
-  } finally {
-    // Oculta skeleton após filtro
-    await hideGlobalSkeleton();
-  }
+  console.log('✅ Clientes filtrados:', filtrados.length);
+  renderizarClientesComPaginacao(filtrados);
 }
 
 
@@ -7857,60 +7849,52 @@ window.carregarFuncionarios = async function () {
 };
 
 // 2. FILTRAR FUNCIONÁRIOS
-window.filtrarFuncionarios = async function () {
+window.filtrarFuncionarios = function () {
   // Validação: se não tem cache, não faz nada
   if (!window.cacheFuncionarios || window.cacheFuncionarios.length === 0) {
     console.warn('⚠️ Cache de funcionários vazio. Aguardando carregamento...');
     return;
   }
 
-  // Mostra skeleton durante o filtro
-  showGlobalSkeleton('funcionarios');
+  console.log('🔍 Filtrando funcionários. Cache tem:', window.cacheFuncionarios.length, 'items');
 
-  try {
-    console.log('🔍 Filtrando funcionários. Cache tem:', window.cacheFuncionarios.length, 'items');
+  const inputBusca = document.getElementById('buscaFuncionarios');
+  const inputStatus = document.getElementById('filtroStatusFuncionario');
+  const inputDepartamento = document.getElementById('filtroDepartamentoFuncionario');
 
-    const inputBusca = document.getElementById('buscaFuncionarios');
-    const inputStatus = document.getElementById('filtroStatusFuncionario');
-    const inputDepartamento = document.getElementById('filtroDepartamentoFuncionario');
+  const termo = inputBusca ? inputBusca.value.toLowerCase() : "";
+  const statusFiltro = inputStatus ? inputStatus.value : "";
+  const deptoFiltro = inputDepartamento ? inputDepartamento.value : "";
 
-    const termo = inputBusca ? inputBusca.value.toLowerCase() : "";
-    const statusFiltro = inputStatus ? inputStatus.value : "";
-    const deptoFiltro = inputDepartamento ? inputDepartamento.value : "";
+  console.log('🎯 Filtros aplicados:', { termo, statusFiltro, deptoFiltro });
 
-    console.log('🎯 Filtros aplicados:', { termo, statusFiltro, deptoFiltro });
+  const filtrados = window.cacheFuncionarios.filter(func => {
+    const nome = (func.nome || "").toLowerCase();
+    const cargo = (func.cargo || "").toLowerCase();
+    const email = (func.email || "").toLowerCase();
+    const status = (func.status || "");
+    const departamento = (func.departamento || "");
 
-    const filtrados = window.cacheFuncionarios.filter(func => {
-      const nome = (func.nome || "").toLowerCase();
-      const cargo = (func.cargo || "").toLowerCase();
-      const email = (func.email || "").toLowerCase();
-      const status = (func.status || "");
-      const departamento = (func.departamento || "");
+    // Filtro de Texto
+    const bateuTexto = nome.includes(termo) || cargo.includes(termo) || email.includes(termo);
 
-      // Filtro de Texto
-      const bateuTexto = nome.includes(termo) || cargo.includes(termo) || email.includes(termo);
+    // Filtro de Status
+    const bateuStatus = statusFiltro === "" || status === statusFiltro;
 
-      // Filtro de Status
-      const bateuStatus = statusFiltro === "" || status === statusFiltro;
+    // Filtro de Departamento
+    const bateuDepto = deptoFiltro === "" || departamento === deptoFiltro;
 
-      // Filtro de Departamento
-      const bateuDepto = deptoFiltro === "" || departamento === deptoFiltro;
+    return bateuTexto && bateuStatus && bateuDepto;
+  });
 
-      return bateuTexto && bateuStatus && bateuDepto;
-    });
+  console.log('✅ Filtrados:', filtrados.length, 'de', window.cacheFuncionarios.length, 'funcionários');
 
-    console.log('✅ Filtrados:', filtrados.length, 'de', window.cacheFuncionarios.length, 'funcionários');
+  // Salva lista filtrada e reseta para página 1
+  window.paginacaoFuncionarios.listaTotalFiltrada = filtrados;
+  window.paginacaoFuncionarios.paginaAtual = 1;
 
-    // Salva lista filtrada e reseta para página 1
-    window.paginacaoFuncionarios.listaTotalFiltrada = filtrados;
-    window.paginacaoFuncionarios.paginaAtual = 1;
-
-    // Renderiza primeira página
-    window.renderizarFuncionariosPaginado();
-  } finally {
-    // Oculta skeleton após filtro
-    await hideGlobalSkeleton();
-  }
+  // Renderiza primeira página
+  window.renderizarFuncionariosPaginado();
 };
 
 // 3. RENDERIZAR COM PAGINAÇÃO
