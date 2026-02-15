@@ -1613,19 +1613,23 @@ app.put('/financeiro/jobs/:id/pagar', (req, res) => {
 app.get('/financeiro/grafico-fluxo', (req, res) => {
   const ano = req.query.ano || new Date().getFullYear();
 
-  // Receitas (Jobs pagos por mês)
+  // Receitas (Jobs pagos - usa data_inicio como referência da entrega)
   const sqlReceitas = `
-    SELECT MONTH(data_job) as mes, COALESCE(SUM(valor), 0) as total
+    SELECT MONTH(data_inicio) as mes, COALESCE(SUM(valor), 0) as total
     FROM jobs 
-    WHERE YEAR(data_job) = ? AND pagamento = 'Pago'
-    GROUP BY MONTH(data_job)
+    WHERE YEAR(data_inicio) = ? 
+      AND pagamento = 'Pago'
+      AND status = 'Finalizado'
+    GROUP BY MONTH(data_inicio)
   `;
 
-  // Despesas por mês
+  // Despesas por mês (usa data_vencimento como referência)
   const sqlDespesas = `
     SELECT MONTH(data_vencimento) as mes, COALESCE(SUM(valor), 0) as total
     FROM transacoes 
-    WHERE tipo = 'despesa' AND YEAR(data_vencimento) = ? AND status IN ('pago', 'pendente')
+    WHERE tipo = 'despesa' 
+      AND YEAR(data_vencimento) = ? 
+      AND status IN ('pago', 'pendente')
     GROUP BY MONTH(data_vencimento)
   `;
 
@@ -1639,8 +1643,16 @@ app.get('/financeiro/grafico-fluxo', (req, res) => {
       const entradas = Array(12).fill(0);
       const saidas = Array(12).fill(0);
 
-      receitas.forEach(r => { entradas[r.mes - 1] = parseFloat(r.total); });
-      despesas.forEach(d => { saidas[d.mes - 1] = parseFloat(d.total); });
+      receitas.forEach(r => { 
+        if (r.mes >= 1 && r.mes <= 12) {
+          entradas[r.mes - 1] = parseFloat(r.total); 
+        }
+      });
+      despesas.forEach(d => { 
+        if (d.mes >= 1 && d.mes <= 12) {
+          saidas[d.mes - 1] = parseFloat(d.total); 
+        }
+      });
 
       res.json({ entradas, saidas });
     });
