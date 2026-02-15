@@ -9768,7 +9768,12 @@ function renderizarTabelaHistorico(lista) {
     let badgeClass = 'bg-secondary';
     if (item.status === 'Agendado') badgeClass = 'bg-primary';
     if (item.status === 'Em Andamento') badgeClass = 'bg-success';
+    if (item.status === 'Confirmado') badgeClass = 'bg-warning text-dark';
     if (item.status === 'Cancelado') badgeClass = 'bg-danger';
+
+    // Monta o ID no formato correto (tipo-id) para funcionar com a função de visualização
+    const tipoRegistro = item.tipo_registro || 'job';
+    const eventoId = `${tipoRegistro}-${item.id}`;
 
     html += `
             <tr>
@@ -9782,7 +9787,7 @@ function renderizarTabelaHistorico(lista) {
                 
                 <td class="text-end pe-3">
                     <button class="btn btn-sm btn-outline-primary" 
-                            onclick="abrirJobVisualizacaoPeloHistorico(${item.id})">
+                            onclick="abrirJobVisualizacaoPeloHistorico('${eventoId}')">
                         <i class="bi bi-eye"></i> Ver
                     </button>
                 </td>
@@ -9979,10 +9984,19 @@ function renderizarCalendarioFuncionario(listaJobs) {
 }
 
 window.abrirJobVisualizacaoPeloHistorico = function (eventoId) {
-  // Extrai o tipo e o ID do formato "tipo-id"
-  const partes = eventoId.split('-');
-  const tipoRegistro = partes[0]; // 'escala' ou 'job'
-  const idNumerico = partes.slice(1).join('-'); // Pega o resto (caso tenha hífens no ID)
+  // Converte para string caso seja número
+  const eventoIdStr = String(eventoId);
+  
+  // Verifica se o ID veio no formato "tipo-id" (do calendário) ou apenas número (da tabela)
+  let tipoRegistro = 'job'; // Padrão é job
+  let idNumerico = eventoIdStr;
+  
+  // Se contém hífen e começa com 'escala' ou 'job', extrai o tipo
+  if (eventoIdStr.includes('-') && (eventoIdStr.startsWith('escala-') || eventoIdStr.startsWith('job-'))) {
+    const partes = eventoIdStr.split('-');
+    tipoRegistro = partes[0]; // 'escala' ou 'job'
+    idNumerico = partes.slice(1).join('-'); // Pega o resto
+  }
 
   // Se for escala manual, mostra detalhes da escala em vez de abrir o job
   if (tipoRegistro === 'escala') {
