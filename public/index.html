@@ -719,32 +719,19 @@
         <div class="col-xl-3 col-md-6">
           <div class="card-custom stat-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
-              <div style="width: 100%; overflow: hidden">
-                <div class="kpi-title">JOBS EM ANDAMENTO</div>
-
+              <div style="width: 100%;">
+                <div class="kpi-title">JOBS EM ANDAMENTO (SEMANA)</div>
                 <div class="kpi-value sensitive-value" id="kpi-jobs">0</div>
-
-                <div class="kpi-trend sensitive-value" id="kpi-jobs-trend">
-                  <i class="bi bi-dash"></i>
-                  <span id="kpi-jobs-pct">--%</span>
-                  <span class="text-muted ms-1 fw-normal small">vs semana ant.</span>
-                </div>
+                <div class="small text-muted">Memória da semana atual</div>
               </div>
-
               <div class="kpi-icon-circle bg-green-soft text-green">
                 <i class="bi bi-camera-video"></i>
               </div>
             </div>
-
-            <div class="mini-chart" id="mini-chart-jobs" style="
-                  display: flex;
-                  justify-content: space-between;
-                  gap: 4px;
-                  height: 35px;
-                  align-items: flex-end;
-                  width: 100%;
-                  padding-bottom: 8px;
-                "></div>
+            <!-- Canvas para gráfico de barras da semana -->
+            <div style="height: 60px; position: relative;">
+              <canvas id="chartJobsSemana"></canvas>
+            </div>
           </div>
         </div>
         <!-- CARD VEÍCULOS ATIVOS - COMENTADO

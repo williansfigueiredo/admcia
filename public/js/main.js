@@ -582,6 +582,94 @@ async function updateStatusIndicators() {
   }
 
   console.log('✅ Indicadores atualizados');
+  
+  // 4. ATUALIZA GRÁFICO DE JOBS DA SEMANA
+  atualizarGraficoJobsSemana();
+}
+
+// Instância do gráfico de jobs da semana
+let chartJobsSemanaInstance = null;
+
+/**
+ * Atualiza o gráfico de barras de jobs da semana
+ */
+async function atualizarGraficoJobsSemana() {
+  const canvas = document.getElementById('chartJobsSemana');
+  const kpiTotal = document.getElementById('kpi-jobs');
+  
+  if (!canvas) return;
+
+  try {
+    const response = await fetch(`${API_URL}/jobs/semana`);
+    const dados = await response.json();
+    
+    console.log('📊 Dados semana:', dados);
+    
+    // Atualiza valor total
+    if (kpiTotal) {
+      kpiTotal.textContent = dados.total;
+    }
+
+    const ctx = canvas.getContext('2d');
+
+    // Destrói gráfico anterior se existir
+    if (chartJobsSemanaInstance) {
+      chartJobsSemanaInstance.destroy();
+    }
+
+    const labels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    
+    chartJobsSemanaInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: dados.dias,
+          backgroundColor: 'rgba(10, 179, 156, 0.8)',
+          borderRadius: 3,
+          barThickness: 'flex',
+          maxBarThickness: 20
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.parsed.y + ' job' + (context.parsed.y !== 1 ? 's' : '');
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              display: false
+            },
+            grid: { display: false },
+            border: { display: false }
+          },
+          x: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: {
+              font: { size: 9 },
+              color: '#888'
+            }
+          }
+        }
+      }
+    });
+
+    console.log('✅ Gráfico de jobs da semana atualizado');
+  } catch (error) {
+    console.error('❌ Erro ao carregar gráfico da semana:', error);
+  }
 }
 
 /* =============================================================

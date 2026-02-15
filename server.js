@@ -597,6 +597,43 @@ app.get('/jobs/ativos', (req, res) => {
   });
 });
 
+// ROTA: JOBS POR DIA DA SEMANA ATUAL (para gráfico de memória semanal)
+app.get('/jobs/semana', (req, res) => {
+  // Pega data de início e fim da semana atual (domingo a sábado)
+  const sql = `
+    SELECT 
+      DAYOFWEEK(data_inicio) as dia_semana,
+      DAYNAME(data_inicio) as nome_dia,
+      COUNT(DISTINCT j.id) as total
+    FROM jobs j
+    WHERE YEARWEEK(data_inicio, 0) = YEARWEEK(CURDATE(), 0)
+      AND status IN ('Em Andamento', 'Finalizado')
+    GROUP BY DAYOFWEEK(data_inicio), DAYNAME(data_inicio)
+    ORDER BY DAYOFWEEK(data_inicio)
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar jobs da semana:", err);
+      return res.status(500).json({ error: err.message });
+    }
+
+    // Monta array de 7 dias (Dom=1, Seg=2, ..., Sáb=7)
+    const diasSemana = Array(7).fill(0);
+    results.forEach(r => {
+      diasSemana[r.dia_semana - 1] = r.total;
+    });
+
+    // Total da semana
+    const totalSemana = diasSemana.reduce((acc, val) => acc + val, 0);
+
+    res.json({
+      dias: diasSemana, // [dom, seg, ter, qua, qui, sex, sab]
+      total: totalSemana
+    });
+  });
+});
+
 app.get('/jobs', (req, res) => {
   // VERIFICAR E ATUALIZAR JOBS VENCIDOS AUTOMATICAMENTE
   const sqlUpdateVencidos = `
