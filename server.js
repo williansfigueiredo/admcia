@@ -2831,7 +2831,7 @@ app.get('/funcionarios/:id/historico', (req, res) => {
 
         /* 3. Busca ESCALAS MANUAIS do funcionário */
         SELECT 
-          e.id, 
+          COALESCE(e.job_id, e.id) as id,
           CASE 
             WHEN j.descricao IS NOT NULL THEN CONCAT(j.descricao, ' - ', e.tipo)
             ELSE CONCAT('Escala ', e.tipo)
