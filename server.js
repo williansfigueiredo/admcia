@@ -2757,34 +2757,74 @@ app.post('/escalas', (req, res) => {
   const data = req.body;
   console.log("📥 Recebendo tentativa de escala:", data);
 
-  const sql = `
-        INSERT INTO escalas (funcionario_id, data_escala, data_inicio, data_fim, tipo, observacao, job_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
-
   // Mapeamento dos dados
   // Aceita tanto 'data' (único dia) quanto 'data_inicio'/'data_fim' (período)
   const dataInicio = data.data_inicio || data.data;
   const dataFim = data.data_fim || data.data;
+  const jobId = data.job_id || null;
 
-  const values = [
-    data.funcionario_id,     // ID do funcionário
-    dataInicio,              // Data escala (compatibilidade)
-    dataInicio,              // Data início
-    dataFim,                 // Data fim
-    data.tipo,               // Tipo (Folga, Trabalho, etc)
-    data.obs || null,        // Observação
-    data.job_id || null      // Job ID (NULL para escalas avulsas, ID do job se vinculado)
-  ];
+  // Se tem job_id, busca o nome do job para a observação
+  if (jobId) {
+    const sqlJob = "SELECT titulo FROM jobs WHERE id = ?";
+    db.query(sqlJob, [jobId], (err, jobResult) => {
+      if (err) {
+        console.error("❌ Erro ao buscar job:", err);
+        return res.status(500).json({ error: err.message });
+      }
 
-  db.query(sql, values, (err, result) => {
-    if (err) {
-      console.error("❌ Erro ao salvar escala:", err);
-      return res.status(500).json({ error: err.message });
-    }
-    console.log("✅ Escala salva com ID:", result.insertId);
-    res.json({ message: "Escala salva com sucesso!", id: result.insertId });
-  });
+      const nomeJob = jobResult[0]?.titulo || 'Evento';
+      const observacaoAuto = `Job #${jobId} - ${nomeJob}`;
+
+      const sql = `
+        INSERT INTO escalas (funcionario_id, data_escala, data_inicio, data_fim, tipo, observacao, job_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      const values = [
+        data.funcionario_id,
+        dataInicio,
+        dataInicio,
+        dataFim,
+        data.tipo,
+        observacaoAuto,  // Observação automática com nome do job
+        jobId
+      ];
+
+      db.query(sql, values, (err, result) => {
+        if (err) {
+          console.error("❌ Erro ao salvar escala:", err);
+          return res.status(500).json({ error: err.message });
+        }
+        console.log("✅ Escala salva com ID:", result.insertId, "- Obs:", observacaoAuto);
+        res.json({ message: "Escala salva com sucesso!", id: result.insertId });
+      });
+    });
+  } else {
+    // Escala avulsa (sem job vinculado)
+    const sql = `
+      INSERT INTO escalas (funcionario_id, data_escala, data_inicio, data_fim, tipo, observacao, job_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      data.funcionario_id,
+      dataInicio,
+      dataInicio,
+      dataFim,
+      data.tipo,
+      data.obs || null,  // Usa a obs do formulário
+      null
+    ];
+
+    db.query(sql, values, (err, result) => {
+      if (err) {
+        console.error("❌ Erro ao salvar escala:", err);
+        return res.status(500).json({ error: err.message });
+      }
+      console.log("✅ Escala avulsa salva com ID:", result.insertId);
+      res.json({ message: "Escala salva com sucesso!", id: result.insertId });
+    });
+  }
 });
 
 // ROTA PARA LER AS ESCALAS (Para aparecer no calendário depois)
