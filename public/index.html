@@ -720,16 +720,20 @@
           <div class="card-custom stat-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
               <div style="width: 100%;">
-                <div class="kpi-title">JOBS EM ANDAMENTO (SEMANA)</div>
+                <div class="kpi-title">JOBS EM ANDAMENTO</div>
                 <div class="kpi-value sensitive-value" id="kpi-jobs">0</div>
-                <div class="small text-muted">Memória da semana atual</div>
+                <div class="kpi-trend sensitive-value" id="kpi-jobs-trend">
+                  <i class="bi bi-dash"></i>
+                  <span id="kpi-jobs-pct">--%</span>
+                  <span class="text-muted ms-1 fw-normal small">vs semana ant.</span>
+                </div>
               </div>
               <div class="kpi-icon-circle bg-green-soft text-green">
                 <i class="bi bi-camera-video"></i>
               </div>
             </div>
             <!-- Canvas para gráfico de barras da semana -->
-            <div style="height: 60px; position: relative;">
+            <div style="height: 35px; position: relative;">
               <canvas id="chartJobsSemana"></canvas>
             </div>
           </div>

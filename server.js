@@ -599,37 +599,63 @@ app.get('/jobs/ativos', (req, res) => {
 
 // ROTA: JOBS POR DIA DA SEMANA ATUAL (para gráfico de memória semanal)
 app.get('/jobs/semana', (req, res) => {
-  // Pega data de início e fim da semana atual (domingo a sábado)
-  const sql = `
+  // Semana ATUAL
+  const sqlAtual = `
     SELECT 
       DAYOFWEEK(data_inicio) as dia_semana,
-      DAYNAME(data_inicio) as nome_dia,
       COUNT(DISTINCT j.id) as total
     FROM jobs j
     WHERE YEARWEEK(data_inicio, 0) = YEARWEEK(CURDATE(), 0)
       AND status IN ('Em Andamento', 'Finalizado')
-    GROUP BY DAYOFWEEK(data_inicio), DAYNAME(data_inicio)
-    ORDER BY DAYOFWEEK(data_inicio)
+    GROUP BY DAYOFWEEK(data_inicio)
   `;
 
-  db.query(sql, (err, results) => {
+  // Semana ANTERIOR (para comparação)
+  const sqlAnterior = `
+    SELECT COUNT(DISTINCT j.id) as total
+    FROM jobs j
+    WHERE YEARWEEK(data_inicio, 0) = YEARWEEK(DATE_SUB(CURDATE(), INTERVAL 7 DAY), 0)
+      AND status IN ('Em Andamento', 'Finalizado')
+  `;
+
+  db.query(sqlAtual, (err, resultsAtual) => {
     if (err) {
       console.error("Erro ao buscar jobs da semana:", err);
       return res.status(500).json({ error: err.message });
     }
 
-    // Monta array de 7 dias (Dom=1, Seg=2, ..., Sáb=7)
-    const diasSemana = Array(7).fill(0);
-    results.forEach(r => {
-      diasSemana[r.dia_semana - 1] = r.total;
-    });
+    db.query(sqlAnterior, (err2, resultsAnterior) => {
+      if (err2) {
+        console.error("Erro ao buscar jobs da semana anterior:", err2);
+        return res.status(500).json({ error: err2.message });
+      }
 
-    // Total da semana
-    const totalSemana = diasSemana.reduce((acc, val) => acc + val, 0);
+      // Monta array de 7 dias (Dom=1, Seg=2, ..., Sáb=7)
+      const diasSemana = Array(7).fill(0);
+      resultsAtual.forEach(r => {
+        diasSemana[r.dia_semana - 1] = r.total;
+      });
 
-    res.json({
-      dias: diasSemana, // [dom, seg, ter, qua, qui, sex, sab]
-      total: totalSemana
+      // Total da semana atual
+      const totalSemana = diasSemana.reduce((acc, val) => acc + val, 0);
+      
+      // Total da semana anterior
+      const totalSemanaAnterior = resultsAnterior[0]?.total || 0;
+      
+      // Calcula variação percentual
+      let variacao = 0;
+      if (totalSemanaAnterior > 0) {
+        variacao = ((totalSemana - totalSemanaAnterior) / totalSemanaAnterior) * 100;
+      } else if (totalSemana > 0) {
+        variacao = 100; // Se não tinha nada antes e agora tem, é +100%
+      }
+
+      res.json({
+        dias: diasSemana, // [dom, seg, ter, qua, qui, sex, sab]
+        total: totalSemana,
+        totalSemanaAnterior: totalSemanaAnterior,
+        variacao: variacao.toFixed(1)
+      });
     });
   });
 });

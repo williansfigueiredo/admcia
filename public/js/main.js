@@ -596,6 +596,8 @@ let chartJobsSemanaInstance = null;
 async function atualizarGraficoJobsSemana() {
   const canvas = document.getElementById('chartJobsSemana');
   const kpiTotal = document.getElementById('kpi-jobs');
+  const kpiTrend = document.getElementById('kpi-jobs-trend');
+  const kpiPct = document.getElementById('kpi-jobs-pct');
   
   if (!canvas) return;
 
@@ -608,6 +610,30 @@ async function atualizarGraficoJobsSemana() {
     // Atualiza valor total
     if (kpiTotal) {
       kpiTotal.textContent = dados.total;
+    }
+
+    // Atualiza variação percentual
+    if (kpiTrend && kpiPct) {
+      const variacao = parseFloat(dados.variacao);
+      const sinal = variacao >= 0 ? '+' : '';
+      const icone = variacao > 0 ? 'arrow-up' : variacao < 0 ? 'arrow-down' : 'dash';
+      
+      kpiPct.textContent = `${sinal}${Math.abs(variacao).toFixed(1)}%`;
+      
+      // Remove classes antigas
+      kpiTrend.classList.remove('positive', 'negative', 'neutral');
+      
+      // Adiciona classe baseada na variação
+      if (variacao > 0) {
+        kpiTrend.classList.add('positive');
+        kpiTrend.innerHTML = `<i class="bi bi-arrow-up"></i><span id="kpi-jobs-pct">${sinal}${Math.abs(variacao).toFixed(1)}%</span><span class="text-muted ms-1 fw-normal small">vs semana ant.</span>`;
+      } else if (variacao < 0) {
+        kpiTrend.classList.add('negative');
+        kpiTrend.innerHTML = `<i class="bi bi-arrow-down"></i><span id="kpi-jobs-pct">${sinal}${Math.abs(variacao).toFixed(1)}%</span><span class="text-muted ms-1 fw-normal small">vs semana ant.</span>`;
+      } else {
+        kpiTrend.classList.add('neutral');
+        kpiTrend.innerHTML = `<i class="bi bi-dash"></i><span id="kpi-jobs-pct">0.0%</span><span class="text-muted ms-1 fw-normal small">vs semana ant.</span>`;
+      }
     }
 
     const ctx = canvas.getContext('2d');
@@ -628,7 +654,7 @@ async function atualizarGraficoJobsSemana() {
           backgroundColor: 'rgba(10, 179, 156, 0.8)',
           borderRadius: 3,
           barThickness: 'flex',
-          maxBarThickness: 20
+          maxBarThickness: 15
         }]
       },
       options: {
