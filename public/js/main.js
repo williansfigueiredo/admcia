@@ -587,19 +587,16 @@ async function updateStatusIndicators() {
   atualizarGraficoJobsSemana();
 }
 
-// Instância do gráfico de jobs da semana
-let chartJobsSemanaInstance = null;
-
 /**
- * Atualiza o gráfico de barras de jobs da semana
+ * Atualiza o mini-gráfico de jobs da semana (barras verticais)
  */
 async function atualizarGraficoJobsSemana() {
-  const canvas = document.getElementById('chartJobsSemana');
+  const miniChart = document.getElementById('mini-chart-jobs');
   const kpiTotal = document.getElementById('kpi-jobs');
   const kpiTrend = document.getElementById('kpi-jobs-trend');
   const kpiPct = document.getElementById('kpi-jobs-pct');
   
-  if (!canvas) return;
+  if (!miniChart) return;
 
   try {
     const response = await fetch(`${API_URL}/jobs/semana`);
@@ -616,7 +613,6 @@ async function atualizarGraficoJobsSemana() {
     if (kpiTrend && kpiPct) {
       const variacao = parseFloat(dados.variacao);
       const sinal = variacao >= 0 ? '+' : '';
-      const icone = variacao > 0 ? 'arrow-up' : variacao < 0 ? 'arrow-down' : 'dash';
       
       kpiPct.textContent = `${sinal}${Math.abs(variacao).toFixed(1)}%`;
       
@@ -626,74 +622,44 @@ async function atualizarGraficoJobsSemana() {
       // Adiciona classe baseada na variação
       if (variacao > 0) {
         kpiTrend.classList.add('positive');
-        kpiTrend.innerHTML = `<i class="bi bi-arrow-up"></i><span id="kpi-jobs-pct">${sinal}${Math.abs(variacao).toFixed(1)}%</span><span class="text-muted ms-1 fw-normal small">vs semana ant.</span>`;
+        kpiTrend.innerHTML = `<i class="bi bi-arrow-up"></i><span id="kpi-jobs-pct">${sinal}${Math.abs(variacao).toFixed(1)}%</span><span class="text-muted ms-1 fw-normal">vs semana ant.</span>`;
       } else if (variacao < 0) {
         kpiTrend.classList.add('negative');
-        kpiTrend.innerHTML = `<i class="bi bi-arrow-down"></i><span id="kpi-jobs-pct">${sinal}${Math.abs(variacao).toFixed(1)}%</span><span class="text-muted ms-1 fw-normal small">vs semana ant.</span>`;
+        kpiTrend.innerHTML = `<i class="bi bi-arrow-down"></i><span id="kpi-jobs-pct">${sinal}${Math.abs(variacao).toFixed(1)}%</span><span class="text-muted ms-1 fw-normal">vs semana ant.</span>`;
       } else {
         kpiTrend.classList.add('neutral');
-        kpiTrend.innerHTML = `<i class="bi bi-dash"></i><span id="kpi-jobs-pct">0.0%</span><span class="text-muted ms-1 fw-normal small">vs semana ant.</span>`;
+        kpiTrend.innerHTML = `<i class="bi bi-dash"></i><span id="kpi-jobs-pct">0.0%</span><span class="text-muted ms-1 fw-normal">vs semana ant.</span>`;
       }
     }
 
-    const ctx = canvas.getContext('2d');
-
-    // Destrói gráfico anterior se existir
-    if (chartJobsSemanaInstance) {
-      chartJobsSemanaInstance.destroy();
-    }
-
+    // Cria mini-barras (igual ao gráfico de faturamento)
+    miniChart.innerHTML = '';
+    const maxValor = Math.max(...dados.dias);
     const labels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    
-    chartJobsSemanaInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: dados.dias,
-          backgroundColor: 'rgba(10, 179, 156, 0.8)',
-          borderRadius: 3,
-          barThickness: 'flex',
-          maxBarThickness: 15
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                return context.parsed.y + ' job' + (context.parsed.y !== 1 ? 's' : '');
-              }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1,
-              display: false
-            },
-            grid: { display: false },
-            border: { display: false }
-          },
-          x: {
-            grid: { display: false },
-            border: { display: false },
-            ticks: {
-              font: { size: 10 },
-              color: '#888',
-              padding: 4
-            }
-          }
-        }
+
+    dados.dias.forEach((valor, index) => {
+      let altura = 0;
+      if (maxValor > 0) altura = (valor / maxValor) * 100;
+      if (altura < 15) altura = 15;
+
+      const barra = document.createElement('div');
+      barra.className = 'mini-bar bg-bar-green';
+      barra.style.height = `${altura}%`;
+      barra.style.cursor = "pointer";
+      barra.title = `${labels[index]}: ${valor} job${valor !== 1 ? 's' : ''}`;
+      
+      // Destaca o dia atual
+      const hoje = new Date().getDay(); // 0 = Dom, 1 = Seg, ...
+      if (index === hoje) {
+        barra.style.opacity = "1";
+      } else {
+        barra.style.opacity = "0.4";
       }
+
+      miniChart.appendChild(barra);
     });
 
-    console.log('✅ Gráfico de jobs da semana atualizado');
+    console.log('✅ Mini-gráfico de jobs da semana atualizado');
   } catch (error) {
     console.error('❌ Erro ao carregar gráfico da semana:', error);
   }
