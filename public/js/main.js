@@ -11144,11 +11144,21 @@ function inicializarFinanceiro() {
   financeiroCarregado = true;
   
   console.log('💰 Inicializando módulo financeiro...');
+  
+  // Verifica se Chart.js está carregado
+  if (typeof Chart === 'undefined') {
+    console.error('❌ Chart.js não está carregado!');
+    return;
+  } else {
+    console.log('✅ Chart.js está carregado:', Chart.version);
+  }
+  
   carregarResumoFinanceiro();
   carregarTransacoes();
   
   // Pequeno delay para garantir que o canvas já está renderizado
   setTimeout(() => {
+    console.log('🎨 Iniciando carregamento dos gráficos...');
     carregarGraficoFluxoCaixa();
     carregarGraficoDespesasCategoria();
   }, 100);
@@ -11538,11 +11548,19 @@ async function excluirTransacao(id) {
 // Carregar gráfico de fluxo de caixa
 async function carregarGraficoFluxoCaixa() {
   const canvas = document.getElementById('financeChart');
-  if (!canvas) return;
+  if (!canvas) {
+    console.log('❌ Canvas financeChart não encontrado');
+    return;
+  }
 
   try {
+    console.log('📊 Carregando gráfico de fluxo de caixa...');
     const response = await fetch(`${API_URL}/financeiro/grafico-fluxo`);
     const dados = await response.json();
+    
+    console.log('📊 Dados recebidos do gráfico:', dados);
+    console.log('📊 Entradas:', dados.entradas);
+    console.log('📊 Saídas:', dados.saidas);
 
     const ctx = canvas.getContext('2d');
 
@@ -11590,6 +11608,7 @@ async function carregarGraficoFluxoCaixa() {
             beginAtZero: true,
             ticks: {
               callback: function(value) {
+                if (value === 0) return 'R$ 0';
                 return 'R$ ' + (value / 1000).toFixed(0) + 'K';
               }
             },
@@ -11619,11 +11638,20 @@ let despesasCategoriaChartInstance = null;
 // Carregar gráfico de despesas por categoria (pizza/doughnut)
 async function carregarGraficoDespesasCategoria() {
   const canvas = document.getElementById('despesasCategoriaChart');
-  if (!canvas) return;
+  if (!canvas) {
+    console.log('❌ Canvas despesasCategoriaChart não encontrado');
+    return;
+  }
 
   try {
+    console.log('🍰 Carregando gráfico de despesas por categoria...');
     const response = await fetch(`${API_URL}/financeiro/despesas-por-categoria`);
     const dados = await response.json();
+    
+    console.log('🍰 Dados recebidos:', dados);
+    console.log('🍰 Labels:', dados.labels);
+    console.log('🍰 Valores:', dados.valores);
+    console.log('🍰 Total:', dados.total);
 
     const ctx = canvas.getContext('2d');
 
@@ -11648,12 +11676,15 @@ async function carregarGraficoDespesasCategoria() {
 
     // Se não houver dados, mostra mensagem
     if (!dados.labels || dados.labels.length === 0) {
+      console.log('⚠️ Nenhuma despesa cadastrada no mês atual');
       const legendaEl = document.getElementById('despesasCategoriaLegenda');
       if (legendaEl) {
         legendaEl.innerHTML = '<span class="text-muted">Nenhuma despesa cadastrada este mês</span>';
       }
       return;
     }
+
+    console.log('✅ Renderizando gráfico com', dados.labels.length, 'categorias');
 
     despesasCategoriaChartInstance = new Chart(ctx, {
       type: 'doughnut',
