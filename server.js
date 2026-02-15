@@ -1363,13 +1363,12 @@ app.get('/financeiro/resumo', (req, res) => {
         AND MONTH(data_vencimento) = MONTH(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
         AND YEAR(data_vencimento) = YEAR(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
     `,
-    // Vencidas (Jobs com pagamento pendente e data passada)
+    // Vencidas (Jobs com pagamento = 'Vencido' - TOTAL ACUMULADO, não apenas do mês)
     vencidas: `
       SELECT COALESCE(SUM(valor), 0) as total, COUNT(*) as qtd
       FROM jobs 
-      WHERE pagamento IN ('Pendente', 'Parcial') 
+      WHERE pagamento = 'Vencido'
         AND status NOT IN ('Cancelado')
-        AND data_job < CURRENT_DATE()
     `
   };
 
