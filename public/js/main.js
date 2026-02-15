@@ -9130,20 +9130,10 @@ window.salvarNovaEscala = async function () {
   }
 
   try {
-    // Se tem job selecionado, adiciona funcionário à equipe do job também
-    if (jobId) {
-      // 1. Adiciona na job_equipe
-      await fetch(`${API_URL}/jobs/${jobId}/equipe/adicionar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          funcionario_id: funcionarioId,
-          funcao: tipo === 'Trabalho' ? 'Técnico' : tipo
-        })
-      });
-    }
+    // NÃO adiciona na job_equipe - é apenas uma escala manual vinculada
+    // O funcionário aparecerá apenas nos dias da escala, não em todos os dias do job
 
-    // 2. Cria a escala
+    // Cria a escala com as datas selecionadas pelo usuário
     const dados = {
       funcionario_id: funcionarioId,
       data_inicio: dataInicio,
@@ -9217,25 +9207,9 @@ document.addEventListener('DOMContentLoaded', function() {
             opt.value = job.id;
             const dataFormatada = job.data_inicio ? formatarData(job.data_inicio) : '';
             opt.text = `#${job.numero_pedido || job.id} - ${job.descricao || 'Sem descrição'} (${dataFormatada})`;
-            // Guarda as datas do job no option para usar depois
-            opt.setAttribute('data-data-inicio', job.data_inicio || '');
-            opt.setAttribute('data-data-fim', job.data_fim || job.data_inicio || '');
             selectJob.appendChild(opt);
           });
-          
-          // Evento para preencher datas quando selecionar um job
-          selectJob.onchange = function() {
-            const selectedOption = selectJob.options[selectJob.selectedIndex];
-            const dataInicio = selectedOption.getAttribute('data-data-inicio');
-            const dataFim = selectedOption.getAttribute('data-data-fim');
-            
-            if (dataInicio) {
-              document.getElementById('escalaDataInicio').value = dataInicio.split('T')[0];
-            }
-            if (dataFim) {
-              document.getElementById('escalaDataFim').value = dataFim.split('T')[0];
-            }
-          };
+          // NÃO preenche datas automaticamente - usuário escolhe manualmente
         })
         .catch(err => {
           console.error("Erro ao carregar jobs:", err);
