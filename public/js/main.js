@@ -9814,9 +9814,17 @@ function renderizarTabelaHistorico(lista) {
     if (item.status === 'Confirmado') badgeClass = 'bg-warning text-dark';
     if (item.status === 'Cancelado') badgeClass = 'bg-danger';
 
-    // Monta o ID no formato correto (tipo-id) para funcionar com a função de visualização
+    // Para escalas vinculadas a jobs, usa 'job' como tipo para abrir o pedido diretamente
+    // O id já é o job_id devido ao COALESCE na query
     const tipoRegistro = item.tipo_registro || 'job';
-    const eventoId = `${tipoRegistro}-${item.id}`;
+    let eventoId;
+    
+    // Se for escala com job_id vinculado, trata como job para abrir direto
+    if (tipoRegistro === 'escala' && item.job_id) {
+      eventoId = `job-${item.job_id}`;
+    } else {
+      eventoId = `${tipoRegistro}-${item.id}`;
+    }
 
     html += `
             <tr>
