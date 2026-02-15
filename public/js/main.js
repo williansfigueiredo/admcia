@@ -11279,6 +11279,10 @@ async function carregarTransacoes() {
   try {
     const response = await fetch(`${API_URL}/financeiro/transacoes?${params}`);
     transacoesCache = await response.json();
+    console.log('💰 Transações recebidas:', transacoesCache);
+    console.log('💰 Tipo:', typeof transacoesCache);
+    console.log('💰 É array?', Array.isArray(transacoesCache));
+    console.log('💰 Estrutura:', JSON.stringify(transacoesCache, null, 2));
     renderizarTransacoes(transacoesCache);
   } catch (error) {
     console.error('❌ Erro ao carregar transações:', error);
@@ -11559,6 +11563,7 @@ async function carregarGraficoFluxoCaixa() {
     const dados = await response.json();
     
     console.log('📊 Dados recebidos do gráfico:', dados);
+    console.log('📊 Estrutura completa:', JSON.stringify(dados, null, 2));
     console.log('📊 Entradas:', dados.entradas);
     console.log('📊 Saídas:', dados.saidas);
 
@@ -11649,6 +11654,7 @@ async function carregarGraficoDespesasCategoria() {
     const dados = await response.json();
     
     console.log('🍰 Dados recebidos:', dados);
+    console.log('🍰 Estrutura completa:', JSON.stringify(dados, null, 2));
     console.log('🍰 Labels:', dados.labels);
     console.log('🍰 Valores:', dados.valores);
     console.log('🍰 Total:', dados.total);

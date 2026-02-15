@@ -1634,10 +1634,20 @@ app.get('/financeiro/grafico-fluxo', (req, res) => {
   `;
 
   db.query(sqlReceitas, [ano], (err, receitas) => {
-    if (err) return res.status(500).json({ error: err.message });
+    if (err) {
+      console.error('❌ Erro ao buscar receitas:', err);
+      return res.status(500).json({ error: err.message });
+    }
+
+    console.log('💰 Receitas encontradas:', receitas);
 
     db.query(sqlDespesas, [ano], (err, despesas) => {
-      if (err) return res.status(500).json({ error: err.message });
+      if (err) {
+        console.error('❌ Erro ao buscar despesas:', err);
+        return res.status(500).json({ error: err.message });
+      }
+
+      console.log('💳 Despesas encontradas:', despesas);
 
       // Monta arrays de 12 posições
       const entradas = Array(12).fill(0);
@@ -1654,6 +1664,7 @@ app.get('/financeiro/grafico-fluxo', (req, res) => {
         }
       });
 
+      console.log('📊 Enviando para frontend:', { entradas, saidas });
       res.json({ entradas, saidas });
     });
   });
@@ -1696,6 +1707,8 @@ app.get('/financeiro/despesas-por-categoria', (req, res) => {
       return res.status(500).json({ error: err.message });
     }
     
+    console.log('🍰 Resultados da query:', results);
+    
     // Formata para o gráfico
     const dados = {
       labels: results.map(r => r.categoria),
@@ -1703,6 +1716,7 @@ app.get('/financeiro/despesas-por-categoria', (req, res) => {
       total: results.reduce((acc, r) => acc + (parseFloat(r.total) || 0), 0)
     };
     
+    console.log('🍰 Enviando para frontend:', dados);
     res.json(dados);
   });
 });
