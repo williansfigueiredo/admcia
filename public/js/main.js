@@ -9652,6 +9652,7 @@ function renderizarCalendarioFuncionario(listaJobs) {
     if (job.status === 'Em Andamento') cor = '#198754'; // Verde
     if (job.status === 'Confirmado') cor = '#ffc107'; // Amarelo
     if (job.status === 'Cancelado') cor = '#dc3545'; // Vermelho
+    if (job.status === 'Escala') cor = '#3b82f6'; // Azul para escalas avulsas
 
     // Extrai datas como strings YYYY-MM-DD
     const dataInicioStr = extrairDataStr(job.data_inicio);
@@ -9691,9 +9692,15 @@ function renderizarCalendarioFuncionario(listaJobs) {
     // Determina se é evento de dia inteiro
     const isAllDay = !job.hora_inicio_evento && !job.hora_fim_evento;
 
+    // Monta o título baseado no tipo de registro
+    const isEscala = job.tipo_registro === 'escala';
+    const titulo = isEscala 
+      ? `📅 ${job.descricao}` 
+      : `📋 Job #${job.id} - ${job.descricao}`;
+
     return {
-      id: job.id,
-      title: `Job #${job.id} - ${job.descricao}`,
+      id: `${job.tipo_registro || 'job'}-${job.id}`,
+      title: titulo,
       start: dataHoraInicio,
       end: dataHoraFim,
       allDay: isAllDay,
@@ -9701,7 +9708,8 @@ function renderizarCalendarioFuncionario(listaJobs) {
       borderColor: cor,
       extendedProps: {
         status: job.status,
-        funcao: job.funcao
+        funcao: job.funcao,
+        tipo_registro: job.tipo_registro || 'job'
       }
     };
   });

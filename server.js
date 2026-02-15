@@ -2802,14 +2802,14 @@ app.get('/escalas', (req, res) => {
 
 
 // ROTA: BUSCAR HISTÓRICO DE JOBS DE UM FUNCIONÁRIO
-// ROTA: BUSCAR HISTÓRICO (UNINDO EQUIPE + OPERADOR PRINCIPAL)
+// ROTA: BUSCAR HISTÓRICO (UNINDO EQUIPE + OPERADOR PRINCIPAL + ESCALAS MANUAIS)
 app.get('/funcionarios/:id/historico', (req, res) => {
   const id = req.params.id;
   console.log(`🔎 Buscando histórico completo para Func ID: ${id}`);
 
   const sql = `
         /* 1. Busca se ele está na lista de EQUIPE (Tabela Nova) */
-        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, je.funcao
+        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, je.funcao, 'job' as tipo_registro
         FROM jobs j
         JOIN job_equipe je ON j.id = je.job_id
         WHERE je.funcionario_id = ?
@@ -2817,15 +2817,33 @@ app.get('/funcionarios/:id/historico', (req, res) => {
         UNION ALL
 
         /* 2. Busca se ele é o OPERADOR PRINCIPAL (Tabela Antiga/Dropdown) */
-        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, 'Operador Principal' as funcao
+        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, 'Operador Principal' as funcao, 'job' as tipo_registro
         FROM jobs j
         WHERE j.operador_id = ?
+
+        UNION ALL
+
+        /* 3. Busca ESCALAS MANUAIS do funcionário */
+        SELECT 
+          e.id, 
+          CASE 
+            WHEN j.descricao IS NOT NULL THEN CONCAT(j.descricao, ' - ', e.tipo)
+            ELSE CONCAT('Escala ', e.tipo)
+          END as descricao,
+          COALESCE(e.data_inicio, e.data_escala) as data_inicio, 
+          COALESCE(e.data_fim, e.data_escala) as data_fim, 
+          COALESCE(j.status, 'Escala') as status, 
+          e.tipo as funcao,
+          'escala' as tipo_registro
+        FROM escalas e
+        LEFT JOIN jobs j ON e.job_id = j.id
+        WHERE e.funcionario_id = ?
 
         ORDER BY data_inicio DESC
     `;
 
-  // Passamos o ID duas vezes (uma para cada ?)
-  db.query(sql, [id, id], (err, results) => {
+  // Passamos o ID três vezes (uma para cada ?)
+  db.query(sql, [id, id, id], (err, results) => {
     if (err) {
       console.error("❌ Erro SQL Histórico:", err);
       return res.status(500).json({ error: err.message });
