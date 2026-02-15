@@ -376,6 +376,24 @@ db.getConnection((err, connection) => {
         dados_novos LONGTEXT,
         ip_address VARCHAR(45),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`,
+      
+      // 17. transacoes financeiras
+      `CREATE TABLE IF NOT EXISTS transacoes (
+        id INT(11) AUTO_INCREMENT PRIMARY KEY,
+        tipo ENUM('receita', 'despesa') NOT NULL,
+        categoria VARCHAR(100),
+        descricao VARCHAR(255),
+        valor DECIMAL(10,2) NOT NULL,
+        data_vencimento DATE,
+        data_pagamento DATE,
+        status ENUM('pendente', 'pago', 'atrasado', 'cancelado') DEFAULT 'pendente',
+        job_id INT(11),
+        cliente_id INT(11),
+        forma_pagamento VARCHAR(50),
+        observacoes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )`
     ];
     
@@ -1245,6 +1263,306 @@ app.get('/dashboard/grafico-financeiro', (req, res) => {
 
     res.json(dadosPorMes);
   });
+});
+
+
+// =============================================================
+// ROTAS DO MÓDULO FINANCEIRO
+// =============================================================
+
+// RESUMO FINANCEIRO (Cards do topo)
+app.get('/financeiro/resumo', (req, res) => {
+  const queries = {
+    // A Receber: Jobs não pagos (pendentes + atrasados)
+    aReceber: `
+      SELECT COALESCE(SUM(valor), 0) as total 
+      FROM jobs 
+      WHERE pagamento IN ('Pendente', 'Parcial') 
+        AND status NOT IN ('Cancelado')
+    `,
+    // Recebido este mês
+    recebidoMes: `
+      SELECT COALESCE(SUM(valor), 0) as total 
+      FROM jobs 
+      WHERE pagamento = 'Pago' 
+        AND MONTH(data_job) = MONTH(CURRENT_DATE()) 
+        AND YEAR(data_job) = YEAR(CURRENT_DATE())
+    `,
+    // Despesas do mês (da tabela transacoes)
+    despesasMes: `
+      SELECT COALESCE(SUM(valor), 0) as total 
+      FROM transacoes 
+      WHERE tipo = 'despesa'
+        AND status IN ('pago', 'pendente')
+        AND MONTH(data_vencimento) = MONTH(CURRENT_DATE()) 
+        AND YEAR(data_vencimento) = YEAR(CURRENT_DATE())
+    `,
+    // Vencidas (Jobs com pagamento pendente e data passada)
+    vencidas: `
+      SELECT COALESCE(SUM(valor), 0) as total, COUNT(*) as qtd
+      FROM jobs 
+      WHERE pagamento IN ('Pendente', 'Parcial') 
+        AND status NOT IN ('Cancelado')
+        AND data_job < CURRENT_DATE()
+    `
+  };
+
+  const resultado = { aReceber: 0, recebidoMes: 0, despesasMes: 0, vencidas: 0, qtdVencidas: 0 };
+
+  db.query(queries.aReceber, (err, r1) => {
+    if (!err && r1[0]) resultado.aReceber = parseFloat(r1[0].total) || 0;
+    
+    db.query(queries.recebidoMes, (err, r2) => {
+      if (!err && r2[0]) resultado.recebidoMes = parseFloat(r2[0].total) || 0;
+      
+      db.query(queries.despesasMes, (err, r3) => {
+        if (!err && r3[0]) resultado.despesasMes = parseFloat(r3[0].total) || 0;
+        
+        db.query(queries.vencidas, (err, r4) => {
+          if (!err && r4[0]) {
+            resultado.vencidas = parseFloat(r4[0].total) || 0;
+            resultado.qtdVencidas = r4[0].qtd || 0;
+          }
+          
+          // Calcula saldo (recebido - despesas)
+          resultado.saldo = resultado.recebidoMes - resultado.despesasMes;
+          
+          res.json(resultado);
+        });
+      });
+    });
+  });
+});
+
+// LISTAR TRANSAÇÕES (Jobs como receitas + transações manuais)
+app.get('/financeiro/transacoes', (req, res) => {
+  const { tipo, status, dataInicio, dataFim, busca } = req.query;
+
+  // União de Jobs (receitas) com Transações manuais
+  let sql = `
+    SELECT 
+      'job' as origem,
+      j.id,
+      j.descricao,
+      'receita' as tipo,
+      CASE 
+        WHEN j.forma_pagamento LIKE '%Locação%' THEN 'Locação'
+        WHEN j.forma_pagamento LIKE '%Serviço%' THEN 'Serviço'
+        ELSE 'Locação + Serviço'
+      END as categoria,
+      j.valor,
+      j.data_job as data_vencimento,
+      NULL as data_pagamento,
+      CASE 
+        WHEN j.pagamento = 'Pago' THEN 'pago'
+        WHEN j.pagamento = 'Cancelado' THEN 'cancelado'
+        WHEN j.data_job < CURRENT_DATE() AND j.pagamento != 'Pago' THEN 'atrasado'
+        ELSE 'pendente'
+      END as status,
+      c.nome as cliente_nome,
+      j.cliente_id
+    FROM jobs j
+    LEFT JOIN clientes c ON j.cliente_id = c.id
+    WHERE j.status != 'Cancelado'
+    
+    UNION ALL
+    
+    SELECT 
+      'transacao' as origem,
+      t.id,
+      t.descricao,
+      t.tipo,
+      t.categoria,
+      t.valor,
+      t.data_vencimento,
+      t.data_pagamento,
+      t.status,
+      c.nome as cliente_nome,
+      t.cliente_id
+    FROM transacoes t
+    LEFT JOIN clientes c ON t.cliente_id = c.id
+  `;
+
+  let conditions = [];
+  let params = [];
+
+  // Filtros aplicados via subquery
+  let sqlFinal = `SELECT * FROM (${sql}) AS uniao WHERE 1=1`;
+
+  if (tipo && tipo !== 'todos') {
+    sqlFinal += ` AND tipo = ?`;
+    params.push(tipo);
+  }
+
+  if (status && status !== 'todos') {
+    sqlFinal += ` AND status = ?`;
+    params.push(status);
+  }
+
+  if (dataInicio) {
+    sqlFinal += ` AND data_vencimento >= ?`;
+    params.push(dataInicio);
+  }
+
+  if (dataFim) {
+    sqlFinal += ` AND data_vencimento <= ?`;
+    params.push(dataFim);
+  }
+
+  if (busca) {
+    sqlFinal += ` AND (descricao LIKE ? OR cliente_nome LIKE ?)`;
+    params.push(`%${busca}%`, `%${busca}%`);
+  }
+
+  sqlFinal += ` ORDER BY data_vencimento DESC LIMIT 100`;
+
+  db.query(sqlFinal, params, (err, results) => {
+    if (err) {
+      console.error('❌ Erro ao buscar transações:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(results);
+  });
+});
+
+// CRIAR TRANSAÇÃO MANUAL (Despesa ou Receita)
+app.post('/financeiro/transacoes', (req, res) => {
+  const { tipo, categoria, descricao, valor, data_vencimento, status, forma_pagamento, observacoes, cliente_id, job_id } = req.body;
+
+  const sql = `
+    INSERT INTO transacoes (tipo, categoria, descricao, valor, data_vencimento, status, forma_pagamento, observacoes, cliente_id, job_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  const values = [
+    tipo || 'despesa',
+    categoria || 'Outros',
+    descricao,
+    valor,
+    data_vencimento,
+    status || 'pendente',
+    forma_pagamento,
+    observacoes,
+    cliente_id || null,
+    job_id || null
+  ];
+
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error('❌ Erro ao criar transação:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    console.log('✅ Transação criada com ID:', result.insertId);
+    res.json({ message: 'Transação criada com sucesso!', id: result.insertId });
+  });
+});
+
+// ATUALIZAR STATUS DE TRANSAÇÃO
+app.put('/financeiro/transacoes/:id', (req, res) => {
+  const { id } = req.params;
+  const { status, data_pagamento, ...outros } = req.body;
+
+  let sql = 'UPDATE transacoes SET status = ?';
+  let params = [status];
+
+  if (data_pagamento) {
+    sql += ', data_pagamento = ?';
+    params.push(data_pagamento);
+  }
+
+  // Campos adicionais se enviados
+  ['categoria', 'descricao', 'valor', 'data_vencimento', 'forma_pagamento', 'observacoes'].forEach(campo => {
+    if (outros[campo] !== undefined) {
+      sql += `, ${campo} = ?`;
+      params.push(outros[campo]);
+    }
+  });
+
+  sql += ' WHERE id = ?';
+  params.push(id);
+
+  db.query(sql, params, (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Transação atualizada!', affected: result.affectedRows });
+  });
+});
+
+// DELETAR TRANSAÇÃO
+app.delete('/financeiro/transacoes/:id', (req, res) => {
+  const { id } = req.params;
+  db.query('DELETE FROM transacoes WHERE id = ?', [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Transação excluída!', deleted: result.affectedRows });
+  });
+});
+
+// MARCAR JOB COMO PAGO
+app.put('/financeiro/jobs/:id/pagar', (req, res) => {
+  const { id } = req.params;
+  const { data_pagamento } = req.body;
+
+  const sql = `UPDATE jobs SET pagamento = 'Pago' WHERE id = ?`;
+  
+  db.query(sql, [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    console.log(`✅ Job #${id} marcado como pago`);
+    res.json({ message: 'Pagamento registrado!', affected: result.affectedRows });
+  });
+});
+
+// GRÁFICO DE FLUXO DE CAIXA (Entradas vs Saídas por mês)
+app.get('/financeiro/grafico-fluxo', (req, res) => {
+  const ano = req.query.ano || new Date().getFullYear();
+
+  // Receitas (Jobs pagos por mês)
+  const sqlReceitas = `
+    SELECT MONTH(data_job) as mes, COALESCE(SUM(valor), 0) as total
+    FROM jobs 
+    WHERE YEAR(data_job) = ? AND pagamento = 'Pago'
+    GROUP BY MONTH(data_job)
+  `;
+
+  // Despesas por mês
+  const sqlDespesas = `
+    SELECT MONTH(data_vencimento) as mes, COALESCE(SUM(valor), 0) as total
+    FROM transacoes 
+    WHERE tipo = 'despesa' AND YEAR(data_vencimento) = ? AND status IN ('pago', 'pendente')
+    GROUP BY MONTH(data_vencimento)
+  `;
+
+  db.query(sqlReceitas, [ano], (err, receitas) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    db.query(sqlDespesas, [ano], (err, despesas) => {
+      if (err) return res.status(500).json({ error: err.message });
+
+      // Monta arrays de 12 posições
+      const entradas = Array(12).fill(0);
+      const saidas = Array(12).fill(0);
+
+      receitas.forEach(r => { entradas[r.mes - 1] = parseFloat(r.total); });
+      despesas.forEach(d => { saidas[d.mes - 1] = parseFloat(d.total); });
+
+      res.json({ entradas, saidas });
+    });
+  });
+});
+
+// CATEGORIAS DE DESPESAS (para dropdown)
+app.get('/financeiro/categorias', (req, res) => {
+  const categorias = [
+    'Combustível',
+    'Manutenção',
+    'Logística',
+    'Folha de Pagamento',
+    'Aluguel',
+    'Materiais',
+    'Marketing',
+    'Impostos',
+    'Fornecedores',
+    'Outros'
+  ];
+  res.json(categorias);
 });
 
 
@@ -2572,7 +2890,7 @@ app.get('/agenda', (req, res) => {
     const eventosEscalas = [];
     // Guarda combinação (funcionario_id, job_id) de escalas manuais para evitar duplicação
     const escalasComJob = new Set();
-    
+
     escalasRaw.forEach(e => {
       const dataInicioStr = extrairDataStr(e.data_inicio);
       const dataFimStr = e.data_fim ? extrairDataStr(e.data_fim) : dataInicioStr;
@@ -2587,13 +2905,13 @@ app.get('/agenda', (req, res) => {
       const isTrabalhoDeJob = e.job_id && e.tipo_escala === 'Trabalho';
       const icone = isTrabalhoDeJob ? '📋' : '📅';
       let titulo = `${icone} ${e.funcionario_nome}`;
-      
+
       // Marca que esse funcionário tem escala vinculada a este job (para evitar duplicação)
       // Marca TODAS as escalas com job_id para evitar que apareça duplicado do sqlJobs
       if (e.job_id) {
         escalasComJob.add(`${e.operador_id}-${e.job_id}`);
       }
-      
+
       if (e.job_descricao) {
         titulo += ` - ${e.job_descricao}`;
       }
@@ -2613,7 +2931,7 @@ app.get('/agenda', (req, res) => {
         // Se escala tem job vinculado, usa horário do job; senão usa horário padrão
         const horaInicio = e.job_hora_chegada || '08:00:00';
         const horaFim = e.job_hora_fim || horaInicio; // Se não tem fim, usa o mesmo horário de início
-        
+
         eventosEscalas.push({
           id: `${e.id}-${dataStr}`,
           start: `${dataStr} ${horaInicio}`,
@@ -3528,7 +3846,7 @@ app.get('/auth/logout', (req, res) => {
   });
 
   if (token) {
-    db.query("DELETE FROM sessoes_usuarios WHERE token = ?", [token], () => {});
+    db.query("DELETE FROM sessoes_usuarios WHERE token = ?", [token], () => { });
   }
 
   res.redirect('/login');

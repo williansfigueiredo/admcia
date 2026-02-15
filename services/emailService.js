@@ -28,13 +28,13 @@ function inicializarEmail() {
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || '';
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || '';
   const useSecure = smtpPort === 465; // SSL para porta 465
-  
+
   // Configurar remetente
-  emailFrom = process.env.SMTP_FROM_NAME 
+  emailFrom = process.env.SMTP_FROM_NAME
     ? `${process.env.SMTP_FROM_NAME} <${smtpUser}>`
     : process.env.EMAIL_FROM || smtpUser;
 
-  console.log(`📧 Tentando configurar email: host=${smtpHost}, port=${smtpPort}, secure=${useSecure}, user=${smtpUser ? smtpUser.substring(0,5) + '...' : 'NÃO DEFINIDO'}`);
+  console.log(`📧 Tentando configurar email: host=${smtpHost}, port=${smtpPort}, secure=${useSecure}, user=${smtpUser ? smtpUser.substring(0, 5) + '...' : 'NÃO DEFINIDO'}`);
 
   if (smtpUser && smtpPass) {
     transporter = nodemailer.createTransport({
@@ -134,7 +134,7 @@ function templateNovoAcesso(nome, email, senha, urlSistema) {
       <a href="${urlSistema}" class="btn">Acessar o Sistema</a>
     </p>
   `;
-  
+
   return templateBase(conteudo, 'Bem-vindo ao Sistema');
 }
 
@@ -162,7 +162,7 @@ function templateSenhaResetada(nome, email, senha, urlSistema) {
       <a href="${urlSistema}" class="btn">Acessar o Sistema</a>
     </p>
   `;
-  
+
   return templateBase(conteudo, 'Senha Resetada');
 }
 
@@ -194,7 +194,7 @@ function templateRecuperacaoSenha(nome, codigo, urlRecuperacao, minutosExpiracao
       Se o botão não funcionar, use o código acima diretamente no sistema.
     </p>
   `;
-  
+
   return templateBase(conteudo, 'Recuperação de Senha');
 }
 

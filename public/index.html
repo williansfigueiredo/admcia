@@ -957,110 +957,108 @@
           <p class="text-muted mb-0">Fluxo de caixa: Locações e Serviços</p>
         </div>
         <div class="d-flex gap-2">
-          <button class="btn-header-outline">
+          <button class="btn-header-outline" onclick="exportarFinanceiro()">
             <i class="bi bi-download me-2"></i>Exportar
           </button>
-          <button class="btn-header-dark">
+          <button class="btn-header-dark" onclick="abrirModalNovaTransacao()">
             <i class="bi bi-plus-lg me-2"></i>Nova Transação
           </button>
         </div>
       </div>
 
+      <!-- Cards de Resumo -->
       <div class="row g-4 mb-4">
-
-        <div class="col-md-4">
+        <div class="col-md-3">
           <div class="card-custom stat-card">
             <div class="d-flex justify-content-between align-items-start">
               <div class="fin-icon-box bg-green-soft">
                 <i class="bi bi-arrow-down-left"></i>
               </div>
-              <div class="trend-pill bg-green-soft">
-                <i class="bi bi-graph-up-arrow"></i> 8.5%
-              </div>
+              <span class="badge bg-success-subtle text-success" id="finQtdVencidas">0 vencidas</span>
             </div>
-            <div class="fin-label">A Receber (Jobs)</div>
-            <div class="fin-value sensitive-value">R$ 17.3K</div>
+            <div class="fin-label">A Receber</div>
+            <div class="fin-value sensitive-value" id="finAReceber">R$ 0,00</div>
           </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-3">
+          <div class="card-custom stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="fin-icon-box bg-blue-soft">
+                <i class="bi bi-check2-circle"></i>
+              </div>
+              <span class="badge bg-primary-subtle text-primary">Este mês</span>
+            </div>
+            <div class="fin-label">Recebido</div>
+            <div class="fin-value sensitive-value" id="finRecebido">R$ 0,00</div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
           <div class="card-custom stat-card">
             <div class="d-flex justify-content-between align-items-start">
               <div class="fin-icon-box bg-red-soft">
                 <i class="bi bi-arrow-up-right"></i>
               </div>
-              <div class="trend-pill bg-red-soft">
-                <i class="bi bi-graph-down-arrow"></i> 3.2%
-              </div>
+              <span class="badge bg-danger-subtle text-danger">Despesas</span>
             </div>
-            <div class="fin-label">Custos Operacionais</div>
-            <div class="fin-value sensitive-value">R$ 5.8K</div>
+            <div class="fin-label">Custos do Mês</div>
+            <div class="fin-value sensitive-value" id="finDespesas">R$ 0,00</div>
           </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-3">
           <div class="card-custom stat-card">
             <div class="d-flex justify-content-between align-items-start">
-              <div class="fin-icon-box bg-blue-soft">
+              <div class="fin-icon-box bg-warning-soft">
                 <i class="bi bi-wallet2"></i>
               </div>
-              <div class="trend-pill bg-green-soft">
-                <i class="bi bi-graph-up-arrow"></i> 12.8%
-              </div>
+              <span class="badge bg-warning-subtle text-warning">Saldo</span>
             </div>
-            <div class="fin-label">Saldo em Caixa</div>
-            <div class="fin-value sensitive-value">R$ 11.5K</div>
+            <div class="fin-label">Resultado do Mês</div>
+            <div class="fin-value sensitive-value" id="finSaldo">R$ 0,00</div>
           </div>
         </div>
-
       </div>
 
+      <!-- Gráfico de Fluxo de Caixa -->
       <div class="card-custom mb-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h5 class="fw-bold mb-1">Fluxo de Caixa</h5>
-            <p class="text-muted small mb-0">
-              Receitas (Locações) vs Despesas (Frota/Equipe)
-            </p>
+            <p class="text-muted small mb-0">Receitas vs Despesas mensais</p>
           </div>
           <div class="d-flex gap-3 small">
             <div class="d-flex align-items-center gap-2">
-              <span style="
-                    width: 12px;
-                    height: 12px;
-                    background: #0ab39c;
-                    border-radius: 4px;
-                  "></span>
-              Entradas
+              <span style="width: 12px;height: 12px;background: #0ab39c;border-radius: 4px;"></span> Entradas
             </div>
             <div class="d-flex align-items-center gap-2">
-              <span style="
-                    width: 12px;
-                    height: 12px;
-                    background: #f06548;
-                    border-radius: 4px;
-                  "></span>
-              Saídas
+              <span style="width: 12px;height: 12px;background: #f06548;border-radius: 4px;"></span> Saídas
             </div>
           </div>
         </div>
         <div style="height: 320px"><canvas id="financeChart"></canvas></div>
       </div>
+
+      <!-- Tabela de Transações -->
       <div class="card-custom">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
           <div>
-            <h5 class="fw-bold mb-1">Transações Recentes</h5>
-            <p class="text-muted small mb-0">
-              Histórico de faturamento e pagamentos
-            </p>
+            <h5 class="fw-bold mb-1">Transações</h5>
+            <p class="text-muted small mb-0">Receitas e despesas do período</p>
           </div>
-          <div class="d-flex gap-2">
-            <div class="d-flex align-items-center border rounded px-2 bg-white">
-              <i class="bi bi-search text-muted small"></i><input type="text" class="border-0 small p-1 ms-1"
-                style="outline: none; width: 120px" placeholder="Buscar..." />
-            </div>
-            <select class="form-select form-select-sm" style="width: 100px">
-              <option>Todos</option>
+          <div class="d-flex gap-2 flex-wrap">
+            <input type="text" id="finBusca" class="form-control form-control-sm" style="width: 150px" placeholder="Buscar..." oninput="filtrarTransacoes()">
+            <select id="finFiltroTipo" class="form-select form-select-sm" style="width: 120px" onchange="filtrarTransacoes()">
+              <option value="todos">Todos</option>
+              <option value="receita">Receitas</option>
+              <option value="despesa">Despesas</option>
+            </select>
+            <select id="finFiltroStatus" class="form-select form-select-sm" style="width: 120px" onchange="filtrarTransacoes()">
+              <option value="todos">Todos Status</option>
+              <option value="pendente">Pendente</option>
+              <option value="pago">Pago</option>
+              <option value="atrasado">Atrasado</option>
             </select>
           </div>
         </div>
@@ -1068,111 +1066,110 @@
           <table class="table table-fin table-borderless mb-0">
             <thead>
               <tr>
-                <th>DESCRIÇÃO <i class="bi bi-arrow-down-short"></i></th>
+                <th>DESCRIÇÃO</th>
                 <th>TIPO</th>
                 <th>CATEGORIA</th>
-                <th>VALOR <i class="bi bi-arrow-down-short"></i></th>
+                <th>VALOR</th>
                 <th>VENCIMENTO</th>
                 <th>STATUS</th>
                 <th class="text-end">AÇÕES</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="tabelaTransacoesBody">
               <tr>
-                <td>
-                  <span class="fw-bold text-dark">Job - TV Record (Estúdio 3)</span>
-                </td>
-                <td class="text-income">Receita</td>
-                <td>Locação TP</td>
-                <td class="fw-bold text-income">+ R$ 15.800</td>
-                <td>24 jan 2026</td>
-                <td><span class="pill-green">Pago</span></td>
-                <td class="text-end text-muted">
-                  <i class="bi bi-eye cursor-pointer"></i>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="fw-bold text-dark">Reparo Monitor 19" (Quebra)</span>
-                </td>
-                <td class="text-expense">Despesa</td>
-                <td>Manutenção</td>
-                <td class="fw-bold text-expense">- R$ 2.500</td>
-                <td>27 jan 2026</td>
-                <td><span class="pill-green">Pago</span></td>
-                <td class="text-end text-muted">
-                  <i class="bi bi-eye cursor-pointer"></i>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="fw-bold text-dark">Job - Palestra Pfizer</span>
-                </td>
-                <td class="text-income">Receita</td>
-                <td>TP + Operador</td>
-                <td class="fw-bold text-income">+ R$ 4.200</td>
-                <td>19 jan 2026</td>
-                <td><span class="pill-yellow">Pendente</span></td>
-                <td class="text-end text-muted">
-                  <i class="bi bi-eye cursor-pointer"></i>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="fw-bold text-dark">Combustível - Fiorino</span>
-                </td>
-                <td class="text-expense">Despesa</td>
-                <td>Logística</td>
-                <td class="fw-bold text-expense">- R$ 3.800</td>
-                <td>14 jan 2026</td>
-                <td><span class="pill-red">Atrasado</span></td>
-                <td class="text-end text-muted">
-                  <i class="bi bi-eye cursor-pointer"></i>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="fw-bold text-dark">Campanha Política (Pacote)</span>
-                </td>
-                <td class="text-income">Receita</td>
-                <td>Locação Mensal</td>
-                <td class="fw-bold text-income">+ R$ 28.500</td>
-                <td>21 jan 2026</td>
-                <td><span class="pill-green">Pago</span></td>
-                <td class="text-end text-muted">
-                  <i class="bi bi-eye cursor-pointer"></i>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="fw-bold text-dark">Pagamento Operadores</span>
-                </td>
-                <td class="text-expense">Despesa</td>
-                <td>Mão de Obra</td>
-                <td class="fw-bold text-expense">- R$ 45.000</td>
-                <td>04 jan 2026</td>
-                <td><span class="pill-green">Pago</span></td>
-                <td class="text-end text-muted">
-                  <i class="bi bi-eye cursor-pointer"></i>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="fw-bold text-dark">Produtora VideoArt (Extra)</span>
-                </td>
-                <td class="text-income">Receita</td>
-                <td>Diária Extra</td>
-                <td class="fw-bold text-income">+ R$ 3.100</td>
-                <td>17 jan 2026</td>
-                <td><span class="pill-red">Atrasado</span></td>
-                <td class="text-end text-muted">
-                  <i class="bi bi-eye cursor-pointer"></i>
+                <td colspan="7" class="text-center text-muted py-4">
+                  <i class="bi bi-hourglass-split me-2"></i>Carregando transações...
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="mt-3 text-muted small">Mostrando 7 transações</div>
+        <div class="mt-3 text-muted small" id="finContador">Mostrando 0 transações</div>
+      </div>
+    </div>
+
+    <!-- MODAL: NOVA TRANSAÇÃO -->
+    <div class="modal fade" id="modalNovaTransacao" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold" id="modalTransacaoTitulo">Nova Transação</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="transacaoId">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Tipo *</label>
+                <select id="transacaoTipo" class="form-select" required>
+                  <option value="despesa">Despesa</option>
+                  <option value="receita">Receita</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Categoria *</label>
+                <select id="transacaoCategoria" class="form-select" required>
+                  <option value="Combustível">Combustível</option>
+                  <option value="Manutenção">Manutenção</option>
+                  <option value="Logística">Logística</option>
+                  <option value="Folha de Pagamento">Folha de Pagamento</option>
+                  <option value="Aluguel">Aluguel</option>
+                  <option value="Materiais">Materiais</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Impostos">Impostos</option>
+                  <option value="Fornecedores">Fornecedores</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-bold">Descrição *</label>
+                <input type="text" id="transacaoDescricao" class="form-control" placeholder="Ex: Pagamento de fornecedor" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Valor (R$) *</label>
+                <input type="number" id="transacaoValor" class="form-control" step="0.01" min="0" placeholder="0,00" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Data Vencimento *</label>
+                <input type="date" id="transacaoVencimento" class="form-control" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Status</label>
+                <select id="transacaoStatus" class="form-select">
+                  <option value="pendente">Pendente</option>
+                  <option value="pago">Pago</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Forma de Pagamento</label>
+                <select id="transacaoFormaPgto" class="form-select">
+                  <option value="">Selecione</option>
+                  <option value="PIX">PIX</option>
+                  <option value="Boleto">Boleto</option>
+                  <option value="Cartão">Cartão</option>
+                  <option value="Transferência">Transferência</option>
+                  <option value="Dinheiro">Dinheiro</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Cliente (opcional)</label>
+                <select id="transacaoCliente" class="form-select">
+                  <option value="">Nenhum</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-bold">Observações</label>
+                <textarea id="transacaoObs" class="form-control" rows="2" placeholder="Observações adicionais..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="salvarTransacao()">
+              <i class="bi bi-check-lg me-2"></i>Salvar
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
