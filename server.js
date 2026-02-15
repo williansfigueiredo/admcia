@@ -2808,11 +2808,16 @@ app.get('/funcionarios/:id/historico', (req, res) => {
   console.log(`🔎 Buscando histórico completo para Func ID: ${id}`);
 
   const sql = `
-        /* 1. Busca se ele está na lista de EQUIPE (Tabela Nova) */
+        /* 1. Busca se ele está na lista de EQUIPE (Tabela Nova) - EXCETO jobs com escala manual */
         SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, je.funcao, 'job' as tipo_registro
         FROM jobs j
         JOIN job_equipe je ON j.id = je.job_id
         WHERE je.funcionario_id = ?
+        AND NOT EXISTS (
+          SELECT 1 FROM escalas e 
+          WHERE e.funcionario_id = je.funcionario_id 
+          AND e.job_id = j.id
+        )
 
         UNION ALL
 

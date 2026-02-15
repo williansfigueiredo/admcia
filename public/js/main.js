@@ -9155,7 +9155,7 @@ window.salvarNovaEscala = async function () {
   }
 
   try {
-    // Se tem job selecionado, adiciona funcionário à equipe do job
+    // Se tem job selecionado, adiciona funcionário à equipe do job (para aparecer na Equipe do Evento)
     if (jobId) {
       await fetch(`${API_URL}/jobs/${jobId}/equipe/adicionar`, {
         method: 'POST',
