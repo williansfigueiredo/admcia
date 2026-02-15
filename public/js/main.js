@@ -9316,55 +9316,100 @@ window.toggleFuncView = function (modo) {
 };
 
 // 3. ABRIR MODAL MANUAL (para clique no calendário)
-window.abrirModalEscalaManual = function (data) {
+window.abrirModalEscalaManual = async function (data) {
   const campoData = document.getElementById('escalaData');
   if (campoData) campoData.value = data;
 
   const select = document.getElementById('escalaFuncionarioManual');
   select.innerHTML = '<option>Carregando...</option>';
 
-  fetch(`${API_URL}/funcionarios/todos`)
-    .then(r => r.json())
-    .then(lista => {
-      select.innerHTML = '';
-      lista.forEach(f => {
-        const opt = document.createElement('option');
-        opt.value = f.id;
-        opt.text = f.nome;
-        select.appendChild(opt);
-      });
-      const modalEl = document.getElementById('modalNovaEscalaManual');
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
+  try {
+    // Carregar funcionários
+    const resFuncionarios = await fetch(`${API_URL}/funcionarios/todos`);
+    const lista = await resFuncionarios.json();
+    
+    select.innerHTML = '';
+    lista.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f.id;
+      opt.text = f.nome;
+      select.appendChild(opt);
     });
+
+    // Carregar jobs ativos para vincular
+    const selectJob = document.getElementById('escalaJobManual');
+    if (selectJob) {
+      selectJob.innerHTML = '<option value="">Carregando jobs...</option>';
+      
+      const resJobs = await fetch(`${API_URL}/jobs/ativos`);
+      const jobs = await resJobs.json();
+      
+      selectJob.innerHTML = '<option value="">Nenhum - Escala avulsa</option>';
+      jobs.forEach(job => {
+        const opt = document.createElement('option');
+        opt.value = job.id;
+        const dataFormatada = job.data_inicio ? formatarData(job.data_inicio) : '';
+        opt.text = `#${job.numero_pedido || job.id} - ${job.descricao || 'Sem descrição'} (${dataFormatada})`;
+        selectJob.appendChild(opt);
+      });
+    }
+
+    const modalEl = document.getElementById('modalNovaEscalaManual');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  } catch (err) {
+    console.error("Erro ao carregar dados:", err);
+    alert("Erro ao carregar dados");
+  }
 };
 
 // 4. SALVAR ESCALA MANUAL (do modal antigo - clique no calendário)
-window.salvarEscalaManual = function () {
-  const dados = {
-    data: document.getElementById('escalaData').value,
-    funcionario_id: document.getElementById('escalaFuncionarioManual').value,
-    tipo: document.getElementById('escalaTipoManual').value,
-    obs: document.getElementById('escalaObsManual').value
-  };
+window.salvarEscalaManual = async function () {
+  const funcionarioId = document.getElementById('escalaFuncionarioManual').value;
+  const tipo = document.getElementById('escalaTipoManual').value;
+  const jobId = document.getElementById('escalaJobManual')?.value || null;
+  
+  try {
+    // Se tem job selecionado, adiciona funcionário à equipe do job
+    if (jobId) {
+      await fetch(`${API_URL}/jobs/${jobId}/equipe/adicionar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          funcionario_id: funcionarioId,
+          funcao: tipo
+        })
+      });
+      console.log('✅ Funcionário adicionado à equipe do job');
+    }
 
-  fetch(`${API_URL}/escalas`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(dados)
-  })
-    .then(() => {
-      alert("Escala salva!");
+    const dados = {
+      data: document.getElementById('escalaData').value,
+      funcionario_id: funcionarioId,
+      tipo: tipo,
+      obs: document.getElementById('escalaObsManual').value,
+      job_id: jobId || null
+    };
 
-      // Fecha modal
-      const el = document.getElementById('modalNovaEscalaManual');
-      const modal = bootstrap.Modal.getInstance(el);
-      if (modal) modal.hide();
+    await fetch(`${API_URL}/escalas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
 
-      // Recarrega calendário
-      if (calendar) calendar.refetchEvents();
-    })
-    .catch(err => alert("Erro ao salvar: " + err));
+    alert("Escala salva!");
+
+    // Fecha modal
+    const el = document.getElementById('modalNovaEscalaManual');
+    const modal = bootstrap.Modal.getInstance(el);
+    if (modal) modal.hide();
+
+    // Recarrega calendário
+    if (calendar) calendar.refetchEvents();
+  } catch (err) {
+    console.error("Erro ao salvar escala:", err);
+    alert("Erro ao salvar: " + err);
+  }
 };
 
 // 5. SALVAR NOVA ESCALA (do modal principal - botão Nova Escala)
