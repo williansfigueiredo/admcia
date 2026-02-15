@@ -1322,11 +1322,11 @@ app.get('/dashboard/grafico-financeiro', (req, res) => {
 // RESUMO FINANCEIRO (Cards do topo) - COM COMPARAÇÃO MÊS ANTERIOR
 app.get('/financeiro/resumo', (req, res) => {
   const queries = {
-    // A Receber: Jobs não pagos (pendentes + atrasados) - TOTAL GERAL
+    // A Receber: Jobs não pagos (Pendente + Parcial + Vencido) - TOTAL GERAL
     aReceber: `
       SELECT COALESCE(SUM(valor), 0) as total 
       FROM jobs 
-      WHERE pagamento IN ('Pendente', 'Parcial') 
+      WHERE pagamento IN ('Pendente', 'Parcial', 'Vencido') 
         AND status NOT IN ('Cancelado')
     `,
     // Recebido ESTE MÊS
