@@ -11156,6 +11156,14 @@ async function carregarResumoFinanceiro() {
       return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     };
 
+    // Formata variação percentual
+    const formatarVariacao = (variacao) => {
+      const num = parseFloat(variacao) || 0;
+      const sinal = num >= 0 ? '+' : '';
+      return sinal + num.toFixed(1) + '%';
+    };
+
+    // Atualiza valores dos cards
     document.getElementById('finAReceber').textContent = formatarValor(dados.aReceber);
     document.getElementById('finRecebido').textContent = formatarValor(dados.recebidoMes);
     document.getElementById('finDespesas').textContent = formatarValor(dados.despesasMes);
@@ -11177,8 +11185,50 @@ async function carregarResumoFinanceiro() {
         qtdEl.classList.add('bg-success-subtle', 'text-success');
       }
     }
+
+    // ========== VARIAÇÕES PERCENTUAIS ==========
     
-    console.log('✅ Resumo financeiro carregado');
+    // Badge de variação do Recebido
+    const varRecebidoEl = document.getElementById('finVarRecebido');
+    if (varRecebidoEl) {
+      const varRecebido = dados.variacaoRecebido || 0;
+      varRecebidoEl.innerHTML = `<i class="bi bi-${varRecebido >= 0 ? 'graph-up-arrow' : 'graph-down-arrow'}"></i> ${formatarVariacao(varRecebido)}`;
+      varRecebidoEl.classList.remove('bg-success-subtle', 'text-success', 'bg-danger-subtle', 'text-danger');
+      if (varRecebido >= 0) {
+        varRecebidoEl.classList.add('bg-success-subtle', 'text-success');
+      } else {
+        varRecebidoEl.classList.add('bg-danger-subtle', 'text-danger');
+      }
+    }
+
+    // Badge de variação das Despesas (invertido: aumento é ruim)
+    const varDespesasEl = document.getElementById('finVarDespesas');
+    if (varDespesasEl) {
+      const varDespesas = dados.variacaoDespesas || 0;
+      varDespesasEl.innerHTML = `<i class="bi bi-${varDespesas >= 0 ? 'graph-up-arrow' : 'graph-down-arrow'}"></i> ${formatarVariacao(varDespesas)}`;
+      varDespesasEl.classList.remove('bg-success-subtle', 'text-success', 'bg-danger-subtle', 'text-danger');
+      // Para despesas, aumento é RUIM (vermelho), diminuição é BOM (verde)
+      if (varDespesas <= 0) {
+        varDespesasEl.classList.add('bg-success-subtle', 'text-success');
+      } else {
+        varDespesasEl.classList.add('bg-danger-subtle', 'text-danger');
+      }
+    }
+
+    // Badge de variação do Saldo
+    const varSaldoEl = document.getElementById('finVarSaldo');
+    if (varSaldoEl) {
+      const varSaldo = dados.variacaoSaldo || 0;
+      varSaldoEl.innerHTML = `<i class="bi bi-${varSaldo >= 0 ? 'graph-up-arrow' : 'graph-down-arrow'}"></i> ${formatarVariacao(varSaldo)}`;
+      varSaldoEl.classList.remove('bg-success-subtle', 'text-success', 'bg-danger-subtle', 'text-danger');
+      if (varSaldo >= 0) {
+        varSaldoEl.classList.add('bg-success-subtle', 'text-success');
+      } else {
+        varSaldoEl.classList.add('bg-danger-subtle', 'text-danger');
+      }
+    }
+    
+    console.log('✅ Resumo financeiro carregado', dados);
   } catch (error) {
     console.error('❌ Erro ao carregar resumo financeiro:', error);
   }

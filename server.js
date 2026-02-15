@@ -1270,32 +1270,49 @@ app.get('/dashboard/grafico-financeiro', (req, res) => {
 // ROTAS DO MÓDULO FINANCEIRO
 // =============================================================
 
-// RESUMO FINANCEIRO (Cards do topo)
+// RESUMO FINANCEIRO (Cards do topo) - COM COMPARAÇÃO MÊS ANTERIOR
 app.get('/financeiro/resumo', (req, res) => {
   const queries = {
-    // A Receber: Jobs não pagos (pendentes + atrasados)
+    // A Receber: Jobs não pagos (pendentes + atrasados) - TOTAL GERAL
     aReceber: `
       SELECT COALESCE(SUM(valor), 0) as total 
       FROM jobs 
       WHERE pagamento IN ('Pendente', 'Parcial') 
         AND status NOT IN ('Cancelado')
     `,
-    // Recebido este mês
-    recebidoMes: `
+    // Recebido ESTE MÊS
+    recebidoMesAtual: `
       SELECT COALESCE(SUM(valor), 0) as total 
       FROM jobs 
       WHERE pagamento = 'Pago' 
         AND MONTH(data_job) = MONTH(CURRENT_DATE()) 
         AND YEAR(data_job) = YEAR(CURRENT_DATE())
     `,
-    // Despesas do mês (da tabela transacoes)
-    despesasMes: `
+    // Recebido MÊS ANTERIOR (para comparação)
+    recebidoMesAnterior: `
+      SELECT COALESCE(SUM(valor), 0) as total 
+      FROM jobs 
+      WHERE pagamento = 'Pago' 
+        AND MONTH(data_job) = MONTH(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
+        AND YEAR(data_job) = YEAR(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
+    `,
+    // Despesas ESTE MÊS
+    despesasMesAtual: `
       SELECT COALESCE(SUM(valor), 0) as total 
       FROM transacoes 
       WHERE tipo = 'despesa'
         AND status IN ('pago', 'pendente')
         AND MONTH(data_vencimento) = MONTH(CURRENT_DATE()) 
         AND YEAR(data_vencimento) = YEAR(CURRENT_DATE())
+    `,
+    // Despesas MÊS ANTERIOR (para comparação)
+    despesasMesAnterior: `
+      SELECT COALESCE(SUM(valor), 0) as total 
+      FROM transacoes 
+      WHERE tipo = 'despesa'
+        AND status IN ('pago', 'pendente')
+        AND MONTH(data_vencimento) = MONTH(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
+        AND YEAR(data_vencimento) = YEAR(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
     `,
     // Vencidas (Jobs com pagamento pendente e data passada)
     vencidas: `
@@ -1307,27 +1324,61 @@ app.get('/financeiro/resumo', (req, res) => {
     `
   };
 
-  const resultado = { aReceber: 0, recebidoMes: 0, despesasMes: 0, vencidas: 0, qtdVencidas: 0 };
+  const resultado = { 
+    aReceber: 0, 
+    recebidoMes: 0, 
+    recebidoMesAnterior: 0,
+    despesasMes: 0, 
+    despesasMesAnterior: 0,
+    vencidas: 0, 
+    qtdVencidas: 0,
+    saldo: 0,
+    saldoMesAnterior: 0,
+    // Porcentagens de variação
+    variacaoRecebido: 0,
+    variacaoDespesas: 0,
+    variacaoSaldo: 0
+  };
+
+  // Função para calcular porcentagem de variação
+  const calcularVariacao = (atual, anterior) => {
+    if (anterior === 0) return atual > 0 ? 100 : 0;
+    return ((atual - anterior) / anterior) * 100;
+  };
 
   db.query(queries.aReceber, (err, r1) => {
     if (!err && r1[0]) resultado.aReceber = parseFloat(r1[0].total) || 0;
     
-    db.query(queries.recebidoMes, (err, r2) => {
+    db.query(queries.recebidoMesAtual, (err, r2) => {
       if (!err && r2[0]) resultado.recebidoMes = parseFloat(r2[0].total) || 0;
       
-      db.query(queries.despesasMes, (err, r3) => {
-        if (!err && r3[0]) resultado.despesasMes = parseFloat(r3[0].total) || 0;
+      db.query(queries.recebidoMesAnterior, (err, r2b) => {
+        if (!err && r2b[0]) resultado.recebidoMesAnterior = parseFloat(r2b[0].total) || 0;
         
-        db.query(queries.vencidas, (err, r4) => {
-          if (!err && r4[0]) {
-            resultado.vencidas = parseFloat(r4[0].total) || 0;
-            resultado.qtdVencidas = r4[0].qtd || 0;
-          }
+        db.query(queries.despesasMesAtual, (err, r3) => {
+          if (!err && r3[0]) resultado.despesasMes = parseFloat(r3[0].total) || 0;
           
-          // Calcula saldo (recebido - despesas)
-          resultado.saldo = resultado.recebidoMes - resultado.despesasMes;
-          
-          res.json(resultado);
+          db.query(queries.despesasMesAnterior, (err, r3b) => {
+            if (!err && r3b[0]) resultado.despesasMesAnterior = parseFloat(r3b[0].total) || 0;
+            
+            db.query(queries.vencidas, (err, r4) => {
+              if (!err && r4[0]) {
+                resultado.vencidas = parseFloat(r4[0].total) || 0;
+                resultado.qtdVencidas = r4[0].qtd || 0;
+              }
+              
+              // Calcula saldos
+              resultado.saldo = resultado.recebidoMes - resultado.despesasMes;
+              resultado.saldoMesAnterior = resultado.recebidoMesAnterior - resultado.despesasMesAnterior;
+              
+              // Calcula variações percentuais
+              resultado.variacaoRecebido = calcularVariacao(resultado.recebidoMes, resultado.recebidoMesAnterior);
+              resultado.variacaoDespesas = calcularVariacao(resultado.despesasMes, resultado.despesasMesAnterior);
+              resultado.variacaoSaldo = calcularVariacao(resultado.saldo, resultado.saldoMesAnterior);
+              
+              res.json(resultado);
+            });
+          });
         });
       });
     });
