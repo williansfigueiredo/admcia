@@ -4311,7 +4311,12 @@ async function abrirModalInvoice(jobId) {
                         <div class="modal-body p-0" id="invoice-pdf-content">${template}</div>
                         <div class="modal-footer">
                             <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                            <button class="btn btn-primary" onclick="window.print()">Imprimir PDF</button>
+                            <button class="btn btn-outline-primary" onclick="imprimirInvoice()">
+                                <i class="bi bi-printer me-1"></i> Imprimir
+                            </button>
+                            <button class="btn btn-primary" onclick="downloadPDFInvoice(${id})">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> Baixar PDF
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -4486,6 +4491,184 @@ function salvarInvoicePDF(jobId) {
     y += 10;
   });
   doc.save(`invoice_pedido_${job.id}.pdf`);
+}
+
+// === FUNÇÕES DE IMPRESSÃO E PDF ===
+
+// Imprimir Invoice (usa window.print com CSS de impressão)
+window.imprimirInvoice = function() {
+  window.print();
+}
+
+// Download PDF do Invoice usando html2canvas
+window.downloadPDFInvoice = async function(jobId) {
+  const element = document.getElementById('invoice-pdf-content');
+  if (!element) {
+    alert('Erro: Conteúdo do invoice não encontrado.');
+    return;
+  }
+
+  try {
+    // Mostra loading
+    const btnPDF = event.target.closest('button');
+    const originalHTML = btnPDF.innerHTML;
+    btnPDF.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Gerando...';
+    btnPDF.disabled = true;
+
+    // Gera canvas do elemento
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    });
+
+    // Converte para PDF
+    const { jsPDF } = window.jspdf;
+    const imgData = canvas.toDataURL('image/png');
+
+    // Calcula dimensões do PDF (A4)
+    const pageWidth = 210; // mm (A4)
+    const pageHeight = 297; // mm (A4)
+    const imgWidth = pageWidth - 20; // margens de 10mm cada lado
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    // Se a imagem for maior que uma página, ajusta
+    let heightLeft = imgHeight;
+    let position = 10;
+    let page = 1;
+
+    // Adiciona a primeira página
+    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+    heightLeft -= (pageHeight - 20);
+
+    // Adiciona páginas extras se necessário
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + 10;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= (pageHeight - 20);
+      page++;
+    }
+
+    // Baixa o arquivo
+    const nomeArquivo = `invoice_pedido_${jobId || 'sem_id'}.pdf`;
+    pdf.save(nomeArquivo);
+
+    // Restaura botão
+    btnPDF.innerHTML = originalHTML;
+    btnPDF.disabled = false;
+
+  } catch (erro) {
+    console.error('Erro ao gerar PDF:', erro);
+    alert('Erro ao gerar PDF. Tente novamente.');
+    
+    // Restaura botão em caso de erro
+    const btnPDF = event.target.closest('button');
+    if (btnPDF) {
+      btnPDF.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> Baixar PDF';
+      btnPDF.disabled = false;
+    }
+  }
+}
+
+// Imprimir Ficha do Cliente
+window.imprimirFichaCliente = function() {
+  window.print();
+}
+
+// Download PDF da Ficha do Cliente
+window.downloadPDFCliente = async function() {
+  // Pega a section do perfil do cliente
+  const element = document.getElementById('view-perfil-cliente');
+  if (!element) {
+    alert('Erro: Perfil do cliente não encontrado.');
+    return;
+  }
+
+  try {
+    // Encontra o botão que foi clicado
+    const btnPDF = event.target.closest('button');
+    const originalHTML = btnPDF.innerHTML;
+    btnPDF.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Gerando...';
+    btnPDF.disabled = true;
+
+    // Pega dados do cliente para o nome do arquivo
+    const nomeCliente = document.getElementById('tituloPerfilNome')?.innerText || 'cliente';
+    const docCliente = document.getElementById('tituloPerfilDoc')?.innerText || '';
+
+    // Esconde elementos que não devem aparecer no PDF
+    const elementosOcultar = element.querySelectorAll('.d-print-none, .nav-tabs, .btn');
+    elementosOcultar.forEach(el => el.style.visibility = 'hidden');
+
+    // Pega apenas a aba de dados cadastrais (primeira aba)
+    const abaDados = element.querySelector('#aba-dados');
+    if (abaDados) abaDados.classList.add('show', 'active');
+
+    // Gera canvas do elemento
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      width: element.scrollWidth,
+      windowWidth: 1200
+    });
+
+    // Restaura elementos ocultos
+    elementosOcultar.forEach(el => el.style.visibility = 'visible');
+
+    // Converte para PDF
+    const { jsPDF } = window.jspdf;
+    const imgData = canvas.toDataURL('image/png');
+
+    // Calcula dimensões do PDF (A4)
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const imgWidth = pageWidth - 20;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    let heightLeft = imgHeight;
+    let position = 10;
+
+    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+    heightLeft -= (pageHeight - 20);
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + 10;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= (pageHeight - 20);
+    }
+
+    // Limpa nome para arquivo
+    const nomeArquivoLimpo = nomeCliente
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .substring(0, 50);
+
+    const nomeArquivo = `ficha_cliente_${nomeArquivoLimpo}.pdf`;
+    pdf.save(nomeArquivo);
+
+    // Restaura botão
+    btnPDF.innerHTML = originalHTML;
+    btnPDF.disabled = false;
+
+  } catch (erro) {
+    console.error('Erro ao gerar PDF:', erro);
+    alert('Erro ao gerar PDF. Tente novamente.');
+    
+    const btnPDF = event.target.closest('button');
+    if (btnPDF) {
+      btnPDF.innerHTML = '<i class="bi bi-file-earmark-pdf me-2"></i>Baixar PDF';
+      btnPDF.disabled = false;
+    }
+  }
 }
 
 function imprimirInvoicePDF(jobId) {

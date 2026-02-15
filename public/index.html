@@ -1534,9 +1534,14 @@
                 </div>
               </div>
 
-              <button class="btn btn-dark d-print-none" onclick="window.print()">
-                <i class="bi bi-printer me-2"></i>Imprimir Ficha
-              </button>
+              <div class="d-flex gap-2 d-print-none">
+                <button class="btn btn-outline-dark" onclick="imprimirFichaCliente()">
+                  <i class="bi bi-printer me-2"></i>Imprimir
+                </button>
+                <button class="btn btn-dark" onclick="downloadPDFCliente()">
+                  <i class="bi bi-file-earmark-pdf me-2"></i>Baixar PDF
+                </button>
+              </div>
             </div>
 
             <ul class="nav nav-tabs card-header-tabs d-print-none" id="abasCliente" role="tablist">
@@ -4122,6 +4127,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 </body>
 
