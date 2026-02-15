@@ -9995,32 +9995,28 @@ window.abrirJobVisualizacaoPeloHistorico = function (eventoId) {
     idNumerico = partes.slice(1).join('-'); // Pega o resto
   }
 
-  // Se for escala manual, mostra detalhes da escala em vez de abrir o job
+  // Variável para guardar o ID do job a ser aberto
+  let jobId = idNumerico;
+
+  // Se for escala manual, busca o job_id vinculado à escala
   if (tipoRegistro === 'escala') {
     // Busca a escala no cache do histórico
     const escala = window.historicoCacheFuncionario?.find(e => 
       e.tipo_registro === 'escala' && String(e.id) === String(idNumerico)
     );
     
-    if (escala) {
-      // Mostra modal com detalhes da escala
-      const dataInicio = formatarData(escala.data_inicio);
-      const dataFim = escala.data_fim ? formatarData(escala.data_fim) : dataInicio;
-      const tipoEscala = escala.funcao || escala.tipo || 'Escala';
-      
-      alert(`📅 Escala Manual\n\n` +
-            `Tipo: ${tipoEscala}\n` +
-            `Job: #${escala.job_id || '-'} - ${escala.descricao || 'Sem descrição'}\n` +
-            `Período: ${dataInicio} até ${dataFim}\n` +
-            `Status: ${escala.status || 'Ativo'}`);
+    if (escala && escala.job_id) {
+      // Pega o job_id da escala para abrir o pedido vinculado
+      jobId = escala.job_id;
+    } else if (escala) {
+      // Se não tem job_id vinculado, mostra mensagem
+      alert('Esta escala não está vinculada a nenhum pedido.');
+      return;
     } else {
       alert('Escala não encontrada.');
+      return;
     }
-    return;
   }
-
-  // Se for job, continua com o fluxo normal
-  const jobId = idNumerico;
   
   // 1. Identifica qual funcionário estamos editando
   const idFuncionario = window.idClienteEdicao || window.idFuncionarioAtual;
