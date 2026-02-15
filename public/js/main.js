@@ -9217,8 +9217,25 @@ document.addEventListener('DOMContentLoaded', function() {
             opt.value = job.id;
             const dataFormatada = job.data_inicio ? formatarData(job.data_inicio) : '';
             opt.text = `#${job.numero_pedido || job.id} - ${job.descricao || 'Sem descrição'} (${dataFormatada})`;
+            // Guarda as datas do job no option para usar depois
+            opt.setAttribute('data-data-inicio', job.data_inicio || '');
+            opt.setAttribute('data-data-fim', job.data_fim || job.data_inicio || '');
             selectJob.appendChild(opt);
           });
+          
+          // Evento para preencher datas quando selecionar um job
+          selectJob.onchange = function() {
+            const selectedOption = selectJob.options[selectJob.selectedIndex];
+            const dataInicio = selectedOption.getAttribute('data-data-inicio');
+            const dataFim = selectedOption.getAttribute('data-data-fim');
+            
+            if (dataInicio) {
+              document.getElementById('escalaDataInicio').value = dataInicio.split('T')[0];
+            }
+            if (dataFim) {
+              document.getElementById('escalaDataFim').value = dataFim.split('T')[0];
+            }
+          };
         })
         .catch(err => {
           console.error("Erro ao carregar jobs:", err);
