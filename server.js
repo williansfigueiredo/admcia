@@ -1616,6 +1616,37 @@ app.get('/financeiro/categorias', (req, res) => {
   res.json(categorias);
 });
 
+// DESPESAS POR CATEGORIA (para gráfico de pizza)
+app.get('/financeiro/despesas-por-categoria', (req, res) => {
+  const sql = `
+    SELECT 
+      COALESCE(categoria, 'Outros') as categoria,
+      SUM(valor) as total
+    FROM transacoes 
+    WHERE tipo = 'despesa'
+      AND MONTH(data_vencimento) = MONTH(CURRENT_DATE()) 
+      AND YEAR(data_vencimento) = YEAR(CURRENT_DATE())
+    GROUP BY categoria
+    ORDER BY total DESC
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error('❌ Erro ao buscar despesas por categoria:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    
+    // Formata para o gráfico
+    const dados = {
+      labels: results.map(r => r.categoria),
+      valores: results.map(r => parseFloat(r.total) || 0),
+      total: results.reduce((acc, r) => acc + (parseFloat(r.total) || 0), 0)
+    };
+    
+    res.json(dados);
+  });
+});
+
 
 // =============================================================
 // ROTA MÁGICA: RECALIBRAR ESTOQUE (CORRIGE QUALQUER ERRO)

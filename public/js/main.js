@@ -11139,6 +11139,7 @@ function inicializarFinanceiro() {
   carregarResumoFinanceiro();
   carregarTransacoes();
   carregarGraficoFluxoCaixa();
+  carregarGraficoDespesasCategoria();
 }
 
 // Carrega os cards de resumo
@@ -11417,6 +11418,7 @@ async function salvarTransacao() {
       carregarTransacoes();
       carregarResumoFinanceiro();
       carregarGraficoFluxoCaixa();
+      carregarGraficoDespesasCategoria();
     } else {
       const erro = await response.json();
       alert('Erro: ' + (erro.error || 'Erro desconhecido'));
@@ -11485,6 +11487,7 @@ async function marcarJobPago(jobId) {
       carregarTransacoes();
       carregarResumoFinanceiro();
       carregarGraficoFluxoCaixa();
+      carregarGraficoDespesasCategoria();
     }
   } catch (error) {
     console.error('Erro:', error);
@@ -11504,6 +11507,7 @@ async function excluirTransacao(id) {
       carregarTransacoes();
       carregarResumoFinanceiro();
       carregarGraficoFluxoCaixa();
+      carregarGraficoDespesasCategoria();
     }
   } catch (error) {
     console.error('Erro:', error);
@@ -11587,6 +11591,101 @@ async function carregarGraficoFluxoCaixa() {
 // Exportar financeiro (placeholder)
 function exportarFinanceiro() {
   alert('Funcionalidade de exportação em desenvolvimento!');
+}
+
+// Variável para o gráfico de despesas por categoria
+let despesasCategoriaChartInstance = null;
+
+// Carregar gráfico de despesas por categoria (pizza/doughnut)
+async function carregarGraficoDespesasCategoria() {
+  const canvas = document.getElementById('despesasCategoriaChart');
+  if (!canvas) return;
+
+  try {
+    const response = await fetch(`${API_URL}/financeiro/despesas-por-categoria`);
+    const dados = await response.json();
+
+    const ctx = canvas.getContext('2d');
+
+    // Destrói gráfico anterior se existir
+    if (despesasCategoriaChartInstance) {
+      despesasCategoriaChartInstance.destroy();
+    }
+
+    // Cores para as categorias
+    const cores = [
+      '#0ab39c', // Verde
+      '#f06548', // Vermelho
+      '#405189', // Azul escuro
+      '#f7b84b', // Amarelo
+      '#299cdb', // Azul claro
+      '#6559cc', // Roxo
+      '#e83e8c', // Rosa
+      '#50a5f1', // Azul
+      '#74788d', // Cinza
+      '#34c38f'  // Verde claro
+    ];
+
+    // Se não houver dados, mostra mensagem
+    if (!dados.labels || dados.labels.length === 0) {
+      const legendaEl = document.getElementById('despesasCategoriaLegenda');
+      if (legendaEl) {
+        legendaEl.innerHTML = '<span class="text-muted">Nenhuma despesa cadastrada este mês</span>';
+      }
+      return;
+    }
+
+    despesasCategoriaChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: dados.labels,
+        datasets: [{
+          data: dados.valores,
+          backgroundColor: cores.slice(0, dados.labels.length),
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const valor = context.raw || 0;
+                const porcentagem = dados.total > 0 ? ((valor / dados.total) * 100).toFixed(1) : 0;
+                return `${context.label}: R$ ${valor.toLocaleString('pt-BR')} (${porcentagem}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Renderiza legenda customizada
+    const legendaEl = document.getElementById('despesasCategoriaLegenda');
+    if (legendaEl) {
+      let legendaHtml = '';
+      dados.labels.forEach((label, i) => {
+        const valor = dados.valores[i] || 0;
+        const porcentagem = dados.total > 0 ? ((valor / dados.total) * 100).toFixed(0) : 0;
+        legendaHtml += `
+          <div class="d-flex align-items-center gap-1">
+            <span style="width: 10px;height: 10px;background: ${cores[i]};border-radius: 2px;"></span>
+            <span>${label} (${porcentagem}%)</span>
+          </div>
+        `;
+      });
+      legendaEl.innerHTML = legendaHtml;
+    }
+
+    console.log('✅ Gráfico de despesas por categoria carregado');
+  } catch (error) {
+    console.error('❌ Erro ao carregar gráfico de despesas:', error);
+  }
 }
 
 // Expor funções globalmente

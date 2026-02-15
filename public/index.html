@@ -1025,23 +1025,44 @@
         </div>
       </div>
 
-      <!-- Gráfico de Fluxo de Caixa -->
-      <div class="card-custom mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h5 class="fw-bold mb-1">Fluxo de Caixa</h5>
-            <p class="text-muted small mb-0">Receitas vs Despesas mensais</p>
-          </div>
-          <div class="d-flex gap-3 small">
-            <div class="d-flex align-items-center gap-2">
-              <span style="width: 12px;height: 12px;background: #0ab39c;border-radius: 4px;"></span> Entradas
+      <!-- Gráficos lado a lado -->
+      <div class="row g-4 mb-4">
+        <!-- Gráfico de Fluxo de Caixa -->
+        <div class="col-lg-7">
+          <div class="card-custom h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h6 class="fw-bold mb-1">Fluxo de Caixa</h6>
+                <p class="text-muted small mb-0">Receitas vs Despesas mensais</p>
+              </div>
+              <div class="d-flex gap-3 small">
+                <div class="d-flex align-items-center gap-1">
+                  <span style="width: 10px;height: 10px;background: #0ab39c;border-radius: 3px;"></span> Entradas
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                  <span style="width: 10px;height: 10px;background: #f06548;border-radius: 3px;"></span> Saídas
+                </div>
+              </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
-              <span style="width: 12px;height: 12px;background: #f06548;border-radius: 4px;"></span> Saídas
-            </div>
+            <div style="height: 250px"><canvas id="financeChart"></canvas></div>
           </div>
         </div>
-        <div style="height: 320px"><canvas id="financeChart"></canvas></div>
+
+        <!-- Gráfico de Despesas por Categoria -->
+        <div class="col-lg-5">
+          <div class="card-custom h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h6 class="fw-bold mb-1">Despesas por Categoria</h6>
+                <p class="text-muted small mb-0">Distribuição do mês atual</p>
+              </div>
+            </div>
+            <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
+              <canvas id="despesasCategoriaChart"></canvas>
+            </div>
+            <div id="despesasCategoriaLegenda" class="d-flex flex-wrap gap-2 justify-content-center small mt-2"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Tabela de Transações -->
