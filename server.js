@@ -2458,6 +2458,8 @@ app.get('/agenda', (req, res) => {
       j.descricao as job_descricao,
       j.numero_pedido as job_numero,
       j.status as job_status,
+      j.hora_chegada_prevista as job_hora_chegada,
+      j.hora_fim_evento as job_hora_fim,
       e.tipo as description,
       f.id as operador_id,
       f.nome as operador_nome,
@@ -2606,10 +2608,14 @@ app.get('/agenda', (req, res) => {
       }
 
       dias.forEach(dataStr => {
+        // Se escala tem job vinculado, usa horário do job; senão usa horário padrão
+        const horaInicio = e.job_hora_chegada || '08:00:00';
+        const horaFim = e.job_hora_fim || horaInicio; // Se não tem fim, usa o mesmo horário de início
+        
         eventosEscalas.push({
           id: `${e.id}-${dataStr}`,
-          start: `${dataStr} 08:00:00`,
-          end: `${dataStr} 17:00:00`,
+          start: `${dataStr} ${horaInicio}`,
+          end: `${dataStr} ${horaFim}`,
           title: titulo,
           description: e.job_status || e.description,
           operador_id: e.operador_id,
