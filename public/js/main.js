@@ -4311,9 +4311,6 @@ async function abrirModalInvoice(jobId) {
                         <div class="modal-body p-0" id="invoice-pdf-content">${template}</div>
                         <div class="modal-footer">
                             <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                            <button class="btn btn-outline-primary" onclick="imprimirInvoice()">
-                                <i class="bi bi-printer me-1"></i> Imprimir
-                            </button>
                             <button class="btn btn-primary" onclick="downloadPDFInvoice(${id})">
                                 <i class="bi bi-file-earmark-pdf me-1"></i> Baixar PDF
                             </button>

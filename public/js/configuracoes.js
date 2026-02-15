@@ -432,7 +432,7 @@ async function alterarSenha() {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_data');
       sessionStorage.clear();
-      window.location.href = '/login.html';
+      window.location.href = '/login';
     } else {
       alert('❌ ' + (result.error || 'Erro ao alterar senha'));
     }
