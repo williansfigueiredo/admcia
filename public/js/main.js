@@ -684,8 +684,9 @@ async function atualizarGraficoJobsSemana() {
             grid: { display: false },
             border: { display: false },
             ticks: {
-              font: { size: 9 },
-              color: '#888'
+              font: { size: 10 },
+              color: '#888',
+              padding: 4
             }
           }
         }
