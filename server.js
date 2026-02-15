@@ -2461,13 +2461,16 @@ app.get('/jobs/:jobId/itens', (req, res) => {
 
 app.get('/agenda', (req, res) => {
   // Primeiro busca escalas MANUAIS (apenas as que NÃO têm job_id)
-  // Usa apenas data_escala por compatibilidade (caso colunas data_inicio/data_fim não existam ainda)
+  // Usa data_inicio/data_fim se existirem, senão usa data_escala
   const sqlEscalas = `
     SELECT 
       CONCAT('escala-', e.id) as id,
-      e.data_escala as data_inicio,
-      e.data_escala as data_fim,
-      CONCAT('📅 ', f.nome, ' - ', e.tipo) as title,
+      COALESCE(e.data_inicio, e.data_escala) as data_inicio,
+      COALESCE(e.data_fim, e.data_escala) as data_fim,
+      f.nome as funcionario_nome,
+      e.tipo as tipo_escala,
+      j.descricao as job_descricao,
+      j.numero_pedido as job_numero,
       e.tipo as description,
       f.id as operador_id,
       f.nome as operador_nome,
@@ -2477,6 +2480,7 @@ app.get('/agenda', (req, res) => {
       'escala' as tipo_evento
     FROM escalas e
     JOIN funcionarios f ON e.funcionario_id = f.id
+    LEFT JOIN jobs j ON e.job_id = j.id
     WHERE e.job_id IS NULL
   `;
 
@@ -2587,12 +2591,19 @@ app.get('/agenda', (req, res) => {
 
       const dias = gerarDiasEntre(dataInicioStr, dataFimStr);
 
+      // Monta o título: "📅 Nome - Job (se vinculado) - Tipo"
+      let titulo = `📅 ${e.funcionario_nome}`;
+      if (e.job_descricao) {
+        titulo += ` - ${e.job_descricao}`;
+      }
+      titulo += ` - ${e.tipo_escala}`;
+
       dias.forEach(dataStr => {
         eventosEscalas.push({
           id: `${e.id}-${dataStr}`,
           start: `${dataStr} 08:00:00`,
           end: `${dataStr} 17:00:00`,
-          title: e.title,
+          title: titulo,
           description: e.description,
           operador_id: e.operador_id,
           operador_nome: e.operador_nome,
