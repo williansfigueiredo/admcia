@@ -6182,8 +6182,9 @@ window.editarJob = async function (jobId) {
     window.guardarItensOriginais();
   }
 
-  if (typeof atualizarValorTotalPedido === 'function') {
-    atualizarValorTotalPedido();
+  // Usar atualizarValorTotal (que busca data-campo) pois os itens são criados com adicionarLinhaItemComValidacao
+  if (typeof window.atualizarValorTotal === 'function') {
+    window.atualizarValorTotal();
   }
 
   // 8. GARANTIR QUE ESTÁ EM MODO EDIÇÃO (REABILITAR INPUTS)

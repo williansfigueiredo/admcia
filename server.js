@@ -900,25 +900,11 @@ app.post('/jobs', (req, res) => {
       console.log('📋 Total de membros recebidos:', data.equipe?.length || 0);
       console.log('========================================');
 
-      // Monta a equipe completa (operador + membros adicionais)
+      // Monta a equipe completa (apenas membros adicionados manualmente)
+      // NOTA: Operador técnico NÃO é adicionado automaticamente à equipe
       let equipeCompleta = [];
 
-      // PRIMEIRO: Adiciona o operador técnico se ele foi enviado
-      if (data.operador_id) {
-        const operadorJaIncluso = data.equipe?.some(m => String(m.funcionario_id) === String(data.operador_id));
-
-        if (!operadorJaIncluso) {
-          console.log('📋 Operador NÃO está na equipe, adicionando...');
-          equipeCompleta.push({
-            funcionario_id: data.operador_id,
-            funcao: 'Operador Técnico'
-          });
-        } else {
-          console.log('📋 Operador JÁ está na equipe enviada');
-        }
-      }
-
-      // SEGUNDO: Adiciona os demais membros da equipe
+      // Adiciona os membros da equipe enviados pelo frontend
       if (data.equipe && data.equipe.length > 0) {
         data.equipe.forEach(membro => {
           equipeCompleta.push({
@@ -2593,8 +2579,11 @@ app.get('/agenda', (req, res) => {
 
       const dias = gerarDiasEntre(dataInicioStr, dataFimStr);
 
-      // Monta o título: "📅 Nome - Job (se vinculado) - Tipo"
-      let titulo = `📅 ${e.funcionario_nome}`;
+      // Monta o título com ícone correto:
+      // 📋 = veio de um pedido (tem job_id)
+      // 📅 = escala manual avulsa (não tem job_id)
+      const icone = e.job_id ? '📋' : '📅';
+      let titulo = `${icone} ${e.funcionario_nome}`;
       if (e.job_descricao) {
         titulo += ` - ${e.job_descricao}`;
         // Marca que esse funcionário tem escala manual para esse job
@@ -2655,9 +2644,9 @@ app.get('/agenda', (req, res) => {
 
         // Para cada dia do período
         dias.forEach(dataStr => {
-          // ⏰ Usa horário cadastrado ou padrão 08:00 se estiver NULL/vazio
+          // ⏰ Usa horário de chegada; se não houver hora de fim, usa a mesma hora de chegada
           const horaChegada = job.hora_chegada_prevista || '08:00:00';
-          const horaFim = job.hora_fim_evento || '18:00:00';
+          const horaFim = job.hora_fim_evento || horaChegada; // Se não tem fim, usa chegada (evento pontual)
 
           let cor = '#475569';
           if (job.status === 'Agendado') cor = '#0284c7';
