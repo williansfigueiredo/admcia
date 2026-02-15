@@ -4515,13 +4515,32 @@ window.downloadPDFInvoice = async function(jobId) {
     btnPDF.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Gerando...';
     btnPDF.disabled = true;
 
+    // Esconde o backdrop e elementos que atrapalham a captura
+    const backdrop = document.querySelector('.modal-backdrop');
+    const modalFooter = document.querySelector('#modalInvoice .modal-footer');
+    if (backdrop) backdrop.style.display = 'none';
+    if (modalFooter) modalFooter.style.display = 'none';
+
+    // Garante fundo branco no elemento
+    const originalBg = element.style.background;
+    element.style.background = '#ffffff';
+
+    // Pequeno delay para garantir renderização
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Gera canvas do elemento
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      removeContainer: true
     });
+
+    // Restaura elementos
+    if (backdrop) backdrop.style.display = '';
+    if (modalFooter) modalFooter.style.display = '';
+    element.style.background = originalBg;
 
     // Converte para PDF
     const { jsPDF } = window.jspdf;
@@ -4565,6 +4584,12 @@ window.downloadPDFInvoice = async function(jobId) {
     console.error('Erro ao gerar PDF:', erro);
     alert('Erro ao gerar PDF. Tente novamente.');
     
+    // Restaura elementos em caso de erro
+    const backdrop = document.querySelector('.modal-backdrop');
+    const modalFooter = document.querySelector('#modalInvoice .modal-footer');
+    if (backdrop) backdrop.style.display = '';
+    if (modalFooter) modalFooter.style.display = '';
+    
     // Restaura botão em caso de erro
     const btnPDF = event.target.closest('button');
     if (btnPDF) {
@@ -4599,13 +4624,25 @@ window.downloadPDFCliente = async function() {
     const nomeCliente = document.getElementById('tituloPerfilNome')?.innerText || 'cliente';
     const docCliente = document.getElementById('tituloPerfilDoc')?.innerText || '';
 
-    // Esconde elementos que não devem aparecer no PDF
+    // Esconde sidebar e elementos que não devem aparecer no PDF
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+    if (sidebar) sidebar.style.display = 'none';
+    if (mainContent) mainContent.style.marginLeft = '0';
+
     const elementosOcultar = element.querySelectorAll('.d-print-none, .nav-tabs, .btn');
     elementosOcultar.forEach(el => el.style.visibility = 'hidden');
 
     // Pega apenas a aba de dados cadastrais (primeira aba)
     const abaDados = element.querySelector('#aba-dados');
     if (abaDados) abaDados.classList.add('show', 'active');
+
+    // Garante fundo branco
+    const originalBg = element.style.background;
+    element.style.background = '#ffffff';
+
+    // Pequeno delay para garantir renderização
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     // Gera canvas do elemento
     const canvas = await html2canvas(element, {
@@ -4614,11 +4651,15 @@ window.downloadPDFCliente = async function() {
       logging: false,
       backgroundColor: '#ffffff',
       width: element.scrollWidth,
-      windowWidth: 1200
+      windowWidth: 1200,
+      removeContainer: true
     });
 
     // Restaura elementos ocultos
+    if (sidebar) sidebar.style.display = '';
+    if (mainContent) mainContent.style.marginLeft = '';
     elementosOcultar.forEach(el => el.style.visibility = 'visible');
+    element.style.background = originalBg;
 
     // Converte para PDF
     const { jsPDF } = window.jspdf;
@@ -4662,6 +4703,12 @@ window.downloadPDFCliente = async function() {
   } catch (erro) {
     console.error('Erro ao gerar PDF:', erro);
     alert('Erro ao gerar PDF. Tente novamente.');
+    
+    // Restaura elementos em caso de erro
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+    if (sidebar) sidebar.style.display = '';
+    if (mainContent) mainContent.style.marginLeft = '';
     
     const btnPDF = event.target.closest('button');
     if (btnPDF) {

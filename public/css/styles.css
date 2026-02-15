@@ -2122,18 +2122,73 @@ tr[onclick]:active {
   padding: 24px;
 }
 
-/* ========== IMPRESSÃO SOMENTE DO INVOICE ========== */
+/* ========== IMPRESSÃO - REGRAS GERAIS ========== */
 @media print {
-  body * {
+  /* Esconde elementos de navegação e botões */
+  .sidebar,
+  .sidebar-overlay,
+  .d-print-none,
+  .btn:not(.print-show),
+  header,
+  .modal-backdrop,
+  .modal-footer,
+  .btn-close,
+  .nav-tabs,
+  #aba-pedidos,
+  #aba-financeiro {
+    display: none !important;
     visibility: hidden !important;
   }
 
-  #modalInvoice,
-  #modalInvoice * {
+  /* Reset geral para impressão */
+  html,
+  body {
+    overflow: visible !important;
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .main-content {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  /* Remove sombras e bordas para economizar tinta */
+  .card,
+  .shadow-sm {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Ajusta inputs para parecerem texto normal */
+  .form-control {
+    border: none !important;
+    background: transparent !important;
+    padding-left: 0 !important;
+    font-size: 14px !important;
+    color: #000 !important;
+  }
+
+  label {
+    color: #000 !important;
+    font-size: 12px !important;
+  }
+
+  /* === IMPRESSÃO DO INVOICE (MODAL) === */
+  body:has(#modalInvoice.show) * {
+    visibility: hidden !important;
+  }
+
+  body:has(#modalInvoice.show) #modalInvoice,
+  body:has(#modalInvoice.show) #modalInvoice * {
     visibility: visible !important;
   }
 
-  #modalInvoice {
+  body:has(#modalInvoice.show) #modalInvoice {
     position: absolute !important;
     left: 0;
     top: 0;
@@ -2141,23 +2196,20 @@ tr[onclick]:active {
     height: auto;
     background: #fff !important;
     z-index: 99999;
-    box-shadow: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
   }
 
-  .modal-backdrop,
-  .modal-footer,
-  .btn,
-  .btn-close {
-    display: none !important;
+  body:has(#modalInvoice.show) #invoice-pdf-content {
+    padding: 20px !important;
   }
 
-  /* Remove rolagem e centraliza */
-  html,
-  body {
-    overflow: visible !important;
-    background: #fff !important;
+  /* === IMPRESSÃO DA FICHA DO CLIENTE === */
+  body:has(#view-perfil-cliente:not(.d-none)) #view-perfil-cliente {
+    display: block !important;
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white !important;
   }
 }
 
@@ -4253,62 +4305,6 @@ body {
   font-size: 1.1rem;
 }
 
-
-/* =========================================
-   CONFIGURAÇÃO DE IMPRESSÃO (PDF)
-   ========================================= */
-@media print {
-
-  /* Esconde tudo que não é essencial */
-  .sidebar,
-  .d-print-none,
-  .btn,
-  .modal,
-  header,
-  #aba-pedidos,
-  #aba-financeiro {
-    display: none !important;
-  }
-
-  /* Ajusta o layout para papel */
-  body,
-  .main-content {
-    background: white !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-  }
-
-  /* Garante que a tela de perfil apareça */
-  #view-perfil-cliente {
-    display: block !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-  }
-
-  /* Remove sombras e bordas para economizar tinta */
-  .card,
-  .shadow-sm {
-    box-shadow: none !important;
-    border: none !important;
-  }
-
-  /* Ajusta inputs para parecerem texto normal */
-  .form-control {
-    border: none !important;
-    background: transparent !important;
-    padding-left: 0 !important;
-    font-size: 14px !important;
-  }
-
-  label {
-    color: #000 !important;
-    font-size: 12px !important;
-    text-transform: uppercase;
-  }
-}
 
 /* Efeito ao passar o mouse no Card */
 .card-hover-effect:hover {
