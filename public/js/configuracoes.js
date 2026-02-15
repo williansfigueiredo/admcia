@@ -421,18 +421,19 @@ async function alterarSenha() {
     const result = await response.json();
 
     if (response.ok && result.success) {
-      alert('✅ Senha alterada com sucesso! Você será redirecionado para fazer login novamente.');
-      
       // Limpa campos
       document.getElementById('configSenhaAtual').value = '';
       document.getElementById('configNovaSenha').value = '';
       document.getElementById('configConfirmarSenha').value = '';
       
-      // Faz logout - limpa token e redireciona para login
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_data');
+      // Faz logout completo - limpa TODOS os dados de sessão local
+      localStorage.clear();
       sessionStorage.clear();
-      window.location.href = '/login';
+      
+      alert('✅ Senha alterada com sucesso! Você será redirecionado para fazer login novamente.');
+      
+      // Redireciona para a rota de logout do servidor (que limpa o cookie e redireciona para login)
+      window.location.href = '/auth/logout';
     } else {
       alert('❌ ' + (result.error || 'Erro ao alterar senha'));
     }

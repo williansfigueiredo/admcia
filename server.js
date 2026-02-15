@@ -3439,7 +3439,15 @@ app.post('/auth/login', (req, res) => {
 
 // LOGOUT
 app.post('/auth/logout', (req, res) => {
-  const token = req.headers['authorization']?.replace('Bearer ', '');
+  const token = req.headers['authorization']?.replace('Bearer ', '') || req.cookies?.auth_token;
+
+  // Limpa o cookie de autenticação
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  });
 
   if (!token) {
     return res.json({ success: true });
@@ -3448,6 +3456,25 @@ app.post('/auth/logout', (req, res) => {
   db.query("DELETE FROM sessoes_usuarios WHERE token = ?", [token], () => {
     res.json({ success: true, message: 'Logout realizado!' });
   });
+});
+
+// LOGOUT via GET (para redirect simples)
+app.get('/auth/logout', (req, res) => {
+  const token = req.cookies?.auth_token;
+
+  // Limpa o cookie de autenticação
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  });
+
+  if (token) {
+    db.query("DELETE FROM sessoes_usuarios WHERE token = ?", [token], () => {});
+  }
+
+  res.redirect('/login');
 });
 
 // VERIFICAR SESSÃO
