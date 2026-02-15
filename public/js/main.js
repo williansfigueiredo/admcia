@@ -9826,6 +9826,15 @@ function renderizarTabelaHistorico(lista) {
       eventoId = `${tipoRegistro}-${item.id}`;
     }
 
+    // Botão de excluir só aparece para escalas avulsas (sem job_id)
+    const isEscalaAvulsa = tipoRegistro === 'escala' && !item.job_id;
+    const btnExcluir = isEscalaAvulsa 
+      ? `<button class="btn btn-sm btn-outline-danger ms-1" 
+                onclick="excluirEscalaAvulsa(${item.id})" title="Excluir escala avulsa">
+            <i class="bi bi-trash"></i>
+         </button>`
+      : '';
+
     html += `
             <tr>
                 <td class="ps-3 fw-bold">${fmtData(item.data_inicio)}</td>
@@ -9841,6 +9850,7 @@ function renderizarTabelaHistorico(lista) {
                             onclick="abrirJobVisualizacaoPeloHistorico('${eventoId}')">
                         <i class="bi bi-eye"></i> Ver
                     </button>
+                    ${btnExcluir}
                 </td>
             </tr>`;
   });
@@ -10103,6 +10113,39 @@ window.abrirJobVisualizacaoPeloHistorico = function (eventoId) {
       e.preventDefault();
       processarVoltarDoJob();
     }
+  }
+}
+
+
+// Função para excluir escala avulsa (sem job_id vinculado)
+window.excluirEscalaAvulsa = async function(escalaId) {
+  if (!confirm('Tem certeza que deseja excluir esta escala avulsa? Esta ação não pode ser desfeita.')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/escalas/${escalaId}`, { method: 'DELETE' });
+    const data = await response.json();
+    
+    if (response.ok) {
+      alert('Escala excluída com sucesso!');
+      
+      // Recarrega o histórico do funcionário atual
+      const idFuncionario = window.idClienteEdicao || window.idFuncionarioAtual;
+      if (idFuncionario) {
+        carregarHistoricoJobsFuncionario(idFuncionario);
+      }
+      
+      // Também atualiza o calendário se existir
+      if (window.calendarInstance) {
+        window.calendarInstance.refetchEvents();
+      }
+    } else {
+      alert('Erro ao excluir escala: ' + (data.error || 'Erro desconhecido'));
+    }
+  } catch (error) {
+    console.error('Erro ao excluir escala:', error);
+    alert('Erro ao excluir escala: ' + error.message);
   }
 }
 

@@ -2801,6 +2801,22 @@ app.get('/escalas', (req, res) => {
 });
 
 
+// ROTA PARA DELETAR ESCALA INDIVIDUAL
+app.delete('/escalas/:id', (req, res) => {
+  const escalaId = req.params.id;
+  console.log(`🗑️ Deletando escala ID: ${escalaId}`);
+
+  const sql = "DELETE FROM escalas WHERE id = ?";
+  db.query(sql, [escalaId], (err, result) => {
+    if (err) {
+      console.error("❌ Erro ao deletar escala:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    console.log(`✅ Escala ${escalaId} deletada com sucesso`);
+    res.json({ message: "Escala deletada com sucesso!", deleted: result.affectedRows });
+  });
+});
+
 
 // ROTA: BUSCAR HISTÓRICO DE JOBS DE UM FUNCIONÁRIO
 // ROTA: BUSCAR HISTÓRICO (UNINDO EQUIPE + OPERADOR PRINCIPAL + ESCALAS MANUAIS)
