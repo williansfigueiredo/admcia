@@ -2460,8 +2460,8 @@ app.get('/jobs/:jobId/itens', (req, res) => {
 // Busca TUDO (Escalas Manuais + Jobs com Cores IGUAIS aos Pills)
 
 app.get('/agenda', (req, res) => {
-  // Primeiro busca escalas MANUAIS (apenas as que NÃO têm job_id)
-  // Usa data_inicio/data_fim se existirem, senão usa data_escala
+  // Busca TODAS as escalas (manuais com ou sem job vinculado)
+  // Usa data_inicio/data_fim da ESCALA, não do job
   const sqlEscalas = `
     SELECT 
       CONCAT('escala-', e.id) as id,
@@ -2477,11 +2477,11 @@ app.get('/agenda', (req, res) => {
       '' as localizacao,
       '#3b82f6' as backgroundColor,
       '#3b82f6' as borderColor,
-      'escala' as tipo_evento
+      'escala' as tipo_evento,
+      e.job_id
     FROM escalas e
     JOIN funcionarios f ON e.funcionario_id = f.id
     LEFT JOIN jobs j ON e.job_id = j.id
-    WHERE e.job_id IS NULL
   `;
 
   // Depois busca jobs: operador principal + equipe adicional
@@ -2583,6 +2583,9 @@ app.get('/agenda', (req, res) => {
 
     // Expande escalas para múltiplos dias
     const eventosEscalas = [];
+    // Guarda combinação (funcionario_id, job_id) de escalas manuais para evitar duplicação
+    const escalasComJob = new Set();
+    
     escalasRaw.forEach(e => {
       const dataInicioStr = extrairDataStr(e.data_inicio);
       const dataFimStr = e.data_fim ? extrairDataStr(e.data_fim) : dataInicioStr;
@@ -2595,6 +2598,8 @@ app.get('/agenda', (req, res) => {
       let titulo = `📅 ${e.funcionario_nome}`;
       if (e.job_descricao) {
         titulo += ` - ${e.job_descricao}`;
+        // Marca que esse funcionário tem escala manual para esse job
+        escalasComJob.add(`${e.operador_id}-${e.job_id}`);
       }
       titulo += ` - ${e.tipo_escala}`;
 
@@ -2624,6 +2629,12 @@ app.get('/agenda', (req, res) => {
       // Expande jobs para todos os dias e membros da equipe
       const eventosJobs = [];
       jobs.forEach(job => {
+        // Se esse funcionário tem escala manual vinculada a esse job, pula
+        // (vai aparecer via escala manual com as datas específicas)
+        if (escalasComJob.has(`${job.funcionario_id}-${job.job_id}`)) {
+          return;
+        }
+
         // Extrai datas como strings YYYY-MM-DD
         const dataInicioStr = job.data_inicio ? extrairDataStr(job.data_inicio) : null;
         const dataFimStr = job.data_fim ? extrairDataStr(job.data_fim) : dataInicioStr;
