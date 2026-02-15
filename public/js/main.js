@@ -11132,14 +11132,18 @@ let financeChartInstance = null;
 
 // Inicializa o módulo financeiro
 function inicializarFinanceiro() {
-  if (financeiroCarregado) return;
+  // Sempre recarrega quando entrar na view (removido check de financeiroCarregado)
   financeiroCarregado = true;
   
   console.log('💰 Inicializando módulo financeiro...');
   carregarResumoFinanceiro();
   carregarTransacoes();
-  carregarGraficoFluxoCaixa();
-  carregarGraficoDespesasCategoria();
+  
+  // Pequeno delay para garantir que o canvas já está renderizado
+  setTimeout(() => {
+    carregarGraficoFluxoCaixa();
+    carregarGraficoDespesasCategoria();
+  }, 100);
 }
 
 // Carrega os cards de resumo
@@ -11163,6 +11167,14 @@ async function carregarResumoFinanceiro() {
       const sinal = num >= 0 ? '+' : '';
       return sinal + num.toFixed(1) + '%';
     };
+
+    // Atualiza nome do mês atual nos KPIs
+    const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const mesAtual = mesesNomes[new Date().getMonth()];
+    ['finMesRecebido', 'finMesDespesas', 'finMesSaldo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = mesAtual;
+    });
 
     // Atualiza valores dos cards
     document.getElementById('finAReceber').textContent = formatarValor(dados.aReceber);
