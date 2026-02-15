@@ -524,7 +524,15 @@ db.getConnection((err, connection) => {
                     () => executarMigracaoComRetry(
                       'ALTER TABLE escalas ADD COLUMN data_fim DATE',
                       'data_fim (escalas)',
-                      () => console.log('✅ Todas as migrações concluídas!')
+                      () => executarMigracaoComRetry(
+                        'ALTER TABLE jobs ADD COLUMN data_vencimento DATE',
+                        'data_vencimento (jobs)',
+                        () => executarMigracaoComRetry(
+                          'ALTER TABLE jobs ADD COLUMN prazo_pagamento INT',
+                          'prazo_pagamento (jobs)',
+                          () => console.log('✅ Todas as migrações concluídas!')
+                        )
+                      )
                     )
                   )
                 )
@@ -590,33 +598,47 @@ app.get('/jobs/ativos', (req, res) => {
 });
 
 app.get('/jobs', (req, res) => {
-  // AQUI ESTÁ O SEGREDO: "f.nome as nome_operador"
-  const sqlJobs = `
-        SELECT j.*, 
-               c.nome as nome_cliente, c.documento as cliente_documento, 
-               f.nome as nome_operador 
-        FROM jobs j
-        LEFT JOIN clientes c ON j.cliente_id = c.id
-        LEFT JOIN funcionarios f ON j.operador_id = f.id
-        ORDER BY j.id DESC
-    `;
+  // VERIFICAR E ATUALIZAR JOBS VENCIDOS AUTOMATICAMENTE
+  const sqlUpdateVencidos = `
+    UPDATE jobs 
+    SET pagamento = 'Vencido'
+    WHERE data_vencimento IS NOT NULL 
+      AND data_vencimento < CURDATE()
+      AND pagamento NOT IN ('Pago', 'Vencido')
+      AND status != 'Cancelado'
+  `;
+  
+  db.query(sqlUpdateVencidos, (errUpdate) => {
+    if (errUpdate) console.error('Erro ao atualizar vencidos:', errUpdate);
+    
+    // AQUI ESTÁ O SEGREDO: "f.nome as nome_operador"
+    const sqlJobs = `
+          SELECT j.*, 
+                 c.nome as nome_cliente, c.documento as cliente_documento, 
+                 f.nome as nome_operador 
+          FROM jobs j
+          LEFT JOIN clientes c ON j.cliente_id = c.id
+          LEFT JOIN funcionarios f ON j.operador_id = f.id
+          ORDER BY j.id DESC
+      `;
 
-  db.query(sqlJobs, (err, jobs) => {
-    if (err) return res.status(500).json(err);
+    db.query(sqlJobs, (err, jobs) => {
+      if (err) return res.status(500).json(err);
 
-    // Busca Itens
-    const sqlItens = "SELECT * FROM job_itens";
-    db.query(sqlItens, (err2, itens) => {
-      if (err2) return res.status(500).json(err2);
+      // Busca Itens
+      const sqlItens = "SELECT * FROM job_itens";
+      db.query(sqlItens, (err2, itens) => {
+        if (err2) return res.status(500).json(err2);
 
-      // Junta tudo
-      const jobsCompletos = jobs.map(job => {
-        return {
-          ...job,
-          itens: itens.filter(i => i.job_id === job.id)
-        };
+        // Junta tudo
+        const jobsCompletos = jobs.map(job => {
+          return {
+            ...job,
+            itens: itens.filter(i => i.job_id === job.id)
+          };
+        });
+        return res.json(jobsCompletos);
       });
-      return res.json(jobsCompletos);
     });
   });
 });
@@ -829,7 +851,8 @@ app.post('/jobs', (req, res) => {
             forma_pagamento, tipo_documento, observacoes,
             desconto_porcentagem, motivo_desconto, vencimento_texto,
             pagador_cep, pagador_logradouro, pagador_numero, pagador_bairro,
-            pagador_cidade, pagador_uf, desconto_valor
+            pagador_cidade, pagador_uf, desconto_valor,
+            prazo_pagamento, data_vencimento
         ) VALUES (
             ?,
             ?, ?, ?, ?, ?, ?, ?, ?, 
@@ -840,7 +863,8 @@ app.post('/jobs', (req, res) => {
             ?, ?, ?, ?, 
             ?, ?, ?, ?, 
             ?, ?, ?, 
-            ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?,
+            ?, ?
         )
     `;
     const pagadorEnderecoCompleto = (data.pagador_logradouro || data.endereco?.logradouro)
@@ -848,6 +872,16 @@ app.post('/jobs', (req, res) => {
       : null;
 
     // 2. Definição dos Valores (Incluindo numero_pedido)
+    // CALCULAR DATA DE VENCIMENTO baseado no prazo
+    let dataVencimento = null;
+    if (data.prazo_pagamento && data.data_inicio) {
+      const dataInicio = new Date(data.data_inicio);
+      dataInicio.setDate(dataInicio.getDate() + parseInt(data.prazo_pagamento));
+      dataVencimento = formatarDataSQL(dataInicio);
+    } else if (data.data_vencimento) {
+      dataVencimento = formatarDataSQL(data.data_vencimento);
+    }
+
     const values = [
       numeroPedido,
       data.descricao || null,
@@ -897,7 +931,9 @@ app.post('/jobs', (req, res) => {
       data.pagador_bairro || null,
       data.pagador_cidade || null,
       data.pagador_uf || null,
-      data.desconto_valor || 0
+      data.desconto_valor || 0,
+      data.prazo_pagamento || null,
+      dataVencimento
     ];
 
     db.query(sqlJob, values, (err, result) => {
@@ -1061,6 +1097,16 @@ app.put('/jobs/:id', (req, res) => {
       return `${year}-${month}-${day}`;
     };
 
+    // CALCULAR DATA DE VENCIMENTO baseado no prazo
+    let dataVencimento = null;
+    if (data.prazo_pagamento && data.data_inicio) {
+      const dataInicio = new Date(data.data_inicio);
+      dataInicio.setDate(dataInicio.getDate() + parseInt(data.prazo_pagamento));
+      dataVencimento = formatarDataSQL(dataInicio);
+    } else if (data.data_vencimento) {
+      dataVencimento = formatarDataSQL(data.data_vencimento);
+    }
+
     // MONTAR ENDEREÇO COMPLETO DO PAGADOR
     const pagadorEnderecoCompleto = (data.pagador_logradouro || data.endereco?.logradouro)
       ? `${data.pagador_logradouro || data.endereco?.logradouro}, ${data.pagador_numero || data.endereco?.numero} - ${data.pagador_bairro || data.endereco?.bairro}, ${data.pagador_cidade || data.endereco?.cidade}/${data.pagador_uf || data.endereco?.uf}`
@@ -1079,7 +1125,8 @@ app.put('/jobs/:id', (req, res) => {
               forma_pagamento = ?, tipo_documento = ?, observacoes = ?,
               motivo_desconto = ?, vencimento_texto = ?,
               pagador_cep = ?, pagador_logradouro = ?, pagador_numero = ?, pagador_bairro = ?,
-              pagador_cidade = ?, pagador_uf = ?, desconto_valor = ?
+              pagador_cidade = ?, pagador_uf = ?, desconto_valor = ?,
+              prazo_pagamento = ?, data_vencimento = ?
           WHERE id = ?
       `;
 
@@ -1126,6 +1173,8 @@ app.put('/jobs/:id', (req, res) => {
       data.pagador_cidade || null,
       data.pagador_uf || null,
       data.desconto_valor || 0,
+      data.prazo_pagamento || null,
+      dataVencimento,
       id
     ];
 

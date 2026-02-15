@@ -1785,6 +1785,9 @@ window.salvarJobTelaCheia = async function () {
 
   // 1. TRATAMENTO DE DATA DE VENCIMENTO
   let vencimentoFinal = "À vista";
+  let prazo_pagamento = null;
+  let data_vencimento = null;
+  
   const modoDataEl = document.getElementById('modoData');
   const modoPrazoEl = document.getElementById('modoPrazo');
 
@@ -1797,11 +1800,13 @@ window.salvarJobTelaCheia = async function () {
     if (dataVenc && dataVenc.trim() !== '') {
       const [ano, mes, dia] = dataVenc.split('-');
       vencimentoFinal = `${dia}/${mes}/${ano}`;
+      data_vencimento = dataVenc; // yyyy-mm-dd format
     }
   } else if (modoPrazoChecked) {
     const prazo = val('jobVencimentoPrazo');
     if (prazo && prazo.trim() !== '') {
-      vencimentoFinal = prazo;
+      prazo_pagamento = parseInt(prazo);
+      vencimentoFinal = `${prazo} dias`;
     }
   }
 
@@ -1910,6 +1915,9 @@ window.salvarJobTelaCheia = async function () {
     forma_pagamento: val('jobFormaPagamento'),
     tipo_documento: val('jobTipoDocumento'),
     observacoes: val('jobObservacoes'),
+
+    prazo_pagamento: prazo_pagamento,
+    data_vencimento: data_vencimento,
 
     itens: itensArray
   };
