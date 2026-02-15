@@ -2584,10 +2584,14 @@ app.get('/agenda', (req, res) => {
       // 📅 = escala manual avulsa (não tem job_id)
       const icone = e.job_id ? '📋' : '📅';
       let titulo = `${icone} ${e.funcionario_nome}`;
+      
+      // Marca que esse funcionário tem escala vinculada a este job (para evitar duplicação)
+      if (e.job_id) {
+        escalasComJob.add(`${e.operador_id}-${e.job_id}`);
+      }
+      
       if (e.job_descricao) {
         titulo += ` - ${e.job_descricao}`;
-        // Marca que esse funcionário tem escala manual para esse job
-        escalasComJob.add(`${e.operador_id}-${e.job_id}`);
       }
       titulo += ` - ${e.tipo_escala}`;
 
