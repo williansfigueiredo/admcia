@@ -2471,12 +2471,11 @@ app.get('/agenda', (req, res) => {
       e.tipo as tipo_escala,
       j.descricao as job_descricao,
       j.numero_pedido as job_numero,
+      j.status as job_status,
       e.tipo as description,
       f.id as operador_id,
       f.nome as operador_nome,
       '' as localizacao,
-      '#3b82f6' as backgroundColor,
-      '#3b82f6' as borderColor,
       'escala' as tipo_evento,
       e.job_id
     FROM escalas e
@@ -2603,18 +2602,28 @@ app.get('/agenda', (req, res) => {
       }
       titulo += ` - ${e.tipo_escala}`;
 
+      // Define cor: se tem job vinculado, usa cor do status do job; senão, azul padrão
+      let cor = '#3b82f6'; // azul padrão para escalas avulsas
+      if (e.job_id && e.job_status) {
+        if (e.job_status === 'Agendado') cor = '#0284c7';
+        else if (e.job_status === 'Em Andamento') cor = '#16a34a';
+        else if (e.job_status === 'Confirmado') cor = '#d97706';
+        else if (e.job_status === 'Finalizado') cor = '#64748b';
+        else if (e.job_status === 'Cancelado') cor = '#dc2626';
+      }
+
       dias.forEach(dataStr => {
         eventosEscalas.push({
           id: `${e.id}-${dataStr}`,
           start: `${dataStr} 08:00:00`,
           end: `${dataStr} 17:00:00`,
           title: titulo,
-          description: e.description,
+          description: e.job_status || e.description,
           operador_id: e.operador_id,
           operador_nome: e.operador_nome,
           localizacao: e.localizacao,
-          backgroundColor: e.backgroundColor,
-          borderColor: e.borderColor,
+          backgroundColor: cor,
+          borderColor: cor,
           tipo_evento: e.tipo_evento
         });
       });
