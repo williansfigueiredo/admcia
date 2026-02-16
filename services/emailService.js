@@ -331,8 +331,6 @@ function getErrorMessage(error) {
 
   return errorMap[error.code] || error.message || 'Erro desconhecido ao enviar email';
 }
-  }
-}
 
 /**
  * Envia email de novo acesso ao sistema

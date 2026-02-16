@@ -129,7 +129,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
 }
 
 // =============================================================   SISTEMA DE NOTIFICAÇÕES (COMPARTILHADO VIA SERVIDOR)
-   ============================================================= */
+
 
 // Obtém o ID do funcionário logado do sessionStorage
 function obterFuncionarioId() {
