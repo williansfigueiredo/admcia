@@ -9333,6 +9333,24 @@ window.initCalendar = function () {
         }) : dataInicio;
       }
 
+      // Extrai apenas o nome do serviço do título (remove ícone e nome do funcionário)
+      // Título formato: "📋 Nome - Nome do Serviço" ou "✋ Nome - Serviço - Tipo"
+      let nomeServico = info.event.title;
+      
+      // Remove o ícone e tudo até o primeiro " - "
+      const primeiroDash = nomeServico.indexOf(' - ');
+      if (primeiroDash !== -1) {
+        nomeServico = nomeServico.substring(primeiroDash + 3); // +3 para pular " - "
+        
+        // Se for escala manual, ainda tem " - Tipo" no final, remove também
+        if (dados.is_manual === 1) {
+          const segundoDash = nomeServico.lastIndexOf(' - ');
+          if (segundoDash !== -1) {
+            nomeServico = nomeServico.substring(0, segundoDash);
+          }
+        }
+      }
+
       // Monta o conteúdo HTML do modal
       const conteudo = `
         <div class="mb-3 p-3 rounded" style="background: rgba(99, 102, 241, 0.1); border-left: 4px solid #6366f1;">
@@ -9340,7 +9358,7 @@ window.initCalendar = function () {
         </div>
         <div class="mb-2">
           <small class="text-muted d-block mb-1">📝 Serviço</small>
-          <div class="fw-semibold">${info.event.title}</div>
+          <div class="fw-semibold">${nomeServico}</div>
         </div>
         <div class="mb-2">
           <small class="text-muted d-block mb-1">🎯 Status</small>
