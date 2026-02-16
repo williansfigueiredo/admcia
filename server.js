@@ -3080,6 +3080,85 @@ app.post('/debug/testar-email', (req, res) => {
   }
 });
 
+// Testar Resend diretamente (debug detalhado)
+app.post('/debug/testar-resend', async (req, res) => {
+  try {
+    const apiKey = process.env.RESEND_API_KEY;
+    
+    if (!apiKey) {
+      return res.status(400).json({
+        success: false,
+        error: 'RESEND_API_KEY não configurado',
+        instrucao: 'Configure RESEND_API_KEY no Railway'
+      });
+    }
+
+    const { Resend } = require('resend');
+    const resendClient = new Resend(apiKey);
+    
+    const emailPara = req.body.email || 'williansfigueiredo@gmail.com';
+    const emailDe = process.env.RESEND_FROM || 'onboarding@resend.dev';
+    
+    console.log('🧪 TESTE DIRETO RESEND');
+    console.log(`  API Key: ${apiKey.substring(0, 10)}...`);
+    console.log(`  From: ${emailDe}`);
+    console.log(`  To: ${emailPara}`);
+    
+    try {
+      const result = await resendClient.emails.send({
+        from: emailDe,
+        to: [emailPara],
+        subject: '🧪 Teste Direto Resend - ' + new Date().toLocaleTimeString(),
+        html: `
+          <h2>✅ Teste Direto do Resend</h2>
+          <p>Este email foi enviado DIRETAMENTE pela API do Resend.</p>
+          <p>Hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
+          <p>Se você recebeu, está funcionando! 🎉</p>
+        `
+      });
+      
+      console.log('📧 RESPOSTA DO RESEND:', JSON.stringify(result, null, 2));
+      
+      // Verificar se tem erro
+      if (result?.error) {
+        return res.status(400).json({
+          success: false,
+          error: result.error,
+          message: 'Resend retornou erro',
+          detalhes: result
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: '✅ Email enviado via Resend!',
+        emailId: result?.data?.id || result?.id,
+        para: emailPara,
+        de: emailDe,
+        resposta_completa: result
+      });
+      
+    } catch (sendError) {
+      console.error('❌ ERRO AO ENVIAR:', sendError);
+      
+      res.status(500).json({
+        success: false,
+        error: sendError.message,
+        nome_erro: sendError.name,
+        detalhes: sendError,
+        message: 'Falha ao enviar via Resend'
+      });
+    }
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Erro ao inicializar Resend'
+    });
+  }
+});
+
 // Testar diferentes configurações SMTP
 app.post('/debug/testar-smtp-configs', async (req, res) => {
   try {

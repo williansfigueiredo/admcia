@@ -265,6 +265,9 @@ async function enviarEmail(destinatario, assunto, htmlContent) {
   // MÉTODO 1: Resend (preferencial)
   if (emailMethod === 'resend') {
     try {
+      console.log(`🔍 Resend Debug - Enviando para: ${destinatario}`);
+      console.log(`🔍 Resend Debug - From: ${emailFrom}`);
+      
       const response = await resend.emails.send({
         from: emailFrom,
         to: [destinatario],
@@ -272,11 +275,25 @@ async function enviarEmail(destinatario, assunto, htmlContent) {
         html: htmlContent
       });
 
+      // LOG COMPLETO da resposta
+      console.log('🔍 RESPOSTA COMPLETA DO RESEND:', JSON.stringify(response, null, 2));
+
+      // Verificar se houve erro na resposta
+      if (response?.error) {
+        console.error('❌ Resend retornou erro:', response.error);
+        throw new Error(response.error.message || JSON.stringify(response.error));
+      }
+
       // Resend pode retornar { data: { id: '...' } } ou { id: '...' }
-      const emailId = response?.data?.id || response?.id || 'sent';
+      const emailId = response?.data?.id || response?.id || null;
       
-      console.log(`✅ Email enviado com sucesso via Resend! ID: ${emailId}`);
-      return { success: true, messageId: emailId, method: 'resend' };
+      if (!emailId) {
+        console.error('⚠️ Email enviado mas sem ID (resposta inesperada)');
+        console.log('🔍 Estrutura da resposta:', Object.keys(response || {}));
+      }
+      
+      console.log(`✅ Email enviado com sucesso via Resend! ID: ${emailId || 'N/A'}`);
+      return { success: true, messageId: emailId, method: 'resend', response };
 
     } catch (error) {
       console.error('❌ Falha ao enviar via Resend:', error.message);
