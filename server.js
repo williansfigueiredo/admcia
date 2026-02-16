@@ -3582,14 +3582,14 @@ app.post('/escalas', (req, res) => {
 
   // Se tem job_id, busca o nome do job para a observação
   if (jobId) {
-    const sqlJob = "SELECT titulo FROM jobs WHERE id = ?";
+    const sqlJob = "SELECT descricao FROM jobs WHERE id = ?";
     db.query(sqlJob, [jobId], (err, jobResult) => {
       if (err) {
         console.error("❌ Erro ao buscar job:", err);
         return res.status(500).json({ error: err.message });
       }
 
-      const nomeJob = jobResult[0]?.titulo || 'Evento';
+      const nomeJob = jobResult[0]?.descricao || 'Evento';
       const observacaoAuto = `Job #${jobId} - ${nomeJob}`;
 
       const sql = `
