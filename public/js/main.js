@@ -1104,13 +1104,24 @@ console.log('🌐 API_URL:', API_URL);
    SISTEMA DE AUTENTICAÇÃO E GESTÃO DE SESSÃO
    ============================================================= */
 
-// Verifica autenticação ao carregar a página
+// Verifica se NÃO está na página de login
+function naoEstaNoLogin() {
+  return !window.location.pathname.includes('/login');
+}
+
+// Verifica autenticação ao carregar a página (APENAS se não estiver no login)
 async function verificarAutenticacaoInicial() {
+  // Não verifica se estiver na página de login
+  if (!naoEstaNoLogin()) {
+    console.log('📄 Página de login - pula verificação');
+    return true;
+  }
+
   const token = sessionStorage.getItem('auth_token');
   
   if (!token) {
     console.log('⚠️ Sem token - redirecionando para login');
-    window.location.href = '/login';
+    window.location.replace('/login'); // Usa replace para não criar histórico
     return false;
   }
 
@@ -1139,13 +1150,18 @@ async function verificarAutenticacaoInicial() {
     console.error('❌ Erro de autenticação:', error.message);
     sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('usuario');
-    window.location.href = '/login';
+    window.location.replace('/login'); // Usa replace para não criar histórico
     return false;
   }
 }
 
 // Monitora status de conexão (online/offline)
 function iniciarMonitoramentoConexao() {
+  // Não monitora se estiver na página de login
+  if (!naoEstaNoLogin()) {
+    return;
+  }
+
   let estaOffline = false;
 
   // Detecta quando fica offline
@@ -1163,7 +1179,7 @@ function iniciarMonitoramentoConexao() {
       
       if (!token) {
         console.log('⚠️ Sem token após reconexão - redirecionando para login');
-        window.location.href = '/login';
+        window.location.replace('/login');
         return;
       }
 
@@ -1191,13 +1207,18 @@ function iniciarMonitoramentoConexao() {
         sessionStorage.removeItem('auth_token');
         sessionStorage.removeItem('usuario');
         alert('Sua sessão expirou. Por favor, faça login novamente.');
-        window.location.href = '/login';
+        window.location.replace('/login');
       }
     }
   });
 
-  // Verificação periódica de token (a cada 5 minutos)
+  // Verificação periódica de token (a cada 10 minutos - aumentado para evitar excesso)
   setInterval(async () => {
+    // Não verifica se estiver na página de login
+    if (!naoEstaNoLogin()) {
+      return;
+    }
+
     const token = sessionStorage.getItem('auth_token');
     
     if (token && navigator.onLine) {
@@ -1224,10 +1245,10 @@ function iniciarMonitoramentoConexao() {
         sessionStorage.removeItem('auth_token');
         sessionStorage.removeItem('usuario');
         alert('Sua sessão expirou. Por favor, faça login novamente.');
-        window.location.href = '/login';
+        window.location.replace('/login');
       }
     }
-  }, 5 * 60 * 1000); // 5 minutos
+  }, 10 * 60 * 1000); // 10 minutos
 
   console.log('🔒 Monitoramento de sessão ativado');
 }
@@ -1240,11 +1261,16 @@ function iniciarMonitoramentoConexao() {
   }
 })();
 
-console.log('🌐 API_URL configurada:', API_URL);
 
 // GARANTIA: Assim que a tela abrir, roda tudo com skeleton loader
 document.addEventListener('DOMContentLoaded', async () => {
   console.log("Sistema Iniciado 🚀");
+
+  // Não executa se estiver na página de login
+  if (!naoEstaNoLogin()) {
+    console.log('📄 Página de login - não executa inicialização do sistema');
+    return;
+  }
 
   // Mostra skeleton loader durante carregamento inicial
   showGlobalSkeleton();
