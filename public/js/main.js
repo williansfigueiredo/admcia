@@ -9396,10 +9396,42 @@ window.initCalendar = function () {
       // Preenche e exibe o modal
       const modalElemento = document.getElementById('modalEventoConteudo');
       const modalContainer = document.getElementById('modalDetalhesEvento');
+      const modalFooter = document.getElementById('modalEventoFooter');
 
       if (modalElemento && modalContainer) {
         // Se o modal existe, usa ele
         modalElemento.innerHTML = conteudo;
+        
+        // Monta o footer com botões
+        let footerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>';
+        
+        // Se for escala manual, adiciona botão de deletar
+        if (dados.is_manual === 1 && dados.tipo === 'escala') {
+          // Extrai o ID real da escala do ID do evento (formato: "escala-123-2026-02-17" ou "123-2026-02-17")
+          const eventoId = info.event.id;
+          let escalaId = null;
+          
+          if (eventoId.startsWith('escala-')) {
+            // Formato: "escala-123-2026-02-17" -> pegar "123"
+            const partes = eventoId.replace('escala-', '').split('-');
+            escalaId = partes[0];
+          } else {
+            // Formato: "123-2026-02-17" -> pegar "123"
+            const partes = eventoId.split('-');
+            escalaId = partes[0];
+          }
+          
+          if (escalaId && !isNaN(escalaId)) {
+            footerHTML = `<button type="button" class="btn btn-danger" onclick="deletarEscalaManual(${escalaId})">
+              🗑️ Apagar Escala
+            </button>` + footerHTML;
+          }
+        }
+        
+        if (modalFooter) {
+          modalFooter.innerHTML = footerHTML;
+        }
+        
         const modal = new bootstrap.Modal(modalContainer);
         modal.show();
       } else {
@@ -9412,6 +9444,42 @@ window.initCalendar = function () {
 
   calendar.render();
   console.log("✅ FullCalendar (Feed) inicializado com sucesso!");
+};
+
+// Função para deletar escala manual
+window.deletarEscalaManual = function(escalaId) {
+  if (!confirm('Tem certeza que deseja apagar esta escala manual?\n\nO funcionário também será removido da equipe do evento.')) {
+    return;
+  }
+  
+  fetch(`${API_URL}/escalas/${escalaId}`, {
+    method: 'DELETE'
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      alert('Erro ao deletar escala: ' + data.error);
+      return;
+    }
+    
+    // Fecha o modal
+    const modalContainer = document.getElementById('modalDetalhesEvento');
+    if (modalContainer) {
+      const modal = bootstrap.Modal.getInstance(modalContainer);
+      if (modal) modal.hide();
+    }
+    
+    // Recarrega o calendário
+    if (typeof recarregarCalendario === 'function') {
+      recarregarCalendario();
+    }
+    
+    alert('✅ Escala deletada com sucesso!');
+  })
+  .catch(err => {
+    console.error('Erro ao deletar escala:', err);
+    alert('Erro ao deletar escala: ' + err.message);
+  });
 };
 
 

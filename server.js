@@ -2037,6 +2037,76 @@ app.get('/debug/corrigir-escalas-automaticas', (req, res) => {
   });
 });
 
+// Rota de debug para sincronizar escalas manuais com a equipe do job
+app.get('/debug/sincronizar-escalas-equipe', (req, res) => {
+  console.log("🔧 Sincronizando escalas manuais com equipe dos jobs...");
+  
+  // Busca todas as escalas manuais que têm job vinculado
+  const sqlEscalas = `
+    SELECT e.id, e.funcionario_id, e.job_id, e.tipo
+    FROM escalas e
+    WHERE e.is_manual = 1 AND e.job_id IS NOT NULL
+  `;
+  
+  db.query(sqlEscalas, (err, escalas) => {
+    if (err) {
+      console.error("❌ Erro ao buscar escalas:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    
+    if (escalas.length === 0) {
+      return res.json({
+        success: true,
+        message: "Nenhuma escala manual com job vinculado encontrada.",
+        adicionados: 0
+      });
+    }
+    
+    let processados = 0;
+    let adicionados = 0;
+    let jaExistentes = 0;
+    
+    escalas.forEach(escala => {
+      const sqlCheck = "SELECT id FROM job_equipe WHERE job_id = ? AND funcionario_id = ?";
+      db.query(sqlCheck, [escala.job_id, escala.funcionario_id], (errCheck, existe) => {
+        processados++;
+        
+        if (errCheck) {
+          console.error(`⚠️ Erro ao verificar equipe para escala ${escala.id}:`, errCheck);
+        } else if (existe.length === 0) {
+          // Adiciona na equipe
+          const funcao = escala.tipo || 'Treinamento';
+          const sqlAdd = "INSERT INTO job_equipe (job_id, funcionario_id, funcao) VALUES (?, ?, ?)";
+          db.query(sqlAdd, [escala.job_id, escala.funcionario_id, funcao], (errAdd) => {
+            if (errAdd) {
+              console.error(`⚠️ Erro ao adicionar funcionário ${escala.funcionario_id} no job ${escala.job_id}:`, errAdd);
+            } else {
+              console.log(`✅ Funcionário ${escala.funcionario_id} adicionado no job ${escala.job_id} com função: ${funcao}`);
+              adicionados++;
+            }
+          });
+        } else {
+          jaExistentes++;
+        }
+        
+        // Quando terminar todos
+        if (processados === escalas.length) {
+          setTimeout(() => {
+            res.json({
+              success: true,
+              message: `Sincronização concluída!`,
+              escalasProcessadas: processados,
+              adicionadosNaEquipe: adicionados,
+              jaExistentes: jaExistentes,
+              instrucao: "Os funcionários das escalas manuais agora estão na equipe dos respectivos jobs."
+            });
+          }, 500);
+        }
+      });
+    });
+  });
+});
+
 
 // =============================================================
 // ROTA MÁGICA: RECALIBRAR ESTOQUE (CORRIGE QUALQUER ERRO)
@@ -3718,19 +3788,48 @@ app.get('/escalas', (req, res) => {
 });
 
 
-// ROTA PARA DELETAR ESCALA INDIVIDUAL
+// ROTA PARA DELETAR ESCALA INDIVIDUAL (e remover da equipe se for escala manual)
 app.delete('/escalas/:id', (req, res) => {
   const escalaId = req.params.id;
   console.log(`🗑️ Deletando escala ID: ${escalaId}`);
 
-  const sql = "DELETE FROM escalas WHERE id = ?";
-  db.query(sql, [escalaId], (err, result) => {
-    if (err) {
-      console.error("❌ Erro ao deletar escala:", err);
-      return res.status(500).json({ error: err.message });
+  // Primeiro busca os dados da escala para saber se precisa remover da equipe
+  const sqlBusca = "SELECT funcionario_id, job_id, is_manual FROM escalas WHERE id = ?";
+  db.query(sqlBusca, [escalaId], (errBusca, escalaData) => {
+    if (errBusca) {
+      console.error("❌ Erro ao buscar escala:", errBusca);
+      return res.status(500).json({ error: errBusca.message });
     }
-    console.log(`✅ Escala ${escalaId} deletada com sucesso`);
-    res.json({ message: "Escala deletada com sucesso!", deleted: result.affectedRows });
+
+    if (escalaData.length === 0) {
+      return res.status(404).json({ error: "Escala não encontrada" });
+    }
+
+    const escala = escalaData[0];
+    const sql = "DELETE FROM escalas WHERE id = ?";
+    
+    db.query(sql, [escalaId], (err, result) => {
+      if (err) {
+        console.error("❌ Erro ao deletar escala:", err);
+        return res.status(500).json({ error: err.message });
+      }
+      
+      console.log(`✅ Escala ${escalaId} deletada com sucesso`);
+      
+      // Se era escala manual com job vinculado, remove também da equipe
+      if (escala.is_manual === 1 && escala.job_id) {
+        const sqlDelEquipe = "DELETE FROM job_equipe WHERE job_id = ? AND funcionario_id = ?";
+        db.query(sqlDelEquipe, [escala.job_id, escala.funcionario_id], (errDelEquipe, resultEquipe) => {
+          if (errDelEquipe) {
+            console.error("⚠️ Erro ao remover da equipe:", errDelEquipe);
+          } else if (resultEquipe.affectedRows > 0) {
+            console.log(`✅ Funcionário ${escala.funcionario_id} removido da equipe do job ${escala.job_id}`);
+          }
+        });
+      }
+      
+      res.json({ message: "Escala deletada com sucesso!", deleted: result.affectedRows });
+    });
   });
 });
 
