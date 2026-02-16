@@ -2504,13 +2504,55 @@ app.post('/jobs/update/:id', (req, res) => {
     return res.status(400).json({ error: "Campo inválido" });
   }
 
-  const sql = `UPDATE jobs SET ${campo} = ? WHERE id = ?`;
-  db.query(sql, [valor, id], (err, result) => {
-    if (err) {
-      console.error("Erro ao atualizar:", err);
-      return res.status(500).json({ error: err.message });
+  // Primeiro, pega os dados atuais do job para comparar e criar notificação
+  db.query('SELECT descricao, numero_pedido, status, pagamento FROM jobs WHERE id = ?', [id], (errGet, jobs) => {
+    if (errGet) {
+      console.error("Erro ao buscar job:", errGet);
+      return res.status(500).json({ error: errGet.message });
     }
-    res.json({ success: true });
+
+    if (!jobs || jobs.length === 0) {
+      return res.status(404).json({ error: "Pedido não encontrado" });
+    }
+
+    const jobAtual = jobs[0];
+    const valorAntigo = jobAtual[campo];
+
+    // Atualiza o campo
+    const sql = `UPDATE jobs SET ${campo} = ? WHERE id = ?`;
+    db.query(sql, [valor, id], (err, result) => {
+      if (err) {
+        console.error("Erro ao atualizar:", err);
+        return res.status(500).json({ error: err.message });
+      }
+
+      // Cria notificação sobre a mudança
+      let titulo = '';
+      let texto = '';
+      let tipo = 'info';
+
+      if (campo === 'status') {
+        titulo = `📋 Status Alterado - Pedido #${jobAtual.numero_pedido}`;
+        texto = `O pedido "${jobAtual.descricao}" teve seu status alterado de "${valorAntigo}" para "${valor}"`;
+        tipo = valor === 'Concluído' ? 'sucesso' : (valor === 'Cancelado' ? 'erro' : 'info');
+      } else if (campo === 'pagamento') {
+        titulo = `💰 Pagamento Atualizado - Pedido #${jobAtual.numero_pedido}`;
+        texto = `O status de pagamento do pedido "${jobAtual.descricao}" foi alterado de "${valorAntigo}" para "${valor}"`;
+        tipo = valor === 'Pago' ? 'sucesso' : (valor === 'Pendente' ? 'alerta' : 'info');
+      }
+
+      // Insere a notificação
+      db.query(
+        'INSERT INTO notificacoes (tipo, titulo, texto, job_id) VALUES (?, ?, ?, ?)',
+        [tipo, titulo, texto, id],
+        (errNotif) => {
+          if (errNotif) console.error('❌ Erro ao criar notificação:', errNotif);
+          else console.log(`✅ Notificação criada: ${titulo}`);
+        }
+      );
+
+      res.json({ success: true });
+    });
   });
 });
 /* ADICIONE ESTA ROTA NO server.js PARA DIAGNOSTICAR */
