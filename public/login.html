@@ -172,6 +172,11 @@
       box-shadow: 0 0 0 4px rgba(240, 101, 72, 0.15);
     }
 
+    /* Input com botão de toggle */
+    .input-group:has(.password-toggle) .form-control {
+      padding-right: 50px !important;
+    }
+
     .password-toggle {
       position: absolute;
       right: 14px;
@@ -183,8 +188,9 @@
       cursor: pointer;
       padding: 4px;
       font-size: 18px;
-      z-index: 2;
+      z-index: 10;
       transition: color 0.2s;
+      pointer-events: all;
     }
 
     .password-toggle:hover {
