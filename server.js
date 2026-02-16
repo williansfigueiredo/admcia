@@ -394,6 +394,27 @@ db.getConnection((err, connection) => {
         observacoes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )`,
+      
+      // 18. notificacoes (sistema compartilhado para todos os usuários)
+      `CREATE TABLE IF NOT EXISTS notificacoes (
+        id INT(11) AUTO_INCREMENT PRIMARY KEY,
+        tipo ENUM('sucesso', 'erro', 'alerta', 'info') NOT NULL DEFAULT 'info',
+        titulo VARCHAR(255) NOT NULL,
+        texto TEXT,
+        job_id INT(11),
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_criado_em (criado_em)
+      )`,
+      
+      // 19. notificacoes_lidas (controla quem já leu cada notificação)
+      `CREATE TABLE IF NOT EXISTS notificacoes_lidas (
+        id INT(11) AUTO_INCREMENT PRIMARY KEY,
+        notificacao_id INT(11) NOT NULL,
+        funcionario_id INT(11) NOT NULL,
+        lido_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_notif_func (notificacao_id, funcionario_id),
+        FOREIGN KEY (notificacao_id) REFERENCES notificacoes(id) ON DELETE CASCADE
       )`
     ];
     
@@ -1113,6 +1134,15 @@ app.post('/jobs', (req, res) => {
             () => { } // Fire and forget
           );
 
+          // Cria notificação de novo pedido para todos os usuários
+          db.query(
+            'INSERT INTO notificacoes (tipo, titulo, texto, job_id) VALUES (?, ?, ?, ?)',
+            ['sucesso', '✅ Novo Pedido Criado', `O pedido "${data.descricao}" (#${numeroPedido}) foi criado com sucesso!`, novoId],
+            (errNotif) => {
+              if (errNotif) console.error('Erro ao criar notificação:', errNotif);
+            }
+          );
+
           res.json({ message: "Job e Equipe salvos com sucesso!", id: novoId, numero_pedido: numeroPedido });
         });
       } else {
@@ -1122,6 +1152,15 @@ app.post('/jobs', (req, res) => {
           "INSERT INTO configuracoes_sistema (chave, valor) VALUES ('pedido_numero_atual', ?) ON DUPLICATE KEY UPDATE valor = ?",
           [String(proximoNumero), String(proximoNumero)],
           () => { } // Fire and forget
+        );
+
+        // Cria notificação de novo pedido para todos os usuários
+        db.query(
+          'INSERT INTO notificacoes (tipo, titulo, texto, job_id) VALUES (?, ?, ?, ?)',
+          ['sucesso', '✅ Novo Pedido Criado', `O pedido "${data.descricao}" (#${numeroPedido}) foi criado com sucesso!`, novoId],
+          (errNotif) => {
+            if (errNotif) console.error('Erro ao criar notificação:', errNotif);
+          }
         );
 
         res.json({ message: "Job e Equipe salvos com sucesso!", id: novoId, numero_pedido: numeroPedido });
@@ -1686,6 +1725,133 @@ app.delete('/financeiro/transacoes/:id', (req, res) => {
   db.query('DELETE FROM transacoes WHERE id = ?', [id], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Transação excluída!', deleted: result.affectedRows });
+  });
+});
+
+// ============================================
+// ROTAS DE NOTIFICAÇÕES (SISTEMA COMPARTILHADO)
+// ============================================
+
+// CRIAR NOTIFICAÇÃO (chamado pelo backend quando acontecem eventos)
+app.post('/notificacoes', (req, res) => {
+  const { tipo, titulo, texto, job_id } = req.body;
+  
+  const sql = 'INSERT INTO notificacoes (tipo, titulo, texto, job_id) VALUES (?, ?, ?, ?)';
+  db.query(sql, [tipo, titulo, texto, job_id || null], (err, result) => {
+    if (err) {
+      console.error('Erro ao criar notificação:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ 
+      success: true, 
+      id: result.insertId,
+      message: 'Notificação criada com sucesso!' 
+    });
+  });
+});
+
+// BUSCAR NOTIFICAÇÕES (não lidas + últimas 50)
+app.get('/notificacoes', (req, res) => {
+  const { funcionario_id } = req.query;
+  
+  if (!funcionario_id) {
+    return res.status(400).json({ error: 'funcionario_id é obrigatório' });
+  }
+  
+  // Busca notificações dos últimos 7 dias, ordenadas por data (mais recentes primeiro)
+  const sql = `
+    SELECT 
+      n.*,
+      CASE 
+        WHEN nl.id IS NOT NULL THEN 1
+        ELSE 0
+      END as lida
+    FROM notificacoes n
+    LEFT JOIN notificacoes_lidas nl ON n.id = nl.notificacao_id AND nl.funcionario_id = ?
+    WHERE n.criado_em >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    ORDER BY n.criado_em DESC
+    LIMIT 100
+  `;
+  
+  db.query(sql, [funcionario_id], (err, results) => {
+    if (err) {
+      console.error('Erro ao buscar notificações:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(results);
+  });
+});
+
+// MARCAR NOTIFICAÇÃO COMO LIDA
+app.post('/notificacoes/:id/lida', (req, res) => {
+  const { id } = req.params;
+  const { funcionario_id } = req.body;
+  
+  if (!funcionario_id) {
+    return res.status(400).json({ error: 'funcionario_id é obrigatório' });
+  }
+  
+  const sql = 'INSERT IGNORE INTO notificacoes_lidas (notificacao_id, funcionario_id) VALUES (?, ?)';
+  db.query(sql, [id, funcionario_id], (err, result) => {
+    if (err) {
+      console.error('Erro ao marcar notificação como lida:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ success: true });
+  });
+});
+
+// MARCAR TODAS AS NOTIFICAÇÕES COMO LIDAS
+app.post('/notificacoes/marcar-todas-lidas', (req, res) => {
+  const { funcionario_id } = req.body;
+  
+  if (!funcionario_id) {
+    return res.status(400).json({ error: 'funcionario_id é obrigatório' });
+  }
+  
+  // Busca todas as notificações não lidas dos últimos 7 dias
+  const sqlSelect = `
+    SELECT n.id 
+    FROM notificacoes n
+    LEFT JOIN notificacoes_lidas nl ON n.id = nl.notificacao_id AND nl.funcionario_id = ?
+    WHERE nl.id IS NULL 
+    AND n.criado_em >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+  `;
+  
+  db.query(sqlSelect, [funcionario_id], (errSelect, notificacoes) => {
+    if (errSelect) {
+      console.error('Erro ao buscar notificações:', errSelect);
+      return res.status(500).json({ error: errSelect.message });
+    }
+    
+    if (notificacoes.length === 0) {
+      return res.json({ success: true, message: 'Nenhuma notificação para marcar' });
+    }
+    
+    // Marca todas como lidas
+    const ids = notificacoes.map(n => n.id);
+    const values = ids.map(id => [id, funcionario_id]);
+    
+    const sqlInsert = 'INSERT IGNORE INTO notificacoes_lidas (notificacao_id, funcionario_id) VALUES ?';
+    db.query(sqlInsert, [values], (errInsert, result) => {
+      if (errInsert) {
+        console.error('Erro ao marcar como lidas:', errInsert);
+        return res.status(500).json({ error: errInsert.message });
+      }
+      res.json({ success: true, marked: result.affectedRows });
+    });
+  });
+});
+
+// LIMPAR NOTIFICAÇÕES ANTIGAS (manutenção - opcional)
+app.delete('/notificacoes/antigas', (req, res) => {
+  const sql = 'DELETE FROM notificacoes WHERE criado_em < DATE_SUB(NOW(), INTERVAL 30 DAY)';
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error('Erro ao limpar notificações antigas:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ success: true, deleted: result.affectedRows });
   });
 });
 
@@ -2478,13 +2644,56 @@ app.post('/jobs/update/:id', (req, res) => {
     return res.status(400).json({ error: "Campo inválido" });
   }
 
-  const sql = `UPDATE jobs SET ${campo} = ? WHERE id = ?`;
-  db.query(sql, [valor, id], (err, result) => {
-    if (err) {
-      console.error("Erro no SQL:", err);
-      return res.status(500).json(err);
+  // Busca o job atual para notificação
+  db.query('SELECT status, descricao, numero_pedido FROM jobs WHERE id = ?', [id], (errSelect, jobResults) => {
+    if (errSelect) {
+      console.error("Erro ao buscar job:", errSelect);
+      return res.status(500).json(errSelect);
     }
-    res.json({ success: true });
+
+    const jobAntigo = jobResults[0];
+    const statusAntigo = jobAntigo ? jobAntigo.status : null;
+
+    const sql = `UPDATE jobs SET ${campo} = ? WHERE id = ?`;
+    db.query(sql, [valor, id], (err, result) => {
+      if (err) {
+        console.error("Erro no SQL:", err);
+        return res.status(500).json(err);
+      }
+
+      // Cria notificação apenas se mudou o status
+      if (campo === 'status' && statusAntigo && statusAntigo !== valor && jobAntigo) {
+        let tipo = 'info';
+        let icone = '🔄';
+
+        if (valor === 'Cancelado') {
+          tipo = 'erro';
+          icone = '❌';
+        } else if (valor === 'Finalizado') {
+          tipo = 'sucesso';
+          icone = '✅';
+        } else if (valor === 'Em Andamento') {
+          tipo = 'alerta';
+          icone = '🎬';
+        } else if (valor === 'Confirmado') {
+          tipo = 'sucesso';
+          icone = '✓';
+        }
+
+        const titulo = `${icone} Status Alterado`;
+        const texto = `O pedido "${jobAntigo.descricao}" (#${jobAntigo.numero_pedido || id}) mudou de "${statusAntigo}" para "${valor}"`;
+
+        db.query(
+          'INSERT INTO notificacoes (tipo, titulo, texto, job_id) VALUES (?, ?, ?, ?)',
+          [tipo, titulo, texto, id],
+          (errNotif) => {
+            if (errNotif) console.error('Erro ao criar notificação:', errNotif);
+          }
+        );
+      }
+
+      res.json({ success: true });
+    });
   });
 });
 
@@ -2586,9 +2795,9 @@ app.delete('/jobs/:id', async (req, res) => {
   console.log(`🗑️ Solicitada exclusão do Job ${id}...`);
 
   try {
-    // 1. PRIMEIRO: DESCOBRIR O STATUS DO PEDIDO
+    // 1. PRIMEIRO: DESCOBRIR O STATUS E DESCRIÇÃO DO PEDIDO
     const jobResult = await new Promise((resolve, reject) => {
-      db.query("SELECT status FROM jobs WHERE id = ?", [id], (err, results) => {
+      db.query("SELECT status, descricao, numero_pedido FROM jobs WHERE id = ?", [id], (err, results) => {
         if (err) reject(err);
         else resolve(results);
       });
@@ -2687,6 +2896,16 @@ app.delete('/jobs/:id', async (req, res) => {
       : "Pedido excluído e estoque devolvido com sucesso!";
 
     console.log(`✅ Job ${id} excluído com sucesso`);
+    
+    // Cria notificação de pedido excluído para todos os usuários
+    db.query(
+      'INSERT INTO notificacoes (tipo, titulo, texto, job_id) VALUES (?, ?, ?, ?)',
+      ['erro', '🗑️ Pedido Excluído', `O pedido "${job.descricao}" (#${job.numero_pedido || id}) foi excluído`, null],
+      (errNotif) => {
+        if (errNotif) console.error('Erro ao criar notificação:', errNotif);
+      }
+    );
+    
     res.json({ success: true, message: msg });
 
   } catch (error) {

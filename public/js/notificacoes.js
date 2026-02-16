@@ -1,44 +1,67 @@
 /* =============================================================
-   SISTEMA DE NOTIFICAÇÕES
+   SISTEMA DE NOTIFICAÇÕES (COMPARTILHADO VIA SERVIDOR)
    ============================================================= */
 
-// Armazena notificações no localStorage
-function obterNotificacoes() {
-  const notificacoes = localStorage.getItem('notificacoes');
-  return notificacoes ? JSON.parse(notificacoes) : [];
+// Obtém o ID do funcionário logado do sessionStorage
+function obterFuncionarioId() {
+  const funcionarioData = sessionStorage.getItem('funcionario');
+  if (funcionarioData) {
+    try {
+      const parsed = JSON.parse(funcionarioData);
+      return parsed.id || null;
+    } catch (e) {
+      console.error('Erro ao parsear dados do funcionário:', e);
+    }
+  }
+  return null;
 }
 
-function salvarNotificacoes(notificacoes) {
-  localStorage.setItem('notificacoes', JSON.stringify(notificacoes));
-  atualizarBadgeNotificacoes();
-}
-
-// Adiciona uma nova notificação
-function adicionarNotificacao(tipo, titulo, texto) {
-  const notificacoes = obterNotificacoes();
-  const novaNotificacao = {
-    id: Date.now(),
-    tipo, // 'sucesso', 'alerta', 'erro', 'info'
-    titulo,
-    texto,
-    lida: false,
-    timestamp: new Date().toISOString()
-  };
-  
-  notificacoes.unshift(novaNotificacao);
-  
-  // Mantém apenas as últimas 50 notificacoes
-  if (notificacoes.length > 50) {
-    notificacoes.splice(50);
+// Busca notificações do servidor
+async function obterNotificacoes() {
+  const funcionarioId = obterFuncionarioId();
+  if (!funcionarioId) {
+    console.warn('Funcionário não logado - notificações desabilitadas');
+    return [];
   }
   
-  salvarNotificacoes(notificacoes);
-  renderizarNotificacoes();
+  try {
+    const response = await fetch(`${window.API_URL}/notificacoes?funcionario_id=${funcionarioId}`);
+    if (!response.ok) throw new Error('Erro ao buscar notificações');
+    
+    const notificacoes = await response.json();
+    return notificacoes;
+  } catch (error) {
+    console.error('Erro ao buscar notificações:', error);
+    return [];
+  }
+}
+
+// Adiciona uma nova notificação (envia ao servidor)
+async function adicionarNotificacao(tipo, titulo, texto, job_id = null) {
+  try {
+    const response = await fetch(`${window.API_URL}/notificacoes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo, titulo, texto, job_id })
+    });
+    
+    if (!response.ok) throw new Error('Erro ao criar notificação');
+    
+    const result = await response.json();
+    
+    // Atualiza a interface imediatamente
+    await renderizarNotificacoes();
+    atualizarBadgeNotificacoes();
+    
+    return result;
+  } catch (error) {
+    console.error('Erro ao adicionar notificação:', error);
+  }
 }
 
 // Renderiza as notificações no dropdown
-function renderizarNotificacoes() {
-  const notificacoes = obterNotificacoes();
+async function renderizarNotificacoes() {
+  const notificacoes = await obterNotificacoes();
   const lista = document.getElementById('listaNotificacoes');
   
   if (!lista) return;
@@ -62,7 +85,7 @@ function renderizarNotificacoes() {
       'info': 'bi-info-circle-fill'
     }[notif.tipo] || 'bi-bell-fill';
     
-    const tempo = formatarTempoNotificacao(new Date(notif.timestamp));
+    const tempo = formatarTempoNotificacao(new Date(notif.criado_em));
     
     html += `
       <div class="notificacao-item ${notif.lida ? '' : 'nao-lida'}" onclick="marcarComoLida(${notif.id})">
@@ -98,8 +121,8 @@ function formatarTempoNotificacao(data) {
 }
 
 // Atualiza o badge de contagem
-function atualizarBadgeNotificacoes() {
-  const notificacoes = obterNotificacoes();
+async function atualizarBadgeNotificacoes() {
+  const notificacoes = await obterNotificacoes();
   const naoLidas = notificacoes.filter(n => !n.lida).length;
   const badge = document.getElementById('badgeNotificacoes');
   
@@ -143,163 +166,71 @@ function fecharNotificacoesAoClicarFora(event) {
 }
 
 // Marca notificação como lida
-function marcarComoLida(id) {
-  const notificacoes = obterNotificacoes();
-  const notif = notificacoes.find(n => n.id === id);
-  if (notif) {
-    notif.lida = true;
-    salvarNotificacoes(notificacoes);
-    renderizarNotificacoes();
-  }
-}
-
-// Limpa todas as notificações
-function limparTodasNotificacoes() {
-  if (confirm('Deseja limpar todas as notificações?')) {
-    localStorage.setItem('notificacoes', JSON.stringify([]));
-    renderizarNotificacoes();
-    atualizarBadgeNotificacoes();
-  }
-}
-
-// Verifica pedidos vencidos e próximos do vencimento
-async function verificarVencimentosPedidos() {
+async function marcarComoLida(id) {
+  const funcionarioId = obterFuncionarioId();
+  if (!funcionarioId) return;
+  
   try {
-    const response = await fetch(`${window.API_URL || 'http://localhost:3000'}/jobs`);
-    if (!response.ok) return;
-    
-    const jobs = await response.json();
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    
-    // Obtém IDs de notificações já enviadas hoje
-    const notificacoesHoje = obterNotificacoesEnviadasHoje();
-    
-    jobs.forEach(job => {
-      if (!job.data_job || job.status === 'Cancelado' || job.pagamento === 'Pago') return;
-      
-      const dataJob = new Date(job.data_job);
-      dataJob.setHours(0, 0, 0, 0);
-      
-      const diffDias = Math.ceil((dataJob - hoje) / (1000  * 60 * 60 * 24));
-      
-      // Cria chave única para evitar notificações duplicadas
-      const chaveNotif = `job-${job.id}-${diffDias}`;
-      
-      // Se já enviou notificação para este job hoje, pula
-      if (notificacoesHoje.includes(chaveNotif)) return;
-      
-      // Pedido vencido
-      if (diffDias < 0) {
-        const diasAtrasado = Math.abs(diffDias);
-        adicionarNotificacao(
-          'erro',
-          '⏰ Pedido Vencido',
-          `O pedido "${job.descricao}" está atrasado há ${diasAtrasado} dia${diasAtrasado > 1 ? 's' : ''}`
-        );
-        salvarNotificacaoEnviada(chaveNotif);
-      }
-      // Falta 2 dias para vencer
-      else if (diffDias === 2) {
-        adicionarNotificacao(
-          'alerta',
-          '⚠️ Pedido Próximo do Vencimento',
-          `O pedido "${job.descricao}" vence em 2 dias (${dataJob.toLocaleDateString('pt-BR')})`
-        );
-        salvarNotificacaoEnviada(chaveNotif);
-      }
-      // Vence hoje
-      else if (diffDias === 0) {
-        adicionarNotificacao(
-          'alerta',
-          '🔔 Pedido Vence Hoje',
-          `O pedido "${job.descricao}" vence hoje!`
-        );
-        salvarNotificacaoEnviada(chaveNotif);
-      }
+    await fetch(`${window.API_URL}/notificacoes/${id}/lida`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ funcionario_id: funcionarioId })
     });
+    
+    await renderizarNotificacoes();
+    atualizarBadgeNotificacoes();
   } catch (error) {
-    console.error('Erro ao verificar vencimentos:', error);
+    console.error('Erro ao marcar notificação como lida:', error);
   }
 }
 
-// Controle de notificações enviadas (para evitar duplicatas)
-function obterNotificacoesEnviadasHoje() {
-  const hoje = new Date().toDateString();
-  const dados = localStorage.getItem('notificacoesEnviadas');
+// Limpa todas as notificações (marca todas como lidas)
+async function limparTodasNotificacoes() {
+  const funcionarioId = obterFuncionarioId();
+  if (!funcionarioId) return;
   
-  if (!dados) return [];
-  
-  const parsed = JSON.parse(dados);
-  
-  // Se é de outro dia, limpa e retorna vazio
-  if (parsed.data !== hoje) {
-    localStorage.setItem('notificacoesEnviadas', JSON.stringify({ data: hoje, ids: [] }));
-    return [];
-  }
-  
-  return parsed.ids || [];
-}
-
-function salvarNotificacaoEnviada(id) {
-  const hoje = new Date().toDateString();
-  const dados = localStorage.getItem('notificacoesEnviadas');
-  let parsed = dados ? JSON.parse(dados) : { data: hoje, ids: [] };
-  
-  // Se mudou o dia, reseta
-  if (parsed.data !== hoje) {
-    parsed = { data: hoje, ids: [] };
-  }
-  
-  if (!parsed.ids.includes(id)) {
-    parsed.ids.push(id);
-    localStorage.setItem('notificacoesEnviadas', JSON.stringify(parsed));
+  if (confirm('Deseja marcar todas as notificações como lidas?')) {
+    try {
+      await fetch(`${window.API_URL}/notificacoes/marcar-todas-lidas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ funcionario_id: funcionarioId })
+      });
+      
+      await renderizarNotificacoes();
+      atualizarBadgeNotificacoes();
+    } catch (error) {
+      console.error('Erro ao limpar notificações:', error);
+    }
   }
 }
 
-// Notificação quando criar novo pedido
+// Verifica pedidos vencidos e próximos do vencimento (agora feito pelo servidor)
+// Esta função apenas atualiza as notificações do servidor
+async function verificarVencimentosPedidos() {
+  await renderizarNotificacoes();
+  atualizarBadgeNotificacoes();
+}
+
+// Notificação quando criar novo pedido (chamada pelo frontend, mas salva no servidor)
 function notificarNovoPedido(descricao) {
-  adicionarNotificacao(
-    'sucesso',
-    '✅ Novo Pedido Criado',
-    `O pedido "${descricao}" foi criado com sucesso!`
-  );
+  // Nota: A notificação será criada pelo servidor automaticamente
+  // Esta função está aqui apenas para compatibilidade com código legado
+  console.log('Notificação de novo pedido será criada pelo servidor:', descricao);
 }
 
-// Notificação quando mudar status do pedido
+// Notificação quando mudar status do pedido (chamada pelo frontend, mas salva no servidor)
 function notificarMudancaStatus(descricao, statusAntigo, statusNovo) {
-  // Define o tipo de notificação baseado no novo status
-  let tipo = 'info';
-  let icone = '🔄';
-  
-  if (statusNovo === 'Cancelado') {
-    tipo = 'erro';
-    icone = '❌';
-  } else if (statusNovo === 'Finalizado') {
-    tipo = 'sucesso';
-    icone = '✅';
-  } else if (statusNovo === 'Em Andamento') {
-    tipo = 'alerta';
-    icone = '🎬';
-  } else if (statusNovo === 'Confirmado') {
-    tipo = 'sucesso';
-    icone = '✓';
-  }
-  
-  adicionarNotificacao(
-    tipo,
-    `${icone} Status Alterado`,
-    `O pedido "${descricao}" mudou de "${statusAntigo}" para "${statusNovo}"`
-  );
+  // Nota: A notificação será criada pelo servidor automaticamente
+  // Esta função está aqui apenas para compatibilidade com código legado
+  console.log('Notificação de mudança de status será criada pelo servidor:', descricao);
 }
 
-// Notificação quando cancelar pedido
+// Notificação quando cancelar pedido (chamada pelo frontend, mas salva no servidor)
 function notificarPedidoCancelado(descricao) {
-  adicionarNotificacao(
-    'erro',
-    '❌ Pedido Cancelado',
-    `O pedido "${descricao}" foi cancelado`
-  );
+  // Nota: A notificação será criada pelo servidor automaticamente
+  // Esta função está aqui apenas para compatibilidade com código legado
+  console.log('Notificação de cancelamento será criada pelo servidor:', descricao);
 }
 
 // Inicializa sistema de notificações
@@ -307,8 +238,11 @@ function inicializarNotificacoes() {
   atualizarBadgeNotificacoes();
   verificarVencimentosPedidos();
   
-  // Verifica vencimentos a cada 30 minutos
-  setInterval(verificarVencimentosPedidos, 30 * 60 * 1000);
+  // Atualiza notificações a cada 30 segundos
+  setInterval(() => {
+    renderizarNotificacoes();
+    atualizarBadgeNotificacoes();
+  }, 30 * 1000);
 }
 
 // Expor funções globalmente
