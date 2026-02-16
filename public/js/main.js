@@ -12380,13 +12380,13 @@ async function carregarGraficoFluxoCaixa() {
           {
             label: 'Entradas',
             data: dados.entradas,
-            backgroundColor: 'rgba(10, 179, 156, 0.8)',
+            backgroundColor: 'rgba(34, 197, 94, 0.8)', // Verde vibrante
             borderRadius: 4
           },
           {
             label: 'Saídas',
             data: dados.saidas,
-            backgroundColor: 'rgba(240, 101, 72, 0.8)',
+            backgroundColor: 'rgba(239, 68, 68, 0.8)', // Vermelho
             borderRadius: 4
           }
         ]
