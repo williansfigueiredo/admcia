@@ -1495,6 +1495,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }, 200);
 
+    } else if (origemDestino === 'financeiro') {
+      console.log("↩️ Voltando para Financeiro");
+      switchView('financeiro');
     } else {
       // Se não veio do histórico, volta para a tela principal de Contratos
       console.log("↩️ Voltando para Gestão de Contratos (Padrão)");
@@ -12058,7 +12061,7 @@ function renderizarTransacoesPaginadas() {
         <td>${getBadgeStatus(t.status)}</td>
         <td class="text-end">
           ${isJob ? `
-            <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirDetalhesJob(${t.id})" title="Ver pedido">
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="window.setJobOrigin('financeiro'); abrirDetalhesJob(${t.id})" title="Ver pedido">
               <i class="bi bi-eye"></i>
             </button>
             ${t.status !== 'pago' ? `
