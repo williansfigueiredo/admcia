@@ -1130,25 +1130,8 @@
           </table>
         </div>
         
-        <!-- Paginação -->
-        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
-          <div class="text-muted small" id="finContador">Mostrando 0 transações</div>
-          <div class="d-flex gap-2 align-items-center">
-            <button class="btn btn-sm btn-outline-secondary" id="btnPrimeiraPagina" onclick="irParaPrimeiraPagina()" title="Primeira página">
-              <i class="bi bi-chevron-bar-left"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" id="btnPaginaAnterior" onclick="mudarPagina(-1)" title="Anterior">
-              <i class="bi bi-chevron-left"></i>
-            </button>
-            <span class="small fw-bold" id="paginaAtualInfo">Página 1 de 1</span>
-            <button class="btn btn-sm btn-outline-secondary" id="btnProximaPagina" onclick="mudarPagina(1)" title="Próxima">
-              <i class="bi bi-chevron-right"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" id="btnUltimaPagina" onclick="irParaUltimaPagina()" title="Última página">
-              <i class="bi bi-chevron-bar-right"></i>
-            </button>
-          </div>
-        </div>
+        <!-- Container de Paginação (padrão do site) -->
+        <div id="paginacao-transacoes" class="mt-4"></div>
       </div>
     </div>
 

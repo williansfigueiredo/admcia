@@ -11814,7 +11814,7 @@ function renderizarTransacoesPaginadas() {
   });
 
   tbody.innerHTML = html;
-  atualizarInfoPaginacao(transacoesFiltradas.length);
+  renderizarBotoesPaginacaoTransacoes(transacoesFiltradas.length);
 }
 
 // Renderiza tabela de transações (mantido para compatibilidade)
@@ -11824,70 +11824,85 @@ function renderizarTransacoes(transacoes) {
   renderizarTransacoesPaginadas();
 }
 
-// Atualiza informações de paginação
-function atualizarInfoPaginacao(total) {
-  const totalPaginas = total > 0 ? Math.ceil(total / itensPorPaginaTransacoes) : 0;
-  const inicio = total > 0 ? (paginaAtualTransacoes - 1) * itensPorPaginaTransacoes + 1 : 0;
-  const fim = Math.min(paginaAtualTransacoes * itensPorPaginaTransacoes, total);
+// Renderiza botões de paginação (padrão do site)
+function renderizarBotoesPaginacaoTransacoes(totalItens) {
+  const totalPaginas = totalItens > 0 ? Math.ceil(totalItens / itensPorPaginaTransacoes) : 0;
   
-  // Atualiza texto contador
-  const contadorEl = document.getElementById('finContador');
-  if (contadorEl) {
-    if (total === 0) {
-      contadorEl.textContent = 'Mostrando 0 transações';
-    } else {
-      contadorEl.textContent = `Mostrando ${inicio} a ${fim} de ${total} transações`;
+  const containerPaginacao = document.getElementById('paginacao-transacoes');
+  if (!containerPaginacao) {
+    console.error('❌ Container de paginação não encontrado!');
+    return;
+  }
+
+  containerPaginacao.innerHTML = '';
+
+  if (totalPaginas <= 1) {
+    // Se houver apenas 1 página ou nenhuma, mostra info mas sem botões
+    if (totalItens > 0) {
+      containerPaginacao.innerHTML = `<div class="text-center text-muted small mt-2">Total: ${totalItens} transação(ões)</div>`;
     }
+    return;
   }
-  
-  // Atualiza informação de página
-  const paginaInfoEl = document.getElementById('paginaAtualInfo');
-  if (paginaInfoEl) {
-    paginaInfoEl.textContent = `Página ${totalPaginas > 0 ? paginaAtualTransacoes : 0} de ${totalPaginas}`;
+
+  let botoesHTML = '<div class="d-flex justify-content-center align-items-center gap-2">';
+
+  // Botão Anterior
+  const desabilitarAnterior = paginaAtualTransacoes === 1;
+  botoesHTML += `
+    <button class="btn btn-sm btn-outline-secondary" 
+            onclick="mudarPaginaTransacoes(${paginaAtualTransacoes - 1})" 
+            ${desabilitarAnterior ? 'disabled' : ''}>
+      <i class="bi bi-chevron-left"></i> Anterior
+    </button>
+  `;
+
+  // Botões numéricos (máximo 5 páginas visíveis)
+  let paginaInicio = Math.max(1, paginaAtualTransacoes - 2);
+  let paginaFim = Math.min(totalPaginas, paginaInicio + 4);
+
+  // Ajusta início se estiver próximo ao fim
+  if (paginaFim - paginaInicio < 4) {
+    paginaInicio = Math.max(1, paginaFim - 4);
   }
-  
-  // Atualiza estado dos botões
-  const btnPrimeira = document.getElementById('btnPrimeiraPagina');
-  const btnAnterior = document.getElementById('btnPaginaAnterior');
-  const btnProxima = document.getElementById('btnProximaPagina');
-  const btnUltima = document.getElementById('btnUltimaPagina');
-  
-  const desabilitarAnterior = paginaAtualTransacoes <= 1;
-  const desabilitarProxima = paginaAtualTransacoes >= totalPaginas || totalPaginas === 0;
-  
-  if (btnPrimeira) btnPrimeira.disabled = desabilitarAnterior;
-  if (btnAnterior) btnAnterior.disabled = desabilitarAnterior;
-  if (btnProxima) btnProxima.disabled = desabilitarProxima;
-  if (btnUltima) btnUltima.disabled = desabilitarProxima;
+
+  for (let i = paginaInicio; i <= paginaFim; i++) {
+    const ativo = i === paginaAtualTransacoes ? 'btn-primary' : 'btn-outline-secondary';
+    botoesHTML += `
+      <button class="btn btn-sm ${ativo}" 
+              onclick="mudarPaginaTransacoes(${i})" 
+              style="min-width: 40px;">
+        ${i}
+      </button>
+    `;
+  }
+
+  // Botão Próximo
+  const desabilitarProximo = paginaAtualTransacoes === totalPaginas;
+  botoesHTML += `
+    <button class="btn btn-sm btn-outline-secondary" 
+            onclick="mudarPaginaTransacoes(${paginaAtualTransacoes + 1})" 
+            ${desabilitarProximo ? 'disabled' : ''}>
+      Próximo <i class="bi bi-chevron-right"></i>
+    </button>
+  `;
+
+  botoesHTML += `</div>
+    <div class="text-center text-muted small mt-2">
+      Página ${paginaAtualTransacoes} de ${totalPaginas} • Total: ${totalItens} transação(ões)
+    </div>`;
+
+  containerPaginacao.innerHTML = botoesHTML;
 }
 
-// Muda página
-function mudarPagina(direcao) {
+// Muda página (função global para ser chamada pelo onclick)
+window.mudarPaginaTransacoes = function(novaPagina) {
   const totalPaginas = Math.ceil(transacoesFiltradas.length / itensPorPaginaTransacoes);
-  const novaPagina = paginaAtualTransacoes + direcao;
   
-  if (novaPagina >= 1 && novaPagina <= totalPaginas) {
-    paginaAtualTransacoes = novaPagina;
-    renderizarTransacoesPaginadas();
-  }
-}
-
-// Vai para primeira página
-function irParaPrimeiraPagina() {
-  if (paginaAtualTransacoes !== 1) {
-    paginaAtualTransacoes = 1;
-    renderizarTransacoesPaginadas();
-  }
-}
-
-// Vai para última página
-function irParaUltimaPagina() {
-  const totalPaginas = Math.ceil(transacoesFiltradas.length / itensPorPaginaTransacoes);
-  if (paginaAtualTransacoes !== totalPaginas && totalPaginas > 0) {
-    paginaAtualTransacoes = totalPaginas;
-    renderizarTransacoesPaginadas();
-  }
-}
+  if (novaPagina < 1 || novaPagina > totalPaginas) return;
+  
+  paginaAtualTransacoes = novaPagina;
+  renderizarTransacoesPaginadas();
+};
 
 // Filtrar transações
 function filtrarTransacoes() {
