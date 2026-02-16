@@ -9277,7 +9277,8 @@ window.initCalendar = function () {
               operador_id: e.operador_id,
               data_inicio_real: e.data_inicio_real,
               data_fim_real: e.data_fim_real,
-              is_manual: e.is_manual  // Adiciona flag manual/automático
+              is_manual: e.is_manual,
+              servico_nome: e.servico_nome
             }
           }));
 
@@ -9333,32 +9334,31 @@ window.initCalendar = function () {
         }) : dataInicio;
       }
 
-      // Extrai apenas o nome do serviço do título (remove ícone e nome do funcionário)
-      // Título formato: "📋 Nome - Nome do Serviço" ou "✋ Nome - Serviço - Tipo"
-      let nomeServico = info.event.title;
-      console.log('🔍 Título original:', nomeServico);
-      
-      // Remove o ícone (primeiro caractere que pode ser emoji)
-      nomeServico = nomeServico.replace(/^[📋✋📅]\s*/, '');
-      console.log('🔍 Após remover ícone:', nomeServico);
-      
-      // Remove o nome do funcionário (tudo até o primeiro " - ")
-      const primeiroDash = nomeServico.indexOf(' - ');
-      if (primeiroDash !== -1) {
-        nomeServico = nomeServico.substring(primeiroDash + 3); // +3 para pular " - "
-        console.log('🔍 Após remover funcionário:', nomeServico);
-        
-        // Se for escala manual, ainda tem " - Tipo" no final, remove também
-        if (dados.is_manual === 1) {
-          const segundoDash = nomeServico.lastIndexOf(' - ');
-          if (segundoDash !== -1) {
-            nomeServico = nomeServico.substring(0, segundoDash);
-            console.log('🔍 Após remover tipo:', nomeServico);
+      // Nome do serviço/evento (preferencialmente vindo do backend)
+      let nomeServico = dados.servico_nome;
+
+      if (!nomeServico) {
+        nomeServico = info.event.title || '';
+
+        // Remove o ícone inicial (📋/✋/📅)
+        nomeServico = nomeServico.replace(/^[📋✋📅]\s*/, '');
+
+        // Remove o nome do funcionário (parte antes do primeiro " - ")
+        const primeiroDash = nomeServico.indexOf(' - ');
+        if (primeiroDash !== -1) {
+          nomeServico = nomeServico.substring(primeiroDash + 3);
+
+          // Para escalas manuais, remove o tipo no final " - Tipo"
+          if (dados.is_manual === 1) {
+            const segundoDash = nomeServico.lastIndexOf(' - ');
+            if (segundoDash !== -1) {
+              nomeServico = nomeServico.substring(0, segundoDash);
+            }
           }
         }
       }
-      
-      console.log('✅ Nome final do serviço:', nomeServico);
+
+      nomeServico = (nomeServico || '').trim() || 'Não informado';
 
       // Monta o conteúdo HTML do modal
       const conteudo = `

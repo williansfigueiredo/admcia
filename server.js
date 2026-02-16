@@ -3367,12 +3367,12 @@ app.get('/agenda', (req, res) => {
     const escalasComJob = new Set();
 
     escalasRaw.forEach(e => {
-      const dataInicioStr = extrairDataStr(e.data_inicio);
-      const dataFimStr = e.data_fim ? extrairDataStr(e.data_fim) : dataInicioStr;
+      const escalaInicioStr = extrairDataStr(e.data_inicio);
+      const escalaFimStr = e.data_fim ? extrairDataStr(e.data_fim) : escalaInicioStr;
 
-      if (!dataInicioStr) return;
+      if (!escalaInicioStr) return;
 
-      const dias = gerarDiasEntre(dataInicioStr, dataFimStr);
+      const dias = gerarDiasEntre(escalaInicioStr, escalaFimStr);
 
       // Monta o título com ícone correto:
       // ✋ = escala MANUAL (criada pelo usuário com datas específicas)
@@ -3386,6 +3386,7 @@ app.get('/agenda', (req, res) => {
       } else {
         icone = '📅'; // Escala avulsa
       }
+      const servicoNome = e.job_descricao || e.tipo_escala || 'Escala Manual';
       let titulo = `${icone} ${e.funcionario_nome}`;
 
       // Marca que esse funcionário tem escala vinculada a este job (para evitar duplicação)
@@ -3414,18 +3415,19 @@ app.get('/agenda', (req, res) => {
         else if (e.job_status === 'Cancelado') cor = '#dc2626';
       }
 
+      // Determina período a ser exibido no modal
+      let dataInicioReal = escalaInicioStr;
+      let dataFimReal = escalaFimStr;
+
+      if (!isManual && e.job_id && e.job_data_inicio) {
+        dataInicioReal = extrairDataStr(e.job_data_inicio);
+        dataFimReal = e.job_data_fim ? extrairDataStr(e.job_data_fim) : dataInicioReal;
+      }
+
       dias.forEach(dataStr => {
         // Se escala tem job vinculado, usa horário do job; senão usa horário padrão
         const horaInicio = e.job_hora_chegada || '08:00:00';
         const horaFim = e.job_hora_fim || horaInicio; // Se não tem fim, usa o mesmo horário de início
-
-        // Prepara datas reais do job (para exibir no modal)
-        let dataInicioReal = null;
-        let dataFimReal = null;
-        if (e.job_id && e.job_data_inicio) {
-          dataInicioReal = extrairDataStr(e.job_data_inicio);
-          dataFimReal = e.job_data_fim ? extrairDataStr(e.job_data_fim) : dataInicioReal;
-        }
 
         eventosEscalas.push({
           id: `${e.id}-${dataStr}`,
@@ -3441,7 +3443,8 @@ app.get('/agenda', (req, res) => {
           tipo_evento: e.tipo_evento,
           is_manual: isManual ? 1 : 0,
           data_inicio_real: dataInicioReal,
-          data_fim_real: dataFimReal
+          data_fim_real: dataFimReal,
+          servico_nome: servicoNome
         });
       });
     });
@@ -3498,7 +3501,8 @@ app.get('/agenda', (req, res) => {
             is_manual: 0,  // Evento automático do job
             // 📅 Datas reais do job (período completo) em formato string
             data_inicio_real: dataInicioStr,
-            data_fim_real: dataFimStr
+            data_fim_real: dataFimStr,
+            servico_nome: job.descricao
           });
         });
       });
