@@ -613,8 +613,8 @@
           sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
         }
 
-        // Redireciona para o dashboard
-        window.location.href = '/';
+        // Redireciona para o dashboard (usa replace para não criar histórico)
+        window.location.replace('/');
 
       } catch (error) {
         console.error('Erro de login:', error);
@@ -656,15 +656,16 @@
           if (response.ok) {
             const data = await response.json();
             if (data.success) {
-              // Já está logado, redireciona
-              window.location.href = '/';
+              // Já está logado, redireciona (usa replace para não criar histórico)
+              console.log('✅ Token válido - redirecionando para dashboard');
+              window.location.replace('/');
               return;
             }
           }
         } catch (error) {
-          // Token inválido, limpa
-          sessionStorage.removeItem('auth_token');
-          sessionStorage.removeItem('usuario');
+          console.log('⚠️ Token inválido - limpando sessão');
+          // Token inválido, limpa TUDO
+          sessionStorage.clear();
         }
       }
     }

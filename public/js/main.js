@@ -1104,6 +1104,9 @@ console.log('🌐 API_URL:', API_URL);
    SISTEMA DE AUTENTICAÇÃO E GESTÃO DE SESSÃO
    ============================================================= */
 
+// Flag para evitar múltiplas verificações simultâneas
+let verificandoAutenticacao = false;
+
 // Verifica se NÃO está na página de login
 function naoEstaNoLogin() {
   return !window.location.pathname.includes('/login');
@@ -1111,16 +1114,26 @@ function naoEstaNoLogin() {
 
 // Verifica autenticação ao carregar a página (APENAS se não estiver no login)
 async function verificarAutenticacaoInicial() {
+  // Evita verificações duplicadas simultâneas
+  if (verificandoAutenticacao) {
+    console.log('⏳ Verificação já em andamento - aguardando...');
+    return false;
+  }
+
   // Não verifica se estiver na página de login
   if (!naoEstaNoLogin()) {
     console.log('📄 Página de login - pula verificação');
     return true;
   }
 
+  verificandoAutenticacao = true;
+
   const token = sessionStorage.getItem('auth_token');
   
   if (!token) {
-    console.log('⚠️ Sem token - redirecionando para login');
+    console.log('⚠️ Sem token - limpando sessão e redirecionando');
+    // Limpa TUDO do sessionStorage incluindo currentView
+    sessionStorage.clear();
     window.location.replace('/login'); // Usa replace para não criar histórico
     return false;
   }
@@ -1148,10 +1161,12 @@ async function verificarAutenticacaoInicial() {
 
   } catch (error) {
     console.error('❌ Erro de autenticação:', error.message);
-    sessionStorage.removeItem('auth_token');
-    sessionStorage.removeItem('usuario');
+    // Limpa TUDO do sessionStorage incluindo currentView
+    sessionStorage.clear();
     window.location.replace('/login'); // Usa replace para não criar histórico
     return false;
+  } finally {
+    verificandoAutenticacao = false;
   }
 }
 
@@ -1204,8 +1219,8 @@ function iniciarMonitoramentoConexao() {
 
       } catch (error) {
         console.error('❌ Sessão expirada após reconexão:', error.message);
-        sessionStorage.removeItem('auth_token');
-        sessionStorage.removeItem('usuario');
+        // Limpa TUDO do sessionStorage
+        sessionStorage.clear();
         alert('Sua sessão expirou. Por favor, faça login novamente.');
         window.location.replace('/login');
       }
@@ -1242,8 +1257,8 @@ function iniciarMonitoramentoConexao() {
 
       } catch (error) {
         console.error('❌ Sessão expirada:', error.message);
-        sessionStorage.removeItem('auth_token');
-        sessionStorage.removeItem('usuario');
+        // Limpa TUDO do sessionStorage
+        sessionStorage.clear();
         alert('Sua sessão expirou. Por favor, faça login novamente.');
         window.location.replace('/login');
       }
@@ -1253,16 +1268,15 @@ function iniciarMonitoramentoConexao() {
   console.log('🔒 Monitoramento de sessão ativado');
 }
 
-// Inicializa verificações de segurança
-(async function inicializarSeguranca() {
-  const autenticado = await verificarAutenticacaoInicial();
-  if (autenticado) {
-    iniciarMonitoramentoConexao();
-  }
-})();
-
 // Função para restaurar a view/aba anterior após atualizar a página
 function restaurarViewAnterior() {
+  // Só restaura se houver token válido (usuário autenticado)
+  const token = sessionStorage.getItem('auth_token');
+  if (!token) {
+    console.log('🚫 Sem token - não restaura view');
+    return;
+  }
+
   const viewSalva = sessionStorage.getItem('currentView');
   
   // Se não houver view salva ou for a view principal, não faz nada
@@ -1288,6 +1302,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('📄 Página de login - não executa inicialização do sistema');
     return;
   }
+
+  // Verifica autenticação ANTES de fazer qualquer coisa
+  const autenticado = await verificarAutenticacaoInicial();
+  if (!autenticado) {
+    console.log('❌ Não autenticado - parando inicialização');
+    return;
+  }
+
+  // Inicia monitoramento de conexão
+  iniciarMonitoramentoConexao();
 
   // Mostra skeleton loader durante carregamento inicial
   showGlobalSkeleton();
