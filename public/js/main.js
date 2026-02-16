@@ -2772,7 +2772,33 @@ function iniciarGraficos() {
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              y: { display: true, beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.06)", borderDash: [5, 5] }, ticks: { callback: (val) => 'R$ ' + (val / 1000) + 'K', color: "#6b7a90" } },
+              y: { 
+                display: true, 
+                beginAtZero: true, 
+                grid: { 
+                  color: "rgba(255, 255, 255, 0.06)", 
+                  borderDash: [5, 5] 
+                }, 
+                ticks: { 
+                  callback: function(value) {
+                    if (value === 0) return 'R$ 0';
+                    
+                    // Se for 1 milhão ou mais, mostra em milhões
+                    if (value >= 1000000) {
+                      return 'R$ ' + (value / 1000000).toFixed(1) + 'M';
+                    }
+                    
+                    // Se for 1 mil ou mais, mostra em milhares
+                    if (value >= 1000) {
+                      return 'R$ ' + (value / 1000).toFixed(1) + 'K';
+                    }
+                    
+                    // Se for menos de 1 mil, mostra o valor inteiro
+                    return 'R$ ' + value.toFixed(0);
+                  }, 
+                  color: "#6b7a90" 
+                } 
+              },
               x: { display: true, grid: { display: false }, ticks: { color: "#6b7a90" } }
             },
           },
