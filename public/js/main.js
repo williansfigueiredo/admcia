@@ -11469,11 +11469,35 @@ function filtrarTransacoes() {
   carregarTransacoes();
 }
 
+// Atualiza categorias baseado no tipo selecionado
+function atualizarCategoriasTransacao() {
+  const tipo = document.getElementById('transacaoTipo').value;
+  const select = document.getElementById('transacaoCategoria');
+  
+  const categoriasDespesa = [
+    'Combustível', 'Manutenção', 'Logística', 'Folha de Pagamento', 
+    'Aluguel', 'Materiais', 'Marketing', 'Impostos', 'Fornecedores',
+    'Energia/Água', 'Internet/Telefone', 'Outros'
+  ];
+  
+  const categoriasReceita = [
+    'Locação', 'Serviço', 'Locação + Serviço', 'Consultoria',
+    'Venda de Equipamento', 'Reembolso', 'Outros'
+  ];
+  
+  const categorias = tipo === 'receita' ? categoriasReceita : categoriasDespesa;
+  
+  select.innerHTML = categorias.map(cat => 
+    `<option value="${cat}">${cat}</option>`
+  ).join('');
+}
+
 // Abrir modal nova transação
 function abrirModalNovaTransacao() {
   document.getElementById('transacaoId').value = '';
   document.getElementById('modalTransacaoTitulo').textContent = 'Nova Transação';
   document.getElementById('transacaoTipo').value = 'despesa';
+  atualizarCategoriasTransacao(); // Atualiza categorias
   document.getElementById('transacaoCategoria').value = 'Outros';
   document.getElementById('transacaoDescricao').value = '';
   document.getElementById('transacaoValor').value = '';
@@ -11507,20 +11531,41 @@ async function carregarClientesDropdownTransacao() {
 // Salvar transação
 async function salvarTransacao() {
   const id = document.getElementById('transacaoId').value;
+  const tipo = document.getElementById('transacaoTipo').value;
+  const status = document.getElementById('transacaoStatus').value;
+  const dataVencimento = document.getElementById('transacaoVencimento').value;
+  
   const dados = {
-    tipo: document.getElementById('transacaoTipo').value,
+    tipo: tipo,
     categoria: document.getElementById('transacaoCategoria').value,
-    descricao: document.getElementById('transacaoDescricao').value,
-    valor: parseFloat(document.getElementById('transacaoValor').value) || 0,
-    data_vencimento: document.getElementById('transacaoVencimento').value,
-    status: document.getElementById('transacaoStatus').value,
-    forma_pagamento: document.getElementById('transacaoFormaPgto').value,
+    descricao: document.getElementById('transacaoDescricao').value.trim(),
+    valor: Math.abs(parseFloat(document.getElementById('transacaoValor').value) || 0),
+    data_vencimento: dataVencimento,
+    status: status,
+    forma_pagamento: document.getElementById('transacaoFormaPgto').value || null,
     cliente_id: document.getElementById('transacaoCliente').value || null,
-    observacoes: document.getElementById('transacaoObs').value
+    observacoes: document.getElementById('transacaoObs').value.trim() || null
   };
 
-  if (!dados.descricao || !dados.valor || !dados.data_vencimento) {
-    alert('Preencha os campos obrigatórios!');
+  // Se status for pago, adiciona data_pagamento automaticamente
+  if (status === 'pago') {
+    dados.data_pagamento = dataVencimento; // Usa data de vencimento como fallback
+  }
+
+  // Validação no frontend
+  if (!dados.descricao) {
+    alert('Descrição é obrigatória!');
+    document.getElementById('transacaoDescricao').focus();
+    return;
+  }
+  if (!dados.valor || dados.valor <= 0) {
+    alert('Valor deve ser maior que zero!');
+    document.getElementById('transacaoValor').focus();
+    return;
+  }
+  if (!dados.data_vencimento) {
+    alert('Data de vencimento é obrigatória!');
+    document.getElementById('transacaoVencimento').focus();
     return;
   }
 
@@ -11535,8 +11580,12 @@ async function salvarTransacao() {
     });
 
     if (response.ok) {
-      alert(id ? 'Transação atualizada!' : 'Transação criada!');
+      // Toast de sucesso
+      const tipoTexto = tipo === 'receita' ? 'Receita' : 'Despesa';
+      alert(id ? `${tipoTexto} atualizada com sucesso!` : `${tipoTexto} cadastrada com sucesso!`);
       bootstrap.Modal.getInstance(document.getElementById('modalNovaTransacao'))?.hide();
+      
+      // Recarrega tudo
       carregarTransacoes();
       carregarResumoFinanceiro();
       carregarGraficoFluxoCaixa();
@@ -11836,6 +11885,7 @@ async function carregarGraficoDespesasCategoria() {
 // Expor funções globalmente
 window.inicializarFinanceiro = inicializarFinanceiro;
 window.abrirModalNovaTransacao = abrirModalNovaTransacao;
+window.atualizarCategoriasTransacao = atualizarCategoriasTransacao;
 window.salvarTransacao = salvarTransacao;
 window.editarTransacao = editarTransacao;
 window.marcarTransacaoPaga = marcarTransacaoPaga;

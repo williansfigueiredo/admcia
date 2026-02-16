@@ -1593,22 +1593,41 @@ app.get('/financeiro/transacoes', (req, res) => {
 
 // CRIAR TRANSAÇÃO MANUAL (Despesa ou Receita)
 app.post('/financeiro/transacoes', (req, res) => {
-  const { tipo, categoria, descricao, valor, data_vencimento, status, forma_pagamento, observacoes, cliente_id, job_id } = req.body;
+  const { tipo, categoria, descricao, valor, data_vencimento, status, forma_pagamento, observacoes, cliente_id, job_id, data_pagamento } = req.body;
+
+  // Validação de campos obrigatórios
+  if (!descricao || descricao.trim() === '') {
+    return res.status(400).json({ error: 'Descrição é obrigatória' });
+  }
+  if (!valor || parseFloat(valor) <= 0) {
+    return res.status(400).json({ error: 'Valor deve ser maior que zero' });
+  }
+  if (!data_vencimento) {
+    return res.status(400).json({ error: 'Data de vencimento é obrigatória' });
+  }
+
+  // Se status for pago/recebido e não informar data_pagamento, usa data_vencimento
+  const statusFinal = status || 'pendente';
+  let dataPagamentoFinal = data_pagamento || null;
+  if ((statusFinal === 'pago' || statusFinal === 'recebido') && !dataPagamentoFinal) {
+    dataPagamentoFinal = data_vencimento;
+  }
 
   const sql = `
-    INSERT INTO transacoes (tipo, categoria, descricao, valor, data_vencimento, status, forma_pagamento, observacoes, cliente_id, job_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO transacoes (tipo, categoria, descricao, valor, data_vencimento, data_pagamento, status, forma_pagamento, observacoes, cliente_id, job_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const values = [
     tipo || 'despesa',
     categoria || 'Outros',
-    descricao,
-    valor,
+    descricao.trim(),
+    Math.abs(parseFloat(valor)), // Sempre positivo
     data_vencimento,
-    status || 'pendente',
-    forma_pagamento,
-    observacoes,
+    dataPagamentoFinal,
+    statusFinal,
+    forma_pagamento || null,
+    observacoes || null,
     cliente_id || null,
     job_id || null
   ];
@@ -1776,14 +1795,51 @@ app.get('/financeiro/despesas-por-categoria', (req, res) => {
     
     console.log('🍰 Resultados da query:', results);
     
+    // Calcula total primeiro
+    const totalGeral = results.reduce((acc, r) => acc + (parseFloat(r.total) || 0), 0);
+    
+    // Agrupa categorias pequenas (< 3% do total) em "Outros"
+    const limitePercentual = 0.03; // 3%
+    let outrosValor = 0;
+    const categoriasAgrupadas = [];
+    
+    results.forEach(r => {
+      const valor = parseFloat(r.total) || 0;
+      const percentual = totalGeral > 0 ? valor / totalGeral : 0;
+      
+      if (percentual < limitePercentual && r.categoria !== 'Outros') {
+        // Agrupa em "Outros"
+        outrosValor += valor;
+      } else {
+        categoriasAgrupadas.push({
+          categoria: r.categoria,
+          valor: valor
+        });
+      }
+    });
+    
+    // Adiciona "Outros" se tiver valor
+    if (outrosValor > 0) {
+      // Verifica se já existe "Outros"
+      const outrosIdx = categoriasAgrupadas.findIndex(c => c.categoria === 'Outros');
+      if (outrosIdx >= 0) {
+        categoriasAgrupadas[outrosIdx].valor += outrosValor;
+      } else {
+        categoriasAgrupadas.push({ categoria: 'Outros', valor: outrosValor });
+      }
+    }
+    
+    // Ordena por valor decrescente
+    categoriasAgrupadas.sort((a, b) => b.valor - a.valor);
+    
     // Formata para o gráfico
     const dados = {
-      labels: results.map(r => r.categoria),
-      valores: results.map(r => parseFloat(r.total) || 0),
-      total: results.reduce((acc, r) => acc + (parseFloat(r.total) || 0), 0)
+      labels: categoriasAgrupadas.map(r => r.categoria),
+      valores: categoriasAgrupadas.map(r => r.valor),
+      total: totalGeral
     };
     
-    console.log('🍰 Enviando para frontend:', dados);
+    console.log('🍰 Enviando para frontend (agrupado):', dados);
     res.json(dados);
   });
 });

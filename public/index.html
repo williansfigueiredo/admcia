@@ -1114,7 +1114,7 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label small fw-bold">Tipo *</label>
-                <select id="transacaoTipo" class="form-select" required>
+                <select id="transacaoTipo" class="form-select" required onchange="atualizarCategoriasTransacao()">
                   <option value="despesa">Despesa</option>
                   <option value="receita">Receita</option>
                 </select>
@@ -1122,6 +1122,7 @@
               <div class="col-md-6">
                 <label class="form-label small fw-bold">Categoria *</label>
                 <select id="transacaoCategoria" class="form-select" required>
+                  <!-- Categorias de Despesa (padrão) -->
                   <option value="Combustível">Combustível</option>
                   <option value="Manutenção">Manutenção</option>
                   <option value="Logística">Logística</option>
@@ -1131,6 +1132,8 @@
                   <option value="Marketing">Marketing</option>
                   <option value="Impostos">Impostos</option>
                   <option value="Fornecedores">Fornecedores</option>
+                  <option value="Energia/Água">Energia/Água</option>
+                  <option value="Internet/Telefone">Internet/Telefone</option>
                   <option value="Outros">Outros</option>
                 </select>
               </div>
@@ -1150,7 +1153,8 @@
                 <label class="form-label small fw-bold">Status</label>
                 <select id="transacaoStatus" class="form-select">
                   <option value="pendente">Pendente</option>
-                  <option value="pago">Pago</option>
+                  <option value="pago">Pago/Recebido</option>
+                  <option value="cancelado">Cancelado</option>
                 </select>
               </div>
               <div class="col-md-6">
@@ -1159,9 +1163,11 @@
                   <option value="">Selecione</option>
                   <option value="PIX">PIX</option>
                   <option value="Boleto">Boleto</option>
-                  <option value="Cartão">Cartão</option>
+                  <option value="Cartão Crédito">Cartão Crédito</option>
+                  <option value="Cartão Débito">Cartão Débito</option>
                   <option value="Transferência">Transferência</option>
                   <option value="Dinheiro">Dinheiro</option>
+                  <option value="Cheque">Cheque</option>
                 </select>
               </div>
               <div class="col-md-6">
