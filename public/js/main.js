@@ -13177,6 +13177,121 @@ async function criarTabelasNotificacoes() {
   }
 }
 
+/**
+ * Diagnóstica configurações SMTP via interface principal
+ */
+async function diagnosticarSMTPSistema() {
+  const container = document.getElementById('emailStatusContainer');
+  if (!container) return;
+
+  if (!confirm('Diagnosticar configurações SMTP? Este teste pode levar até 2 minutos.')) {
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="alert alert-info d-flex align-items-center">
+      <div class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">Diagnosticando...</span>
+      </div>
+      <div>Testando diferentes configurações SMTP... Aguarde até 2 minutos.</div>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('/debug/testar-smtp-configs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+
+    if (data.success && data.configs) {
+      const working = data.configs.filter(c => c.status === 'success');
+      const failed = data.configs.filter(c => c.status === 'error');
+      
+      let alertClass = 'alert-success';
+      let icon = 'bi-check-circle-fill';
+      let title = '✅ Diagnóstico concluído!';
+      
+      if (working.length === 0) {
+        alertClass = 'alert-danger';
+        icon = 'bi-x-circle-fill';
+        title = '❌ Nenhuma configuração funcionou';
+      } else if (failed.length > 0) {
+        alertClass = 'alert-warning';
+        icon = 'bi-exclamation-triangle-fill';
+        title = '⚠️ Algumas configurações funcionaram';
+      }
+
+      let html = `
+        <div class="alert ${alertClass} d-flex align-items-start">
+          <i class="bi ${icon} me-2 fs-5 mt-1"></i>
+          <div class="flex-grow-1">
+            <strong>${title}</strong><br>
+            <small>${data.message}</small>
+      `;
+
+      if (working.length > 0) {
+        html += `
+            <div class="mt-2">
+              <strong>✅ Funcionando:</strong><br>
+        `;
+        working.forEach(config => {
+          html += `<span class="badge bg-success me-1">${config.name}</span>`;
+        });
+        html += '</div>';
+      }
+
+      if (failed.length > 0 && working.length > 0) {
+        html += `
+            <div class="mt-2">
+              <strong>❌ Com problema:</strong><br>
+        `;
+        failed.forEach(config => {
+          html += `<span class="badge bg-danger me-1">${config.name}</span>`;
+        });
+        html += '</div>';
+      }
+
+      if (data.recommendation) {
+        html += `
+            <div class="mt-3 p-2 bg-light rounded">
+              <strong>🎯 Recomendação:</strong> Use <strong>${data.recommendation.name}</strong><br>
+              <small>EMAIL_HOST=${data.recommendation.host}, EMAIL_PORT=${data.recommendation.port}</small>
+            </div>
+        `;
+      }
+
+      html += '</div></div>';
+      container.innerHTML = html;
+
+    } else {
+      container.innerHTML = `
+        <div class="alert alert-danger d-flex align-items-center">
+          <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i>
+          <div>
+            <strong>❌ Erro no diagnóstico</strong><br>
+            <small>${data.message || data.error || 'Erro desconhecido'}</small>
+          </div>
+        </div>
+      `;
+    }
+  } catch (error) {
+    container.innerHTML = `
+      <div class="alert alert-danger d-flex align-items-center">
+        <i class="bi bi-wifi-off me-2 fs-5"></i>
+        <div>
+          <strong>❌ Falha na conexão</strong><br>
+          <small>${error.message}</small>
+        </div>
+      </div>
+    `;
+  }
+}
+
 // Expor funções globalmente  
 window.testarSistemaNotificacoes = testarSistemaNotificacoes;
 window.criarTabelasNotificacoes = criarTabelasNotificacoes;
+window.diagnosticarSMTPSistema = diagnosticarSMTPSistema;

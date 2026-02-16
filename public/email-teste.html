@@ -67,6 +67,20 @@
                                 <div id="teste-resultado" class="mt-3"></div>
                             </div>
                         </div>
+
+                        <!-- Teste 2.5: Diagnóstico SMTP -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5><span class="status-icon">🔍</span>Diagnóstico SMTP</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small">Testa diferentes configurações para encontrar a melhor para seu provedor</p>
+                                <button class="btn btn-warning" onclick="diagnosticarSMTP()">
+                                    <i class="fas fa-search"></i> Diagnosticar Configurações
+                                </button>
+                                <div id="diagnostico-resultado" class="mt-3"></div>
+                            </div>
+                        </div>
                         
                         <!-- Teste 3: Emails Específicos -->
                         <div class="card mb-3">
@@ -210,17 +224,126 @@
                         </div>
                     `;
                 } else {
+                    // Melhor tratamento de erros
+                    let errorDetails = '';
+                    if (data.details) {
+                        errorDetails = `<br><small>Detalhes: Tentativas: ${data.details.attempt}, Código: ${data.details.code}</small>`;
+                    }
+                    
                     resultado.innerHTML = `
                         <div class="error">
                             <strong>❌ ${data.message}</strong><br>
                             <small>${data.error || 'Erro desconhecido'}</small>
+                            ${errorDetails}
+                        </div>
+                    `;
+                    
+                    // Se for erro de timeout, sugerir diagnóstico
+                    if (data.error && (data.error.includes('timeout') || data.error.includes('ETIMEDOUT'))) {
+                        resultado.innerHTML += `
+                            <div class="mt-2 p-2 border rounded bg-warning-light">
+                                <small><i class="bi bi-lightbulb-fill me-1"></i>
+                                <strong>Dica:</strong> Erro de timeout detectado. Tente usar o <strong>Diagnóstico SMTP</strong> abaixo para encontrar as configurações corretas.</small>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                resultado.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Erro de conexão:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function diagnosticarSMTP() {
+            const resultado = document.getElementById('diagnostico-resultado');
+            
+            resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Testando configurações SMTP... (pode levar até 2 minutos)</div>';
+            
+            try {
+                const response = await fetch('/debug/testar-smtp-configs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.configs) {
+                    let html = `
+                        <div class="success">
+                            <strong>✅ Diagnóstico concluído!</strong><br>
+                            <small>${data.message}</small>
+                        </div>
+                        <div class="mt-3">
+                            <h6>Resultado dos testes:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Configuração</th>
+                                            <th>Host:Porta</th>
+                                            <th>Status</th>
+                                            <th>Resultado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                    `;
+                    
+                    data.configs.forEach(config => {
+                        const statusIcon = config.status === 'success' ? '✅' : '❌';
+                        const statusClass = config.status === 'success' ? 'text-success' : 'text-danger';
+                        
+                        html += `
+                            <tr>
+                                <td><strong>${config.name}</strong></td>
+                                <td><small>${config.host}:${config.port}</small></td>
+                                <td class="${statusClass}">${statusIcon}</td>
+                                <td><small>${config.message}</small></td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (data.recommendation) {
+                        html += `
+                            <div class="alert alert-success mt-3">
+                                <strong>🎯 Recomendação:</strong> Use <strong>${data.recommendation.name}</strong><br>
+                                <small>Configure no Railway: EMAIL_HOST=${data.recommendation.host}, EMAIL_PORT=${data.recommendation.port}</small>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div class="alert alert-warning mt-3">
+                                <strong>⚠️ Nenhuma configuração funcionou</strong><br>
+                                <small>Verifique suas credenciais (EMAIL_USER e EMAIL_PASS) e conectividade de rede.</small>
+                            </div>
+                        `;
+                    }
+                    
+                    resultado.innerHTML = html;
+                    
+                } else {
+                    resultado.innerHTML = `
+                        <div class="error">
+                            <strong>❌ ${data.message}</strong><br>
+                            <small>${data.error || 'Erro no diagnóstico'}</small>
                         </div>
                     `;
                 }
             } catch (error) {
                 resultado.innerHTML = `
                     <div class="error">
-                        <strong>❌ Erro de conexão:</strong> ${error.message}
+                        <strong>❌ Erro no diagnóstico:</strong> ${error.message}
                     </div>
                 `;
             }

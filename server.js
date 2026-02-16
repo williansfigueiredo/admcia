@@ -3021,7 +3021,8 @@ app.post('/debug/testar-email', (req, res) => {
           res.status(500).json({
             success: false,
             message: '❌ Erro ao enviar email',
-            error: resultado.error
+            error: resultado.error,
+            details: resultado.details
           });
         }
       })
@@ -3038,6 +3039,34 @@ app.post('/debug/testar-email', (req, res) => {
       success: false,
       error: error.message,
       message: 'Erro interno ao processar teste de email'
+    });
+  }
+});
+
+// Testar diferentes configurações SMTP
+app.post('/debug/testar-smtp-configs', async (req, res) => {
+  try {
+    const emailService = require('./services/emailService');
+    
+    console.log('🧪 Iniciando teste de configurações SMTP...');
+    const resultado = await emailService.testarConfiguracaoEmail();
+    
+    res.json({
+      success: true,
+      message: 'Teste de configurações concluído',
+      ...resultado,
+      timestamp: new Date().toISOString(),
+      dica: resultado.success 
+        ? `Use a configuração: ${resultado.recommendation.name}` 
+        : 'Nenhuma configuração funcionou. Verifique credenciais e conectividade.'
+    });
+    
+  } catch (error) {
+    console.error('Erro ao testar configurações SMTP:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao testar configurações',
+      error: error.message
     });
   }
 });

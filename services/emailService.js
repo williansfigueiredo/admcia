@@ -24,7 +24,7 @@ let emailFrom = null;
 function inicializarEmail() {
   // Ler variáveis aqui (não no topo) para garantir que estão carregadas
   const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 465;
+  const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587; // Mudança: 587 TLS como padrão
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || '';
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || '';
   const useSecure = smtpPort === 465; // SSL para porta 465
@@ -37,18 +37,61 @@ function inicializarEmail() {
   console.log(`📧 Tentando configurar email: host=${smtpHost}, port=${smtpPort}, secure=${useSecure}, user=${smtpUser ? smtpUser.substring(0, 5) + '...' : 'NÃO DEFINIDO'}`);
 
   if (smtpUser && smtpPass) {
-    transporter = nodemailer.createTransport({
+    // Configuração otimizada para Railway e outras plataformas
+    const transporterConfig = {
       host: smtpHost,
       port: smtpPort,
-      secure: useSecure,
+      secure: useSecure, // true para 465, false para outros
+      requireTLS: !useSecure, // força TLS para portas não-SSL
       auth: {
         user: smtpUser,
         pass: smtpPass
       },
-      connectionTimeout: 10000, // 10 segundos
-      greetingTimeout: 10000
+      // Timeouts mais longos para Railway
+      connectionTimeout: 60000, // 60 segundos
+      greetingTimeout: 30000, // 30 segundos  
+      socketTimeout: 60000, // 60 segundos
+      // Configurações adicionais para compatibilidade
+      tls: {
+        // Não falha em certificados auto-assinados
+        rejectUnauthorized: false,
+        // Permite conexões menos seguras (necessário para alguns provedores)
+        ciphers: 'SSLv3'
+      },
+      // Pool de conexões para melhor performance
+      pool: true,
+      maxConnections: 5,
+      maxMessages: 10,
+      // Configurações de debug
+      debug: process.env.NODE_ENV === 'development',
+      logger: process.env.NODE_ENV === 'development'
+    };
+
+    console.log('🔧 Configuração final:', {
+      host: transporterConfig.host,
+      port: transporterConfig.port,
+      secure: transporterConfig.secure,
+      requireTLS: transporterConfig.requireTLS,
+      user: smtpUser.substring(0, 5) + '...',
+      timeouts: '60s connection, 30s greeting, 60s socket'
     });
-    console.log('✅ Serviço de email configurado com sucesso!');
+
+    transporter = nodemailer.createTransporter(transporterConfig);
+    
+    // Teste de conectividade assíncrono (não bloqueia startup)
+    setTimeout(() => {
+      transporter.verify((error, success) => {
+        if (error) {
+          console.error('❌ Falha na verificação do email:', error.message);
+          console.log('💡 Dica: Para Gmail use porta 587 + TLS, ou 465 + SSL');
+          console.log('💡 Verifique se EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS estão corretos');
+        } else {
+          console.log('✅ Servidor de email verificado com sucesso! Pronto para enviar emails.');
+        }
+      });
+    }, 5000); // Aguarda 5 segundos antes de testar
+
+    console.log('✅ Transporter de email criado! (Verificação em andamento...)');
     return true;
   } else {
     console.log('⚠️ Serviço de email não configurado (EMAIL_USER ou EMAIL_PASS não definidos)');
@@ -211,20 +254,83 @@ async function enviarEmail(destinatario, assunto, htmlContent) {
     return { success: false, error: 'Serviço de email não configurado' };
   }
 
-  try {
-    const info = await transporter.sendMail({
-      from: emailFrom,
-      to: destinatario,
-      subject: assunto,
-      html: htmlContent
-    });
+  const mailOptions = {
+    from: emailFrom,
+    to: destinatario,
+    subject: assunto,
+    html: htmlContent
+  };
 
-    console.log(`📧 Email enviado para ${destinatario}: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+  // Implementar retry com timeout progressivo
+  const maxAttempts = 3;
+  let attempt = 1;
 
-  } catch (error) {
-    console.error('❌ Erro ao enviar email:', error);
-    return { success: false, error: error.message };
+  while (attempt <= maxAttempts) {
+    try {
+      console.log(`📧 Tentativa ${attempt}/${maxAttempts} - Enviando email para ${destinatario}...`);
+      
+      // Promise com timeout customizado
+      const info = await Promise.race([
+        transporter.sendMail(mailOptions),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error(`Timeout na tentativa ${attempt} (90s)`)), 90000)
+        )
+      ]);
+
+      console.log(`✅ Email enviado com sucesso! MessageID: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+
+    } catch (error) {
+      console.error(`❌ Tentativa ${attempt} falhou:`, error.message);
+      
+      // Se é problema de timeout ou conectividade, tentar novamente
+      const isRetryableError = 
+        error.code === 'ETIMEDOUT' || 
+        error.code === 'ECONNRESET' ||
+        error.code === 'ENOTFOUND' ||
+        error.message.includes('timeout') ||
+        error.message.includes('CONN');
+
+      if (isRetryableError && attempt < maxAttempts) {
+        const waitTime = attempt * 2000; // 2s, 4s, 6s
+        console.log(`⏳ Aguardando ${waitTime}ms antes da próxima tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        attempt++;
+        continue;
+      }
+
+      // Se não é erro recuperável ou esgotou tentativas
+      const errorMessage = this.getErrorMessage(error);
+      console.error(`💥 Falha definitiva após ${attempt} tentativa(s):`, errorMessage);
+      
+      return { 
+        success: false, 
+        error: errorMessage,
+        details: {
+          code: error.code,
+          attempt: attempt,
+          isRetryable: isRetryableError
+        }
+      };
+    }
+  }
+}
+
+/**
+ * Converte erros técnicos em mensagens mais amigáveis
+ */
+function getErrorMessage(error) {
+  const errorMap = {
+    'ETIMEDOUT': 'Timeout na conexão com servidor de email. Verifique configurações de rede.',
+    'ECONNRESET': 'Conexão foi resetada pelo servidor. Tente novamente.',
+    'ENOTFOUND': 'Servidor de email não encontrado. Verifique EMAIL_HOST.',
+    'ECONNREFUSED': 'Conexão recusada. Verifique porta e configurações de firewall.',
+    'AUTH_FAILED': 'Falha na autenticação. Verifique EMAIL_USER e EMAIL_PASS.',
+    'ESOCKET': 'Erro de socket. Problema de conectividade de rede.'
+  };
+
+  return errorMap[error.code] || error.message || 'Erro desconhecido ao enviar email';
+}
   }
 }
 
@@ -256,11 +362,129 @@ async function enviarEmailRecuperacaoSenha(nome, email, codigo, urlRecuperacao) 
 // EXPORTS
 // ============================================
 
+/**
+ * Testa diferentes configurações de email para encontrar a melhor
+ */
+async function testarConfiguracaoEmail() {
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+  
+  if (!smtpUser || !smtpPass) {
+    return {
+      success: false,
+      error: 'Credenciais não configuradas',
+      configs: []
+    };
+  }
+
+  // Configurações comuns para teste
+  const configuracoes = [
+    // Gmail TLS (mais comum)
+    {
+      name: 'Gmail TLS (Recomendado)',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      requireTLS: true
+    },
+    // Gmail SSL
+    {
+      name: 'Gmail SSL',
+      host: 'smtp.gmail.com', 
+      port: 465,
+      secure: true,
+      requireTLS: false
+    },
+    // Outlook/Hotmail
+    {
+      name: 'Outlook',
+      host: 'smtp-mail.outlook.com',
+      port: 587,
+      secure: false,
+      requireTLS: true
+    },
+    // Yahoo
+    {
+      name: 'Yahoo',
+      host: 'smtp.mail.yahoo.com',
+      port: 587,
+      secure: false,
+      requireTLS: true
+    }
+  ];
+
+  const resultados = [];
+
+  for (const config of configuracoes) {
+    try {
+      console.log(`🧪 Testando ${config.name}...`);
+      
+      const testTransporter = nodemailer.createTransporter({
+        host: config.host,
+        port: config.port,
+        secure: config.secure,
+        requireTLS: config.requireTLS,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass
+        },
+        connectionTimeout: 30000,
+        greetingTimeout: 15000,
+        socketTimeout: 30000,
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+
+      // Teste de conectividade com timeout
+      await Promise.race([
+        new Promise((resolve, reject) => {
+          testTransporter.verify((error, success) => {
+            if (error) reject(error);
+            else resolve(success);
+          });
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout 30s')), 30000)
+        )
+      ]);
+
+      resultados.push({
+        ...config,
+        status: 'success',
+        message: 'Configuração funcionando!'
+      });
+
+      console.log(`✅ ${config.name} - Funcionando!`);
+      
+      // Fechar conexão
+      testTransporter.close();
+
+    } catch (error) {
+      resultados.push({
+        ...config,
+        status: 'error',
+        message: error.message,
+        code: error.code
+      });
+
+      console.log(`❌ ${config.name} - ${error.message}`);
+    }
+  }
+
+  return {
+    success: resultados.some(r => r.status === 'success'),
+    configs: resultados,
+    recommendation: resultados.find(r => r.status === 'success')
+  };
+}
+
 module.exports = {
   inicializarEmail,
   emailConfigurado,
   enviarEmail,
   enviarEmailNovoAcesso,
   enviarEmailSenhaResetada,
-  enviarEmailRecuperacaoSenha
+  enviarEmailRecuperacaoSenha,
+  testarConfiguracaoEmail
 };
