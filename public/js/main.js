@@ -1268,34 +1268,42 @@ function iniciarMonitoramentoConexao() {
   console.log('🔒 Monitoramento de sessão ativado');
 }
 
-// Função para restaurar a view/aba anterior após atualizar a página
-function restaurarViewAnterior() {
+// Flag para evitar múltiplas execuções do DOMContentLoaded
+let sistemaInicializado = false;
+
+// Função para obter a view que deve ser carregada
+function obterViewInicial() {
   // Só restaura se houver token válido (usuário autenticado)
   const token = sessionStorage.getItem('auth_token');
   if (!token) {
-    console.log('🚫 Sem token - não restaura view');
-    return;
+    console.log('🚫 Sem token - limpando view salva');
+    sessionStorage.removeItem('currentView');
+    return 'principal';
   }
 
   const viewSalva = sessionStorage.getItem('currentView');
   
-  // Se não houver view salva ou for a view principal, não faz nada
-  // (a view principal já é carregada por padrão)
-  if (!viewSalva || viewSalva === 'principal') {
-    return;
+  // Se não houver view salva, retorna principal
+  if (!viewSalva) {
+    console.log('🏠 Nenhuma view salva - usando principal');
+    return 'principal';
   }
 
-  // Aguarda um pequeno delay para garantir que tudo foi carregado
-  setTimeout(() => {
-    console.log(`🔄 Restaurando view anterior: ${viewSalva}`);
-    switchView(viewSalva);
-  }, 100);
+  console.log(`🔄 View salva encontrada: ${viewSalva}`);
+  return viewSalva;
 }
 
 
 // GARANTIA: Assim que a tela abrir, roda tudo com skeleton loader
 document.addEventListener('DOMContentLoaded', async () => {
   console.log("Sistema Iniciado 🚀");
+
+  // Evita múltiplas execuções
+  if (sistemaInicializado) {
+    console.log('⚠️ Sistema já inicializado - ignorando DOMContentLoaded duplicado');
+    return;
+  }
+  sistemaInicializado = true;
 
   // Não executa se estiver na página de login
   if (!naoEstaNoLogin()) {
@@ -1307,11 +1315,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const autenticado = await verificarAutenticacaoInicial();
   if (!autenticado) {
     console.log('❌ Não autenticado - parando inicialização');
+    sistemaInicializado = false; // Permite tentar novamente
     return;
   }
 
   // Inicia monitoramento de conexão
   iniciarMonitoramentoConexao();
+
+  // Verifica qual view deve ser carregada ANTES de carregar dados
+  const viewInicial = obterViewInicial();
+  console.log(`🎯 View inicial definida: ${viewInicial}`);
 
   // Mostra skeleton loader durante carregamento inicial
   showGlobalSkeleton();
@@ -1350,15 +1363,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Atualiza indicadores de status
     updateStatusIndicators();
 
-    // Restaura a view anterior se houver (mantém aba ativa após atualizar página)
-    restaurarViewAnterior();
-
     // Inicia monitoramento de conexão (verifica a cada 30 segundos)
     setInterval(updateStatusIndicators, 30000);
 
-    console.log('✅ Busca global e indicadores inicializados');
+    // Se a view inicial não for 'principal', troca para ela (SEM setTimeout)
+    if (viewInicial !== 'principal') {
+      console.log(`🔄 Trocando para view: ${viewInicial}`);
+      await switchView(viewInicial);
+    }
+
+    console.log('✅ Sistema completamente inicializado');
   } catch (error) {
     console.error('❌ Erro durante inicialização:', error);
+    sistemaInicializado = false; // Permite tentar novamente em caso de erro
   } finally {
     // Oculta skeleton loader após carregamento
     await hideGlobalSkeleton();
@@ -3094,6 +3111,15 @@ function iniciarMapa() {
 }
 
 window.switchView = async function (viewId) {
+  // Evita trocar para a mesma view que já está ativa
+  const viewAtual = document.querySelector('.view-section.active');
+  if (viewAtual && viewAtual.id === 'view-' + viewId) {
+    console.log(`⚠️ View ${viewId} já está ativa - ignorando troca`);
+    return;
+  }
+
+  console.log(`🔄 Trocando para view: ${viewId}`);
+
   // Salva a view atual no sessionStorage para manter após atualizar página
   sessionStorage.setItem('currentView', viewId);
 
