@@ -24,9 +24,9 @@ router.post('/login', (req, res) => {
 
   // Validação básica
   if (!email || !senha) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      error: 'Email e senha são obrigatórios' 
+      error: 'Email e senha são obrigatórios'
     });
   }
 
@@ -41,17 +41,17 @@ router.post('/login', (req, res) => {
   db.query(sql, [email.toLowerCase().trim()], async (err, results) => {
     if (err) {
       console.error('Erro ao buscar funcionário:', err);
-      return res.status(500).json({ 
+      return res.status(500).json({
         success: false,
-        error: 'Erro interno do servidor' 
+        error: 'Erro interno do servidor'
       });
     }
 
     // Verifica se encontrou o funcionário
     if (results.length === 0) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        error: 'Credenciais inválidas' 
+        error: 'Credenciais inválidas'
       });
     }
 
@@ -60,40 +60,40 @@ router.post('/login', (req, res) => {
     // Verifica se o status é "Ativo"
     if (funcionario.status !== 'Ativo') {
       let mensagem = 'Acesso não autorizado';
-      
+
       if (funcionario.status === 'Férias') {
         mensagem = 'Funcionário em férias. Acesso temporariamente bloqueado.';
       } else if (funcionario.status === 'Inativo') {
         mensagem = 'Funcionário inativo. Entre em contato com o administrador.';
       }
-      
-      return res.status(403).json({ 
+
+      return res.status(403).json({
         success: false,
-        error: mensagem 
+        error: mensagem
       });
     }
 
     // Verifica se o acesso está ativo
     if (funcionario.acesso_ativo === 0) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        error: 'Acesso ao sistema desativado. Entre em contato com o administrador.' 
+        error: 'Acesso ao sistema desativado. Entre em contato com o administrador.'
       });
     }
 
     // Verifica se foi demitido
     if (funcionario.data_demissao) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        error: 'Funcionário desligado. Acesso não permitido.' 
+        error: 'Funcionário desligado. Acesso não permitido.'
       });
     }
 
     // Verifica se existe senha_hash cadastrada
     if (!funcionario.senha_hash) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        error: 'Credenciais não configuradas. Entre em contato com o administrador.' 
+        error: 'Credenciais não configuradas. Entre em contato com o administrador.'
       });
     }
 
@@ -102,9 +102,9 @@ router.post('/login', (req, res) => {
       const senhaValida = await bcrypt.compare(senha, funcionario.senha_hash);
 
       if (!senhaValida) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           success: false,
-          error: 'Credenciais inválidas' 
+          error: 'Credenciais inválidas'
         });
       }
 
@@ -159,9 +159,9 @@ router.post('/login', (req, res) => {
 
     } catch (bcryptError) {
       console.error('Erro ao comparar senha:', bcryptError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         success: false,
-        error: 'Erro ao processar autenticação' 
+        error: 'Erro ao processar autenticação'
       });
     }
   });
@@ -173,15 +173,15 @@ router.post('/login', (req, res) => {
  */
 router.get('/me', (req, res) => {
   const db = req.app.get('db');
-  
+
   // Obtém token do cookie ou header
-  const token = req.cookies?.auth_token || 
-                req.headers.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.auth_token ||
+    req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
-    return res.status(401).json({ 
+    return res.status(401).json({
       success: false,
-      error: 'Não autenticado' 
+      error: 'Não autenticado'
     });
   }
 
@@ -199,9 +199,9 @@ router.get('/me', (req, res) => {
 
     db.query(sql, [decoded.id], (err, results) => {
       if (err || results.length === 0) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           success: false,
-          error: 'Usuário não encontrado' 
+          error: 'Usuário não encontrado'
         });
       }
 
@@ -209,9 +209,9 @@ router.get('/me', (req, res) => {
 
       // Verifica se ainda está ativo
       if (funcionario.status !== 'Ativo') {
-        return res.status(403).json({ 
+        return res.status(403).json({
           success: false,
-          error: 'Acesso bloqueado' 
+          error: 'Acesso bloqueado'
         });
       }
 
@@ -230,9 +230,9 @@ router.get('/me', (req, res) => {
     });
 
   } catch (jwtError) {
-    return res.status(401).json({ 
+    return res.status(401).json({
       success: false,
-      error: 'Token inválido ou expirado' 
+      error: 'Token inválido ou expirado'
     });
   }
 });
@@ -264,27 +264,27 @@ router.post('/alterar-senha', async (req, res) => {
   const db = req.app.get('db');
 
   // Obtém token
-  const token = req.cookies?.auth_token || 
-                req.headers.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.auth_token ||
+    req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
-    return res.status(401).json({ 
+    return res.status(401).json({
       success: false,
-      error: 'Não autenticado' 
+      error: 'Não autenticado'
     });
   }
 
   if (!senhaAtual || !novaSenha) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      error: 'Senha atual e nova senha são obrigatórias' 
+      error: 'Senha atual e nova senha são obrigatórias'
     });
   }
 
   if (novaSenha.length < 6) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      error: 'A nova senha deve ter pelo menos 6 caracteres' 
+      error: 'A nova senha deve ter pelo menos 6 caracteres'
     });
   }
 
@@ -293,12 +293,12 @@ router.post('/alterar-senha', async (req, res) => {
 
     // Busca senha atual do funcionário
     const sql = "SELECT id, senha_hash FROM funcionarios WHERE id = ?";
-    
+
     db.query(sql, [decoded.id], async (err, results) => {
       if (err || results.length === 0) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           success: false,
-          error: 'Usuário não encontrado' 
+          error: 'Usuário não encontrado'
         });
       }
 
@@ -306,11 +306,11 @@ router.post('/alterar-senha', async (req, res) => {
 
       // Verifica senha atual
       const senhaValida = await bcrypt.compare(senhaAtual, funcionario.senha_hash);
-      
+
       if (!senhaValida) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           success: false,
-          error: 'Senha atual incorreta' 
+          error: 'Senha atual incorreta'
         });
       }
 
@@ -319,13 +319,13 @@ router.post('/alterar-senha', async (req, res) => {
 
       // Atualiza a senha
       const sqlUpdate = "UPDATE funcionarios SET senha_hash = ? WHERE id = ?";
-      
+
       db.query(sqlUpdate, [novaHash, funcionario.id], (errUpdate) => {
         if (errUpdate) {
           console.error('Erro ao atualizar senha:', errUpdate);
-          return res.status(500).json({ 
+          return res.status(500).json({
             success: false,
-            error: 'Erro ao atualizar senha' 
+            error: 'Erro ao atualizar senha'
           });
         }
 
@@ -337,9 +337,9 @@ router.post('/alterar-senha', async (req, res) => {
     });
 
   } catch (jwtError) {
-    return res.status(401).json({ 
+    return res.status(401).json({
       success: false,
-      error: 'Token inválido ou expirado' 
+      error: 'Token inválido ou expirado'
     });
   }
 });
@@ -354,20 +354,20 @@ router.post('/definir-senha/:funcionarioId', async (req, res) => {
   const db = req.app.get('db');
 
   // Obtém token para verificar se é admin/autorizado
-  const token = req.cookies?.auth_token || 
-                req.headers.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.auth_token ||
+    req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
-    return res.status(401).json({ 
+    return res.status(401).json({
       success: false,
-      error: 'Não autorizado' 
+      error: 'Não autorizado'
     });
   }
 
   if (!senha || senha.length < 6) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      error: 'A senha deve ter pelo menos 6 caracteres' 
+      error: 'A senha deve ter pelo menos 6 caracteres'
     });
   }
 
@@ -380,20 +380,20 @@ router.post('/definir-senha/:funcionarioId', async (req, res) => {
 
     // Atualiza a senha do funcionário
     const sql = "UPDATE funcionarios SET senha_hash = ? WHERE id = ?";
-    
+
     db.query(sql, [senhaHash, funcionarioId], (err, result) => {
       if (err) {
         console.error('Erro ao definir senha:', err);
-        return res.status(500).json({ 
+        return res.status(500).json({
           success: false,
-          error: 'Erro ao definir senha' 
+          error: 'Erro ao definir senha'
         });
       }
 
       if (result.affectedRows === 0) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          error: 'Funcionário não encontrado' 
+          error: 'Funcionário não encontrado'
         });
       }
 
@@ -404,9 +404,9 @@ router.post('/definir-senha/:funcionarioId', async (req, res) => {
     });
 
   } catch (jwtError) {
-    return res.status(401).json({ 
+    return res.status(401).json({
       success: false,
-      error: 'Não autorizado' 
+      error: 'Não autorizado'
     });
   }
 });
@@ -427,9 +427,9 @@ router.post('/recuperar-senha', (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Email é obrigatório' 
+    return res.status(400).json({
+      success: false,
+      error: 'Email é obrigatório'
     });
   }
 
@@ -451,7 +451,7 @@ router.post('/recuperar-senha', (req, res) => {
 
     // Gera código de 6 caracteres
     const codigo = Math.random().toString(36).slice(-6).toUpperCase();
-    
+
     // Armazena código com expiração de 30 minutos
     codigosRecuperacao.set(email.toLowerCase(), {
       codigo,
@@ -464,7 +464,7 @@ router.post('/recuperar-senha', (req, res) => {
     // Tenta enviar email (se configurado)
     let emailEnviado = false;
     let emailError = null;
-    
+
     try {
       const emailService = require('../services/emailService');
       if (emailService.emailConfigurado()) {
@@ -474,7 +474,7 @@ router.post('/recuperar-senha', (req, res) => {
           codigo,
           `${req.protocol}://${req.get('host')}/login`
         );
-        
+
         if (resultado.success) {
           console.log(`✅ Email de recuperação enviado para ${email}`);
           emailEnviado = true;
@@ -492,8 +492,8 @@ router.post('/recuperar-senha', (req, res) => {
     }
 
     // Monta resposta
-    const response = { 
-      success: true, 
+    const response = {
+      success: true,
       codigo_gerado: true,
       email_enviado: emailEnviado
     };
@@ -507,7 +507,7 @@ router.post('/recuperar-senha', (req, res) => {
       response.codigo_backup = codigo;
       console.log(`⚠️ Email falhou. Código backup retornado ao usuário: ${codigo}`);
     }
-    
+
     // Em desenvolvimento, sempre retorna o código
     if (process.env.NODE_ENV !== 'production') {
       response.codigo_debug = codigo;
@@ -525,39 +525,39 @@ router.post('/verificar-codigo', (req, res) => {
   const { email, codigo } = req.body;
 
   if (!email || !codigo) {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Email e código são obrigatórios' 
+    return res.status(400).json({
+      success: false,
+      error: 'Email e código são obrigatórios'
     });
   }
 
   const dados = codigosRecuperacao.get(email.toLowerCase());
 
   if (!dados) {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Código não encontrado. Solicite um novo código.' 
+    return res.status(400).json({
+      success: false,
+      error: 'Código não encontrado. Solicite um novo código.'
     });
   }
 
   if (Date.now() > dados.expiracao) {
     codigosRecuperacao.delete(email.toLowerCase());
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Código expirado. Solicite um novo código.' 
+    return res.status(400).json({
+      success: false,
+      error: 'Código expirado. Solicite um novo código.'
     });
   }
 
   if (dados.codigo !== codigo.toUpperCase()) {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Código incorreto' 
+    return res.status(400).json({
+      success: false,
+      error: 'Código incorreto'
     });
   }
 
-  return res.json({ 
-    success: true, 
-    message: 'Código válido' 
+  return res.json({
+    success: true,
+    message: 'Código válido'
   });
 });
 
@@ -570,40 +570,40 @@ router.post('/redefinir-senha', async (req, res) => {
   const { email, codigo, novaSenha } = req.body;
 
   if (!email || !codigo || !novaSenha) {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Email, código e nova senha são obrigatórios' 
+    return res.status(400).json({
+      success: false,
+      error: 'Email, código e nova senha são obrigatórios'
     });
   }
 
   if (novaSenha.length < 6) {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'A senha deve ter pelo menos 6 caracteres' 
+    return res.status(400).json({
+      success: false,
+      error: 'A senha deve ter pelo menos 6 caracteres'
     });
   }
 
   const dados = codigosRecuperacao.get(email.toLowerCase());
 
   if (!dados) {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Código não encontrado. Solicite um novo código.' 
+    return res.status(400).json({
+      success: false,
+      error: 'Código não encontrado. Solicite um novo código.'
     });
   }
 
   if (Date.now() > dados.expiracao) {
     codigosRecuperacao.delete(email.toLowerCase());
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Código expirado. Solicite um novo código.' 
+    return res.status(400).json({
+      success: false,
+      error: 'Código expirado. Solicite um novo código.'
     });
   }
 
   if (dados.codigo !== codigo.toUpperCase()) {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Código incorreto' 
+    return res.status(400).json({
+      success: false,
+      error: 'Código incorreto'
     });
   }
 
@@ -612,8 +612,8 @@ router.post('/redefinir-senha', async (req, res) => {
     const senhaHash = await bcrypt.hash(novaSenha, 10);
 
     // Atualiza no banco
-    db.query('UPDATE funcionarios SET senha_hash = ? WHERE id = ?', 
-      [senhaHash, dados.funcionarioId], 
+    db.query('UPDATE funcionarios SET senha_hash = ? WHERE id = ?',
+      [senhaHash, dados.funcionarioId],
       (err, result) => {
         if (err) {
           console.error('Erro ao atualizar senha:', err);
@@ -625,9 +625,9 @@ router.post('/redefinir-senha', async (req, res) => {
 
         console.log(`✅ Senha redefinida para funcionário ID ${dados.funcionarioId}`);
 
-        return res.json({ 
-          success: true, 
-          message: 'Senha alterada com sucesso!' 
+        return res.json({
+          success: true,
+          message: 'Senha alterada com sucesso!'
         });
       }
     );

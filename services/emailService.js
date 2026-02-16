@@ -28,20 +28,20 @@ let emailMethod = 'none'; // 'resend', 'smtp', 'none'
 function inicializarEmail() {
   // PRIORIDADE 1: Resend (recomendado para Railway)
   const resendApiKey = process.env.RESEND_API_KEY;
-  
+
   if (resendApiKey) {
     try {
       resend = new Resend(resendApiKey);
-      
+
       // Para Resend, usar apenas RESEND_FROM ou padrão
       // NÃO usar EMAIL_FROM pois pode ser @gmail.com (não permitido)
       emailFrom = process.env.RESEND_FROM || 'Sistema CIA <onboarding@resend.dev>';
       emailMethod = 'resend';
-      
+
       console.log('✅ Resend configurado com sucesso!');
       console.log(`📧 Remetente: ${emailFrom}`);
       console.log('⚠️ Para enviar de seu domínio, configure RESEND_FROM e verifique domínio em resend.com/domains');
-      
+
       return true;
     } catch (error) {
       console.error('❌ Erro ao configurar Resend:', error.message);
@@ -57,7 +57,7 @@ function inicializarEmail() {
   if (smtpUser && smtpPass && smtpHost) {
     try {
       const useSecure = smtpPort === 465;
-      
+
       transporter = nodemailer.createTransport({
         host: smtpHost,
         port: smtpPort,
@@ -77,10 +77,10 @@ function inicializarEmail() {
         : process.env.EMAIL_FROM || smtpUser;
 
       emailMethod = 'smtp';
-      
+
       console.log(`✅ SMTP configurado como fallback`);
       console.log(`📧 Host: ${smtpHost}:${smtpPort}, User: ${smtpUser.substring(0, 5)}...`);
-      
+
       // Testar conexão SMTP
       setTimeout(() => {
         transporter.verify((error, success) => {
@@ -91,7 +91,7 @@ function inicializarEmail() {
           }
         });
       }, 2000);
-      
+
       return true;
     } catch (error) {
       console.error('❌ Erro ao configurar SMTP:', error.message);
@@ -279,7 +279,7 @@ async function enviarEmail(destinatario, assunto, htmlContent) {
     try {
       console.log(`🔍 Resend Debug - Enviando para: ${destinatario}`);
       console.log(`🔍 Resend Debug - From: ${emailFrom}`);
-      
+
       const response = await resend.emails.send({
         from: emailFrom,
         to: [destinatario],
@@ -298,26 +298,26 @@ async function enviarEmail(destinatario, assunto, htmlContent) {
 
       // Resend pode retornar { data: { id: '...' } } ou { id: '...' }
       const emailId = response?.data?.id || response?.id || null;
-      
+
       if (!emailId) {
         console.error('⚠️ Email enviado mas sem ID (resposta inesperada)');
         console.log('🔍 Estrutura da resposta:', Object.keys(response || {}));
       }
-      
+
       console.log(`✅ Email enviado com sucesso via Resend! ID: ${emailId || 'N/A'}`);
       return { success: true, messageId: emailId, method: 'resend', response };
 
     } catch (error) {
       console.error('❌ Falha ao enviar via Resend:', error.message);
-      
+
       // Se tiver SMTP configurado, tentar como fallback
       if (transporter) {
         console.log('🔄 Tentando SMTP como fallback...');
         return await enviarViaSMTP(destinatario, assunto, htmlContent);
       }
 
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: error.message,
         method: 'resend'
       };
@@ -349,10 +349,10 @@ async function enviarViaSMTP(destinatario, assunto, htmlContent) {
   while (attempt <= maxAttempts) {
     try {
       console.log(`📧 [SMTP] Tentativa ${attempt}/${maxAttempts} - Enviando para ${destinatario}...`);
-      
+
       const info = await Promise.race([
         transporter.sendMail(mailOptions),
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error(`Timeout na tentativa ${attempt}`)), 30000)
         )
       ]);
@@ -362,9 +362,9 @@ async function enviarViaSMTP(destinatario, assunto, htmlContent) {
 
     } catch (error) {
       console.error(`❌ [SMTP] Tentativa ${attempt} falhou:`, error.message);
-      
-      const isRetryableError = 
-        error.code === 'ETIMEDOUT' || 
+
+      const isRetryableError =
+        error.code === 'ETIMEDOUT' ||
         error.code === 'ECONNRESET' ||
         error.message.includes('timeout');
 
@@ -378,9 +378,9 @@ async function enviarViaSMTP(destinatario, assunto, htmlContent) {
 
       const errorMessage = getErrorMessage(error);
       console.error(`💥 [SMTP] Falha definitiva:`, errorMessage);
-      
-      return { 
-        success: false, 
+
+      return {
+        success: false,
         error: errorMessage,
         method: 'smtp',
         details: {
@@ -443,7 +443,7 @@ async function enviarEmailRecuperacaoSenha(nome, email, codigo, urlRecuperacao) 
 async function testarConfiguracaoEmail() {
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
-  
+
   if (!smtpUser || !smtpPass) {
     return {
       success: false,
@@ -465,8 +465,8 @@ async function testarConfiguracaoEmail() {
     },
     // Gmail SSL (fallback)
     {
-      name: 'Gmail SSL', 
-      host: 'smtp.gmail.com', 
+      name: 'Gmail SSL',
+      host: 'smtp.gmail.com',
       port: 465,
       secure: true,
       requireTLS: false,
@@ -497,7 +497,7 @@ async function testarConfiguracaoEmail() {
   for (const config of configuracoes) {
     try {
       console.log(`🧪 Testando ${config.name}...`);
-      
+
       const testTransporter = nodemailer.createTransport({
         host: config.host,
         port: config.port,
@@ -524,7 +524,7 @@ async function testarConfiguracaoEmail() {
             else resolve(success);
           });
         }),
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Timeout 30s')), 30000)
         )
       ]);
@@ -536,7 +536,7 @@ async function testarConfiguracaoEmail() {
       });
 
       console.log(`✅ ${config.name} - Funcionando!`);
-      
+
       // Fechar conexão
       testTransporter.close();
 

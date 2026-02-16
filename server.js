@@ -102,6 +102,9 @@ db.getConnection((err, connection) => {
       console.log('⚠️ Serviço de email não inicializado:', e.message);
     }
 
+    // Inicializa limpeza automática de notificações antigas
+    inicializarLimpezaNotificacoes();
+
     // =====================================================
     // ✅ MIGRAÇÃO JÁ EXECUTADA NO RAILWAY - COMENTADO
     // =====================================================
@@ -1843,17 +1846,66 @@ app.post('/notificacoes/marcar-todas-lidas', (req, res) => {
   });
 });
 
-// LIMPAR NOTIFICAÇÕES ANTIGAS (manutenção - opcional)
+// LIMPAR NOTIFICAÇÕES ANTIGAS (manutenção - opcional, mas também executado automaticamente)
 app.delete('/notificacoes/antigas', (req, res) => {
-  const sql = 'DELETE FROM notificacoes WHERE criado_em < DATE_SUB(NOW(), INTERVAL 30 DAY)';
+  const sql = 'DELETE FROM notificacoes WHERE criado_em < DATE_SUB(NOW(), INTERVAL 15 DAY)';
   db.query(sql, (err, result) => {
     if (err) {
       console.error('Erro ao limpar notificações antigas:', err);
       return res.status(500).json({ error: err.message });
     }
+    console.log(`🧹 Limpeza manual: ${result.affectedRows} notificações antigas removidas`);
     res.json({ success: true, deleted: result.affectedRows });
   });
 });
+
+// =====================================================
+// SISTEMA DE LIMPEZA AUTOMÁTICA DE NOTIFICAÇÕES
+// =====================================================
+
+/**
+ * Limpa notificações com mais de 15 dias do banco de dados
+ * Remove também os registros de leitura associados (CASCADE)
+ */
+function limparNotificacoesAntigas() {
+  const sql = `
+    DELETE FROM notificacoes 
+    WHERE criado_em < DATE_SUB(NOW(), INTERVAL 15 DAY)
+  `;
+  
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error('❌ Erro ao limpar notificações antigas:', err);
+      return;
+    }
+    
+    if (result.affectedRows > 0) {
+      console.log(`🧹 Limpeza automática: ${result.affectedRows} notificações antigas removidas`);
+      console.log(`📅 Data/Hora: ${new Date().toLocaleString('pt-BR')}`);
+    } else {
+      console.log('✅ Limpeza automática: Nenhuma notificação antiga para remover');
+    }
+  });
+}
+
+/**
+ * Inicializa o sistema de limpeza automática
+ * Executa a limpeza imediatamente e depois a cada 24 horas
+ */
+function inicializarLimpezaNotificacoes() {
+  console.log('🧹 Sistema de limpeza automática de notificações iniciado');
+  console.log('📅 Notificações com mais de 15 dias serão removidas automaticamente');
+  
+  // Executa a primeira limpeza após 1 minuto (para não sobrecarregar na inicialização)
+  setTimeout(() => {
+    limparNotificacoesAntigas();
+  }, 60 * 1000);
+  
+  // Depois executa a cada 24 horas (86400000 ms = 24h)
+  setInterval(() => {
+    limparNotificacoesAntigas();
+  }, 24 * 60 * 60 * 1000);
+}
 
 // MARCAR JOB COMO PAGO
 app.put('/financeiro/jobs/:id/pagar', (req, res) => {

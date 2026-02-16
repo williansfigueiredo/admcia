@@ -470,11 +470,11 @@ function inicializarNotificacoes() {
   atualizarBadgeNotificacoes();
   verificarVencimentosPedidos();
 
-  // Atualiza notificações a cada 30 segundos
+  // Atualiza notificações a cada 5 segundos para resposta mais rápida
   setInterval(() => {
     renderizarNotificacoes();
     atualizarBadgeNotificacoes();
-  }, 30 * 1000);
+  }, 5 * 1000);
 }
 
 // Função de teste para debug
