@@ -10250,9 +10250,7 @@ function renderizarCalendarioFuncionario(listaJobs) {
       console.log('  → Ícone: 📋 (job)');
     }
 
-    const titulo = job.tipo_registro === 'escala'
-      ? `${icone} ${job.descricao}`
-      : `📋 Job #${job.id} - ${job.descricao}`;
+    const titulo = `📋 #${job.id} - ${job.descricao || 'Sem descrição'}`;
     
     console.log('  → Título final:', titulo);
 
@@ -10272,7 +10270,9 @@ function renderizarCalendarioFuncionario(listaJobs) {
         job_id: job.job_id,
         descricao: job.descricao,
         data_inicio: dataInicioStr,
-        data_fim: dataFimStr
+        data_fim: dataFimStr,
+        operador: job.operador_nome || 'Não informado',
+        localizacao: job.localizacao || 'Não informado'
       }
     };
   });
@@ -10304,7 +10304,8 @@ function renderizarCalendarioFuncionario(listaJobs) {
     eventClick: function (info) {
       const dados = info.event.extendedProps;
       const status = dados.status || 'Sem status';
-      const funcao = dados.funcao || 'Não informado';
+      const operador = dados.operador || 'Não informado';
+      const localizacao = dados.localizacao || 'Não informado';
       
       // Define o tipo baseado no registro
       let tipo;
@@ -10315,7 +10316,14 @@ function renderizarCalendarioFuncionario(listaJobs) {
       }
       
       // Nome do serviço
-      const nomeServico = dados.descricao || info.event.title.replace(/^[📋✋📅]\s*/, '').split(' - ')[0] || 'Não informado';
+      const nomeServico = dados.descricao || 'Não informado';
+      
+      // Formata localização para não mostrar valores vazios
+      let localFormatado = localizacao || '';
+      localFormatado = localFormatado.replace(/^[,\s-]+|[,\s-]+$/g, '').replace(/,\s*,/g, ',').trim();
+      if (!localFormatado || localFormatado === ',' || localFormatado === '-') {
+        localFormatado = 'Não informado';
+      }
       
       // Datas
       const formatarData = (dataStr) => {
@@ -10328,7 +10336,7 @@ function renderizarCalendarioFuncionario(listaJobs) {
       const dataInicio = formatarData(dados.data_inicio);
       const dataFim = formatarData(dados.data_fim);
       
-      // Monta o conteúdo HTML do modal
+      // Monta o conteúdo HTML do modal igual ao calendário principal
       const conteudo = `
         <div class="mb-3 p-3 rounded" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-left: 4px solid #6366f1;">
           <h5 class="mb-0 fw-bold" style="color: #4f46e5;">${tipo}</h5>
@@ -10348,9 +10356,15 @@ function renderizarCalendarioFuncionario(listaJobs) {
           </tr>
           <tr>
             <td style="vertical-align: top; white-space: nowrap;">
-              <span class="text-muted small">👷 Função</span>
+              <span class="text-muted small">👤 Operador</span>
             </td>
-            <td>${funcao}</td>
+            <td>${operador}</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; white-space: nowrap;">
+              <span class="text-muted small">📍 Local</span>
+            </td>
+            <td style="word-break: break-word;">${localFormatado}</td>
           </tr>
           <tr>
             <td style="vertical-align: top; white-space: nowrap;">

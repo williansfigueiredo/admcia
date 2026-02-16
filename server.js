@@ -1508,7 +1508,7 @@ app.get('/financeiro/resumo', (req, res) => {
 app.get('/financeiro/transacoes', (req, res) => {
   const { tipo, status, dataInicio, dataFim, busca } = req.query;
 
-  // União de Jobs (receitas) com Transações manuais
+  // União de Jobs (receitas que NÃO têm transação criada) com Transações manuais/automáticas
   let sql = `
     SELECT 
       'job' as origem,
@@ -1534,6 +1534,7 @@ app.get('/financeiro/transacoes', (req, res) => {
     FROM jobs j
     LEFT JOIN clientes c ON j.cliente_id = c.id
     WHERE j.status != 'Cancelado'
+      AND NOT EXISTS (SELECT 1 FROM transacoes t WHERE t.job_id = j.id AND t.tipo = 'receita')
     
     UNION ALL
     
@@ -1690,12 +1691,79 @@ app.put('/financeiro/jobs/:id/pagar', (req, res) => {
   const { id } = req.params;
   const { data_pagamento } = req.body;
 
-  const sql = `UPDATE jobs SET pagamento = 'Pago' WHERE id = ?`;
-  
-  db.query(sql, [id], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    console.log(`✅ Job #${id} marcado como pago`);
-    res.json({ message: 'Pagamento registrado!', affected: result.affectedRows });
+  // Primeiro busca os dados do job para criar a transação
+  db.query('SELECT j.*, c.nome as cliente_nome FROM jobs j LEFT JOIN clientes c ON j.cliente_id = c.id WHERE j.id = ?', [id], (errJob, jobResults) => {
+    if (errJob) {
+      console.error('❌ Erro ao buscar job:', errJob);
+      return res.status(500).json({ error: errJob.message });
+    }
+    
+    if (jobResults.length === 0) {
+      return res.status(404).json({ error: 'Job não encontrado' });
+    }
+    
+    const job = jobResults[0];
+    
+    // Verifica se já existe uma transação para esse job
+    db.query('SELECT id FROM transacoes WHERE job_id = ? AND tipo = "receita"', [id], (errTrans, transResults) => {
+      if (errTrans) {
+        console.error('❌ Erro ao verificar transação existente:', errTrans);
+      }
+      
+      // Atualiza o status do job para Pago
+      const sql = `UPDATE jobs SET pagamento = 'Pago' WHERE id = ?`;
+      
+      db.query(sql, [id], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        console.log(`✅ Job #${id} marcado como pago`);
+        
+        // Se já existe transação, não cria nova
+        if (transResults && transResults.length > 0) {
+          console.log(`ℹ️ Transação já existe para Job #${id}, apenas atualizando status`);
+          
+          // Atualiza a transação existente para pago
+          db.query('UPDATE transacoes SET status = "pago", data_pagamento = ? WHERE job_id = ? AND tipo = "receita"', 
+            [data_pagamento || new Date().toISOString().split('T')[0], id], 
+            (errUpdate) => {
+              if (errUpdate) console.error('Erro ao atualizar transação:', errUpdate);
+            }
+          );
+          
+          return res.json({ message: 'Pagamento registrado!', affected: result.affectedRows });
+        }
+        
+        // Cria nova transação de receita automaticamente
+        const descricaoTransacao = `Pagamento Job #${id} - ${job.descricao || 'Serviço'}`;
+        const valorJob = parseFloat(job.valor) || 0;
+        const dataPagamentoFinal = data_pagamento || new Date().toISOString().split('T')[0];
+        
+        const sqlTransacao = `
+          INSERT INTO transacoes (tipo, categoria, descricao, valor, data_vencimento, data_pagamento, status, cliente_id, job_id)
+          VALUES ('receita', 'Serviços', ?, ?, ?, ?, 'pago', ?, ?)
+        `;
+        
+        const valoresTransacao = [
+          descricaoTransacao,
+          valorJob,
+          job.data_vencimento || dataPagamentoFinal,
+          dataPagamentoFinal,
+          job.cliente_id,
+          id
+        ];
+        
+        db.query(sqlTransacao, valoresTransacao, (errInsert, insertResult) => {
+          if (errInsert) {
+            console.error('❌ Erro ao criar transação automática:', errInsert);
+            // Não retorna erro, pois o pagamento já foi registrado
+          } else {
+            console.log(`✅ Transação de receita #${insertResult.insertId} criada para Job #${id}`);
+          }
+        });
+        
+        res.json({ message: 'Pagamento registrado!', affected: result.affectedRows });
+      });
+    });
   });
 });
 
@@ -3842,9 +3910,21 @@ app.get('/funcionarios/:id/historico', (req, res) => {
 
   const sql = `
         /* 1. Busca se ele está na lista de EQUIPE (Tabela Nova) - EXCETO jobs com escala manual */
-        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, je.funcao, 'job' as tipo_registro, NULL as job_id, 0 as is_manual
+        SELECT 
+          j.id, 
+          j.descricao, 
+          j.data_inicio, 
+          j.data_fim, 
+          j.status, 
+          je.funcao, 
+          'job' as tipo_registro, 
+          NULL as job_id, 
+          0 as is_manual,
+          f.nome as operador_nome,
+          CONCAT_WS(', ', NULLIF(j.rua, ''), NULLIF(j.cidade, ''), NULLIF(j.estado, '')) as localizacao
         FROM jobs j
         JOIN job_equipe je ON j.id = je.job_id
+        LEFT JOIN funcionarios f ON j.operador_id = f.id
         WHERE je.funcionario_id = ?
         AND NOT EXISTS (
           SELECT 1 FROM escalas e 
@@ -3855,8 +3935,20 @@ app.get('/funcionarios/:id/historico', (req, res) => {
         UNION ALL
 
         /* 2. Busca se ele é o OPERADOR PRINCIPAL (Tabela Antiga/Dropdown) */
-        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, 'Operador Principal' as funcao, 'job' as tipo_registro, NULL as job_id, 0 as is_manual
+        SELECT 
+          j.id, 
+          j.descricao, 
+          j.data_inicio, 
+          j.data_fim, 
+          j.status, 
+          'Operador Principal' as funcao, 
+          'job' as tipo_registro, 
+          NULL as job_id, 
+          0 as is_manual,
+          f.nome as operador_nome,
+          CONCAT_WS(', ', NULLIF(j.rua, ''), NULLIF(j.cidade, ''), NULLIF(j.estado, '')) as localizacao
         FROM jobs j
+        LEFT JOIN funcionarios f ON j.operador_id = f.id
         WHERE j.operador_id = ?
 
         UNION ALL
@@ -3864,19 +3956,19 @@ app.get('/funcionarios/:id/historico', (req, res) => {
         /* 3. Busca ESCALAS MANUAIS do funcionário */
         SELECT 
           COALESCE(e.job_id, e.id) as id,
-          CASE 
-            WHEN j.descricao IS NOT NULL THEN CONCAT(j.descricao, ' - ', e.tipo)
-            ELSE CONCAT('Escala ', e.tipo)
-          END as descricao,
+          j.descricao as descricao,
           COALESCE(e.data_inicio, e.data_escala) as data_inicio, 
           COALESCE(e.data_fim, e.data_escala) as data_fim, 
           COALESCE(j.status, 'Escala') as status, 
           e.tipo as funcao,
           'escala' as tipo_registro,
           e.job_id as job_id,
-          COALESCE(e.is_manual, 1) as is_manual
+          COALESCE(e.is_manual, 1) as is_manual,
+          f.nome as operador_nome,
+          CONCAT_WS(', ', NULLIF(j.rua, ''), NULLIF(j.cidade, ''), NULLIF(j.estado, '')) as localizacao
         FROM escalas e
         LEFT JOIN jobs j ON e.job_id = j.id
+        LEFT JOIN funcionarios f ON j.operador_id = f.id
         WHERE e.funcionario_id = ?
 
         ORDER BY data_inicio DESC
