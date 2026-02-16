@@ -1890,6 +1890,151 @@ app.get('/debug/criar-tabela-transacoes', (req, res) => {
 
 
 // =============================================================
+// ROTA DE EMERGÊNCIA: CORRIGIR TABELA ESCALAS
+// =============================================================
+app.get('/debug/corrigir-tabela-escalas', (req, res) => {
+  console.log("🔧 Verificando e corrigindo tabela escalas...");
+
+  const resultados = [];
+  let erros = [];
+
+  // Lista de colunas que precisam existir
+  const migracoesEscalas = [
+    { coluna: 'data_inicio', sql: 'ALTER TABLE escalas ADD COLUMN data_inicio DATE' },
+    { coluna: 'data_fim', sql: 'ALTER TABLE escalas ADD COLUMN data_fim DATE' },
+    { coluna: 'is_manual', sql: 'ALTER TABLE escalas ADD COLUMN is_manual TINYINT(1) NOT NULL DEFAULT 1' },
+    { coluna: 'job_id', sql: 'ALTER TABLE escalas ADD COLUMN job_id INT(11)' }
+  ];
+
+  // Verifica estrutura atual
+  db.query('DESCRIBE escalas', (errDesc, colunas) => {
+    if (errDesc) {
+      console.error("❌ Erro ao verificar tabela escalas:", errDesc);
+      return res.status(500).json({ error: errDesc.message });
+    }
+
+    const colunasExistentes = colunas.map(c => c.Field);
+    console.log("📋 Colunas existentes:", colunasExistentes);
+
+    // Filtra migrações necessárias
+    const migracoesPendentes = migracoesEscalas.filter(m => !colunasExistentes.includes(m.coluna));
+
+    if (migracoesPendentes.length === 0) {
+      console.log("✅ Tabela escalas já está correta!");
+      return res.json({
+        success: true,
+        message: "Tabela 'escalas' já está atualizada!",
+        colunas: colunasExistentes,
+        migracoesExecutadas: 0
+      });
+    }
+
+    console.log("🔧 Migrações pendentes:", migracoesPendentes.map(m => m.coluna));
+
+    // Executa migrações sequencialmente
+    let index = 0;
+    const executarProxima = () => {
+      if (index >= migracoesPendentes.length) {
+        // Todas executadas
+        if (erros.length > 0) {
+          return res.status(500).json({
+            success: false,
+            message: "Algumas migrações falharam",
+            resultados,
+            erros
+          });
+        }
+        return res.json({
+          success: true,
+          message: "Tabela 'escalas' corrigida com sucesso!",
+          migracoesExecutadas: resultados.length,
+          resultados,
+          instrucao: "Agora as escalas manuais devem funcionar corretamente."
+        });
+      }
+
+      const migracao = migracoesPendentes[index];
+      db.query(migracao.sql, (err) => {
+        if (err) {
+          console.error(`❌ Erro ao adicionar ${migracao.coluna}:`, err);
+          erros.push({ coluna: migracao.coluna, erro: err.message });
+        } else {
+          console.log(`✅ Coluna ${migracao.coluna} adicionada!`);
+          resultados.push(migracao.coluna);
+        }
+        index++;
+        executarProxima();
+      });
+    };
+
+    executarProxima();
+  });
+});
+
+// Rota para listar escalas de debug
+app.get('/debug/listar-escalas', (req, res) => {
+  const sql = `
+    SELECT e.*, f.nome as funcionario_nome, j.descricao as job_descricao
+    FROM escalas e
+    LEFT JOIN funcionarios f ON e.funcionario_id = f.id
+    LEFT JOIN jobs j ON e.job_id = j.id
+    ORDER BY e.id DESC
+    LIMIT 20
+  `;
+  db.query(sql, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({
+      total: rows.length,
+      escalas: rows
+    });
+  });
+});
+
+// Rota para corrigir escalas antigas (marcadas como manuais por default)
+// Escalas que cobrem EXATAMENTE o período do job são consideradas automáticas
+app.get('/debug/corrigir-escalas-automaticas', (req, res) => {
+  console.log("🔧 Corrigindo escalas criadas automaticamente...");
+  
+  // Atualiza escalas que:
+  // 1. Têm job_id (estão vinculadas a um job)
+  // 2. Têm is_manual = 1 (marcadas como manual por default)
+  // 3. Não têm data_inicio/data_fim definidos (foram criadas pelo sistema antigo)
+  //    OU as datas NÃO foram especificadas manualmente
+  const sql = `
+    UPDATE escalas e
+    INNER JOIN jobs j ON e.job_id = j.id
+    SET e.is_manual = 0
+    WHERE e.is_manual = 1
+      AND e.job_id IS NOT NULL
+      AND (
+        e.data_inicio IS NULL 
+        OR e.data_fim IS NULL
+        OR (DATE(e.data_inicio) = DATE(j.data_inicio) AND DATE(COALESCE(e.data_fim, e.data_inicio)) = DATE(COALESCE(j.data_fim, j.data_inicio)))
+      )
+  `;
+  
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error("❌ Erro ao corrigir escalas:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    
+    const afetados = result.affectedRows || 0;
+    console.log(`✅ ${afetados} escalas corrigidas para is_manual=0`);
+    
+    res.json({
+      success: true,
+      message: `${afetados} escalas foram marcadas como automáticas.`,
+      escalasCorrigidas: afetados,
+      instrucao: "Agora os ícones devem aparecer corretamente: 📋 = Automático, ✋ = Manual"
+    });
+  });
+});
+
+
+// =============================================================
 // ROTA MÁGICA: RECALIBRAR ESTOQUE (CORRIGE QUALQUER ERRO)
 // =============================================================
 app.get('/debug/recalcular-estoque', (req, res) => {
