@@ -387,20 +387,20 @@ router.post('/:id/definir-senha', requireMaster, async (req, res) => {
             const emailService = require('../services/emailService');
             console.log(`📧 Verificando serviço de email...`);
             console.log(`📧 Email configurado: ${emailService.emailConfigurado()}`);
-            
+
             if (emailService.emailConfigurado()) {
               console.log(`📧 Enviando email de senha definida para ${funcionario.email}...`);
-              
+
               const resultado = await emailService.enviarEmailSenhaDefinida(
                 funcionario.nome,
                 funcionario.email,
                 senha,
                 `${req.protocol}://${req.get('host')}`
               );
-              
+
               console.log(`📧 Resultado do envio:`, resultado);
               emailEnviado = resultado.success;
-              
+
               if (emailEnviado) {
                 console.log(`✅ Email de senha definida enviado para ${funcionario.email}`);
               } else {
@@ -469,20 +469,20 @@ router.post('/:id/reset-senha', requireMaster, async (req, res) => {
             const emailService = require('../services/emailService');
             console.log(`📧 Verificando serviço de email...`);
             console.log(`📧 Email configurado: ${emailService.emailConfigurado()}`);
-            
+
             if (emailService.emailConfigurado()) {
               console.log(`📧 Enviando email de senha resetada para ${funcionario.email}...`);
-              
+
               const resultado = await emailService.enviarEmailSenhaResetada(
                 funcionario.nome,
                 funcionario.email,
                 senhaTemp,
                 `${req.protocol}://${req.get('host')}`
               );
-              
+
               console.log(`📧 Resultado do envio:`, resultado);
               emailEnviado = resultado.success;
-              
+
               if (emailEnviado) {
                 console.log(`✅ Email de senha resetada enviado para ${funcionario.email}`);
               } else {

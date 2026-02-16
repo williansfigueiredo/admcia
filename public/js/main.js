@@ -11936,6 +11936,8 @@ async function carregarDadosEmpresa() {
 async function salvarDadosEmpresa(e) {
   if (e) e.preventDefault();
 
+  console.log('💾 Iniciando salvamento dos dados da empresa...');
+
   const dados = {
     razao_social: document.getElementById('configRazaoSocial').value,
     nome_fantasia: document.getElementById('configNomeFantasia').value,
@@ -11956,6 +11958,8 @@ async function salvarDadosEmpresa(e) {
     logo: window.logoEmpresa
   };
 
+  console.log('📤 Dados que serão enviados:', dados);
+
   try {
     const res = await fetch(`${API_URL}/empresa`, {
       method: 'POST',
@@ -11963,16 +11967,21 @@ async function salvarDadosEmpresa(e) {
       body: JSON.stringify(dados)
     });
 
+    console.log('📨 Status da resposta:', res.status);
+
     const result = await res.json();
+    console.log('📦 Resultado:', result);
 
     if (result.success) {
       alert('✅ Dados da empresa salvos com sucesso!');
+      console.log('✅ Salvamento concluído com sucesso!');
     } else {
       alert('❌ Erro ao salvar: ' + (result.error || 'Erro desconhecido'));
+      console.error('❌ Erro retornado:', result);
     }
   } catch (err) {
-    console.error('Erro ao salvar empresa:', err);
-    alert('❌ Erro ao salvar dados da empresa');
+    console.error('❌ Erro no catch ao salvar empresa:', err);
+    alert('❌ Erro ao salvar dados da empresa: ' + err.message);
   }
 }
 
@@ -12099,6 +12108,12 @@ document.addEventListener('DOMContentLoaded', function () {
   // Setup do upload de logo
   setupLogoUpload();
 
+  // Setup da busca automática de CEP
+  setupBuscaCEP();
+
+  // Setup das máscaras de formatação
+  setupMascarasEmpresa();
+
   // Observer para carregar dados quando abrir aba Empresa
   const tabEmpresa = document.querySelector('[data-bs-target="#tab-empresa"]');
   if (tabEmpresa) {
@@ -12109,6 +12124,111 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 });
+
+// =============================================================
+// BUSCA AUTOMÁTICA DE CEP (ViaCEP)
+// =============================================================
+
+function setupBuscaCEP() {
+  const inputCEP = document.getElementById('configCEP');
+  if (!inputCEP) return;
+
+  inputCEP.addEventListener('blur', async function () {
+    let cep = this.value.replace(/\D/g, ''); // Remove tudo exceto números
+
+    if (cep.length !== 8) return;
+
+    try {
+      // Mostra loading
+      inputCEP.style.borderColor = '#ffc107';
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const dados = await response.json();
+
+      if (dados.erro) {
+        alert('❌ CEP não encontrado!');
+        inputCEP.style.borderColor = '#dc3545';
+        return;
+      }
+
+      // Preenche os campos automaticamente
+      document.getElementById('configLogradouro').value = dados.logradouro || '';
+      document.getElementById('configBairro').value = dados.bairro || '';
+      document.getElementById('configCidade').value = dados.localidade || '';
+      document.getElementById('configEstado').value = dados.uf || '';
+      document.getElementById('configComplemento').value = dados.complemento || '';
+
+      inputCEP.style.borderColor = '#28a745';
+      setTimeout(() => { inputCEP.style.borderColor = ''; }, 2000);
+
+      // Foco no campo número
+      document.getElementById('configNumero').focus();
+
+      console.log('✅ Endereço preenchido automaticamente pelo CEP:', cep);
+    } catch (error) {
+      console.error('Erro ao buscar CEP:', error);
+      alert('⚠️ Erro ao buscar CEP. Verifique sua conexão.');
+      inputCEP.style.borderColor = '';
+    }
+  });
+
+  // Máscara de CEP enquanto digita
+  inputCEP.addEventListener('input', function () {
+    let valor = this.value.replace(/\D/g, '');
+    if (valor.length > 5) {
+      valor = valor.substring(0, 5) + '-' + valor.substring(5, 8);
+    }
+    this.value = valor;
+  });
+}
+
+
+// =============================================================
+// MÁSCARAS DE FORMATAÇÃO (CNPJ, Telefone, etc)
+// =============================================================
+
+function setupMascarasEmpresa() {
+  // Máscara de CNPJ: 00.000.000/0000-00
+  const inputCNPJ = document.getElementById('configCNPJ');
+  if (inputCNPJ) {
+    inputCNPJ.addEventListener('input', function () {
+      let valor = this.value.replace(/\D/g, '');
+      
+      if (valor.length > 14) valor = valor.substring(0, 14);
+      
+      if (valor.length > 12) {
+        valor = valor.substring(0, 2) + '.' + valor.substring(2, 5) + '.' + valor.substring(5, 8) + '/' + valor.substring(8, 12) + '-' + valor.substring(12);
+      } else if (valor.length > 8) {
+        valor = valor.substring(0, 2) + '.' + valor.substring(2, 5) + '.' + valor.substring(5, 8) + '/' + valor.substring(8);
+      } else if (valor.length > 5) {
+        valor = valor.substring(0, 2) + '.' + valor.substring(2, 5) + '.' + valor.substring(5);
+      } else if (valor.length > 2) {
+        valor = valor.substring(0, 2) + '.' + valor.substring(2);
+      }
+      
+      this.value = valor;
+    });
+  }
+
+  // Máscara de Telefone: (00) 00000-0000 ou (00) 0000-0000
+  const inputTelefone = document.getElementById('configTelefoneEmpresa');
+  if (inputTelefone) {
+    inputTelefone.addEventListener('input', function () {
+      let valor = this.value.replace(/\D/g, '');
+      
+      if (valor.length > 11) valor = valor.substring(0, 11);
+      
+      if (valor.length > 10) {
+        valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2, 7) + '-' + valor.substring(7);
+      } else if (valor.length > 6) {
+        valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2, 6) + '-' + valor.substring(6);
+      } else if (valor.length > 2) {
+        valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2);
+      }
+      
+      this.value = valor;
+    });
+  }
+}
 
 
 // =============================================================
