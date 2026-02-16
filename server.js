@@ -2857,6 +2857,86 @@ app.post('/clientes', (req, res) => {
 });
 
 // =============================================================
+// ROTA DE DEBUG: TESTAR NOTIFICAÇÕES
+// =============================================================
+app.get('/debug/testar-notificacoes', (req, res) => {
+  console.log("🧪 Testando sistema de notificações...");
+
+  // 1. Verificar se as tabelas existem
+  db.query('SHOW TABLES LIKE "notificacoes"', (err1, result1) => {
+    if (err1) {
+      return res.status(500).json({ error: 'Erro ao verificar tabela notificacoes', details: err1.message });
+    }
+
+    db.query('SHOW TABLES LIKE "notificacoes_lidas"', (err2, result2) => {
+      if (err2) {
+        return res.status(500).json({ error: 'Erro ao verificar tabela notificacoes_lidas', details: err2.message });
+      }
+
+      const tabelaNotifExiste = result1.length > 0;
+      const tabelaLidasExiste = result2.length > 0;
+
+      if (!tabelaNotifExiste || !tabelaLidasExiste) {
+        return res.json({
+          success: false,
+          message: '❌ Tabelas de notificações não existem!',
+          detalhes: {
+            'notificacoes': tabelaNotifExiste ? '✅ Existe' : '❌ Não existe',
+            'notificacoes_lidas': tabelaLidasExiste ? '✅ Existe' : '❌ Não existe'
+          },
+          instrucao: 'Execute /debug/criar-tabelas-notificacoes primeiro!'
+        });
+      }
+
+      // 2. Criar notificação de teste
+      const tituloTeste = '🧪 Teste de Notificação';
+      const textoTeste = 'Esta é uma notificação de teste criada em ' + new Date().toLocaleString('pt-BR');
+
+      db.query(
+        'INSERT INTO notificacoes (tipo, titulo, texto) VALUES (?, ?, ?)',
+        ['info', tituloTeste, textoTeste],
+        (err3, result3) => {
+          if (err3) {
+            return res.status(500).json({ 
+              error: 'Erro ao criar notificação de teste', 
+              details: err3.message 
+            });
+          }
+
+          const notifId = result3.insertId;
+
+          // 3. Buscar todas as notificações
+          db.query('SELECT * FROM notificacoes ORDER BY criado_em DESC LIMIT 10', (err4, notificacoes) => {
+            if (err4) {
+              return res.status(500).json({ 
+                error: 'Erro ao buscar notificações', 
+                details: err4.message 
+              });
+            }
+
+            res.json({
+              success: true,
+              message: '✅ Sistema de notificações funcionando!',
+              tabelas: {
+                'notificacoes': '✅ Existe',
+                'notificacoes_lidas': '✅ Existe'
+              },
+              teste: {
+                'notificacao_criada': `✅ ID ${notifId}`,
+                'titulo': tituloTeste,
+                'texto': textoTeste
+              },
+              ultimas_notificacoes: notificacoes,
+              instrucao: 'Teste concluído! As notificações devem aparecer no frontend.'
+            });
+          });
+        }
+      );
+    });
+  });
+});
+
+// =============================================================
 // ROTA DE EXCLUSÃO INTELIGENTE (DEVOLVE ESTOQUE ANTES DE APAGAR)
 // =============================================================
 // =============================================================

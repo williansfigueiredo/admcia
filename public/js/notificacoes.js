@@ -8,11 +8,13 @@ function obterFuncionarioId() {
   if (funcionarioData) {
     try {
       const parsed = JSON.parse(funcionarioData);
+      console.log('🔍 Funcionário logado:', parsed.nome, 'ID:', parsed.id);
       return parsed.id || null;
     } catch (e) {
       console.error('Erro ao parsear dados do funcionário:', e);
     }
   }
+  console.warn('⚠️ Nenhum funcionário logado encontrado');
   return null;
 }
 
@@ -20,18 +22,29 @@ function obterFuncionarioId() {
 async function obterNotificacoes() {
   const funcionarioId = obterFuncionarioId();
   if (!funcionarioId) {
-    console.warn('Funcionário não logado - notificações desabilitadas');
+    console.warn('🚫 Funcionário não logado - notificações desabilitadas');
     return [];
   }
   
   try {
-    const response = await fetch(`${window.API_URL}/notificacoes?funcionario_id=${funcionarioId}`);
-    if (!response.ok) throw new Error('Erro ao buscar notificações');
+    const url = `${window.API_URL}/notificacoes?funcionario_id=${funcionarioId}`;
+    console.log('📡 Buscando notificações:', url);
+    
+    const response = await fetch(url);
+    console.log('📡 Resposta do servidor:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erro ${response.status}: ${errorText}`);
+    }
     
     const notificacoes = await response.json();
+    console.log('🔔 Notificações recebidas:', notificacoes.length);
+    console.log('🔔 Detalhes das notificações:', notificacoes);
+    
     return notificacoes;
   } catch (error) {
-    console.error('Erro ao buscar notificações:', error);
+    console.error('❌ Erro ao buscar notificações:', error);
     return [];
   }
 }
@@ -39,15 +52,24 @@ async function obterNotificacoes() {
 // Adiciona uma nova notificação (envia ao servidor)
 async function adicionarNotificacao(tipo, titulo, texto, job_id = null) {
   try {
+    const dados = { tipo, titulo, texto, job_id };
+    console.log('✉️ Criando notificação:', dados);
+    
     const response = await fetch(`${window.API_URL}/notificacoes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tipo, titulo, texto, job_id })
+      body: JSON.stringify(dados)
     });
     
-    if (!response.ok) throw new Error('Erro ao criar notificação');
+    console.log('✉️ Resposta da criação:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erro ${response.status}: ${errorText}`);
+    }
     
     const result = await response.json();
+    console.log('✉️ Notificação criada com sucesso:', result);
     
     // Atualiza a interface imediatamente
     await renderizarNotificacoes();
@@ -55,7 +77,7 @@ async function adicionarNotificacao(tipo, titulo, texto, job_id = null) {
     
     return result;
   } catch (error) {
-    console.error('Erro ao adicionar notificação:', error);
+    console.error('❌ Erro ao adicionar notificação:', error);
   }
 }
 
@@ -235,6 +257,7 @@ function notificarPedidoCancelado(descricao) {
 
 // Inicializa sistema de notificações
 function inicializarNotificacoes() {
+  console.log('🔔 Inicializando sistema de notificações...');
   atualizarBadgeNotificacoes();
   verificarVencimentosPedidos();
   
@@ -243,6 +266,42 @@ function inicializarNotificacoes() {
     renderizarNotificacoes();
     atualizarBadgeNotificacoes();
   }, 30 * 1000);
+}
+
+// Função de teste para debug
+async function testarNotificacoes() {
+  console.log('🧪 === TESTANDO SISTEMA DE NOTIFICAÇÕES ===');
+  
+  // 1. Verificar se funcionário está logado
+  const funcionarioId = obterFuncionarioId();
+  console.log('👤 Funcionário ID:', funcionarioId);
+  
+  // 2. Testar busca de notificações
+  console.log('📥 Testando busca de notificações...');
+  const notifs = await obterNotificacoes();
+  console.log('📥 Quantidade encontrada:', notifs.length);
+  
+  // 3. Criar notificação de teste
+  console.log('✍️ Criando notificação de teste...');
+  const resultado = await adicionarNotificacao(
+    'info', 
+    '🧪 Teste Manual',
+    'Esta é uma notificação de teste criada manualmente'
+  );
+  console.log('✍️ Resultado:', resultado);
+  
+  // 4. Buscar novamente
+  console.log('🔄 Buscando notificações após teste...');
+  const notifsAposTeste = await obterNotificacoes();
+  console.log('🔄 Nova quantidade:', notifsAposTeste.length);
+  
+  console.log('🧪 === TESTE FINALIZADO ===');
+  return {
+    funcionarioId,
+    notificacoesAntes: notifs.length,
+    notificacaocriada: resultado,
+    notificacoesDepois: notifsAposTeste.length
+  };
 }
 
 // Expor funções globalmente
@@ -255,6 +314,7 @@ window.notificarNovoPedido = notificarNovoPedido;
 window.notificarMudancaStatus = notificarMudancaStatus;
 window.notificarPedidoCancelado = notificarPedidoCancelado;
 window.verificarVencimentosPedidos = verificarVencimentosPedidos;
+window.testarNotificacoes = testarNotificacoes; // Função de teste
 
 // Inicializa notificações quando o DOM carregar
 if (document.readyState === 'loading') {
