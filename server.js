@@ -1846,6 +1846,50 @@ app.get('/financeiro/despesas-por-categoria', (req, res) => {
 
 
 // =============================================================
+// ROTA DE EMERGÊNCIA: CRIAR TABELA TRANSACOES
+// =============================================================
+app.get('/debug/criar-tabela-transacoes', (req, res) => {
+  console.log("🔧 Criando tabela transacoes...");
+
+  const sql = `
+    CREATE TABLE IF NOT EXISTS transacoes (
+      id INT(11) AUTO_INCREMENT PRIMARY KEY,
+      tipo ENUM('receita', 'despesa') NOT NULL,
+      categoria VARCHAR(100),
+      descricao VARCHAR(255),
+      valor DECIMAL(10,2) NOT NULL,
+      data_vencimento DATE,
+      data_pagamento DATE,
+      status ENUM('pendente', 'pago', 'atrasado', 'cancelado') DEFAULT 'pendente',
+      job_id INT(11),
+      cliente_id INT(11),
+      forma_pagamento VARCHAR(50),
+      observacoes TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_data_vencimento (data_vencimento),
+      INDEX idx_tipo (tipo),
+      INDEX idx_categoria (categoria),
+      INDEX idx_status (status)
+    )
+  `;
+
+  db.query(sql, (err) => {
+    if (err) {
+      console.error("❌ Erro ao criar tabela:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    console.log("✅ Tabela transacoes criada com sucesso!");
+    res.json({ 
+      success: true, 
+      message: "Tabela 'transacoes' criada com sucesso!",
+      instrucao: "Agora você pode usar o módulo Financeiro normalmente."
+    });
+  });
+});
+
+
+// =============================================================
 // ROTA MÁGICA: RECALIBRAR ESTOQUE (CORRIGE QUALQUER ERRO)
 // =============================================================
 app.get('/debug/recalcular-estoque', (req, res) => {
