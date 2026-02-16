@@ -2300,6 +2300,13 @@ window.salvarJobTelaCheia = async function () {
         if (!isEdit && typeof window.notificarNovoPedido === 'function') {
           window.notificarNovoPedido(jobData.descricao);
         }
+
+        // Força atualização imediata das notificações
+        if (typeof window.forcarAtualizacaoNotificacoes === 'function') {
+          setTimeout(() => {
+            window.forcarAtualizacaoNotificacoes();
+          }, 500);
+        }
       }
       else alert("⚠️ Pedido salvo, mas houve erro no estoque.");
     }
@@ -4234,6 +4241,13 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
 
     console.log("✅ Atualização concluída!");
 
+    // Força atualização imediata das notificações
+    if (typeof window.forcarAtualizacaoNotificacoes === 'function') {
+      setTimeout(() => {
+        window.forcarAtualizacaoNotificacoes();
+      }, 300);
+    }
+
     // 🎨 RECARREGA O CALENDÁRIO PARA MOSTRAR AS CORES NOVAS
     setTimeout(() => {
       if (typeof recarregarCalendario === 'function') {
@@ -4317,6 +4331,13 @@ async function salvarEdicao(selectElem, id, tipo, valorOriginal) {
     if (typeof atualizarDashboard === 'function') atualizarDashboard();
     if (typeof carregarGestaoContratos === 'function') carregarGestaoContratos();
     if (typeof carregarEstoque === 'function') carregarEstoque();
+
+    // Força atualização imediata das notificações
+    if (typeof window.forcarAtualizacaoNotificacoes === 'function') {
+      setTimeout(() => {
+        window.forcarAtualizacaoNotificacoes();
+      }, 300);
+    }
 
   } catch (err) {
     console.error("Erro ao salvar:", err);

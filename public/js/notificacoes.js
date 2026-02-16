@@ -524,17 +524,24 @@ function notificarPedidoCancelado(descricao) {
   console.log('Notificação de cancelamento será criada pelo servidor:', descricao);
 }
 
+// Força atualização imediata das notificações (sem esperar o polling)
+async function forcarAtualizacaoNotificacoes() {
+  console.log('⚡ Forçando atualização imediata de notificações...');
+  await renderizarNotificacoes();
+  await atualizarBadgeNotificacoes();
+}
+
 // Inicializa sistema de notificações
 function inicializarNotificacoes() {
   console.log('🔔 Inicializando sistema de notificações...');
   atualizarBadgeNotificacoes();
   verificarVencimentosPedidos();
 
-  // Atualiza notificações a cada 5 segundos para resposta mais rápida
+  // Atualiza notificações a cada 2 segundos para resposta mais rápida
   setInterval(() => {
     renderizarNotificacoes();
     atualizarBadgeNotificacoes();
-  }, 5 * 1000);
+  }, 2 * 1000);
 }
 
 // Função de teste para debug
