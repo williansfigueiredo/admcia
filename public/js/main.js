@@ -4241,6 +4241,25 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
 
     console.log("✅ Atualização concluída!");
 
+    // ✅ ATUALIZAÇÃO VISUAL IMEDIATA DAS PILLS (não espera recarregar)
+    // Atualiza todos os spans (pills) deste job na tabela
+    const todasPillsStatus = document.querySelectorAll(`span[onclick*="abrirMenuStatus(this, ${id}, 'status'"]`);
+    const todasPillsPagamento = document.querySelectorAll(`span[onclick*="abrirMenuStatus(this, ${id}, 'pagamento'"]`);
+    
+    if (tipo === 'status') {
+      todasPillsStatus.forEach(pill => {
+        pill.textContent = novoValor;
+        pill.className = `${getStatusPill(novoValor, true)} cursor-pointer`;
+      });
+      console.log(`✅ Pills de status atualizadas visualmente para: ${novoValor}`);
+    } else if (tipo === 'pagamento') {
+      todasPillsPagamento.forEach(pill => {
+        pill.textContent = novoValor;
+        pill.className = `${getPagamentoPill(novoValor, true)} cursor-pointer`;
+      });
+      console.log(`✅ Pills de pagamento atualizadas visualmente para: ${novoValor}`);
+    }
+
     // Força atualização imediata das notificações
     if (typeof window.forcarAtualizacaoNotificacoes === 'function') {
       setTimeout(() => {
@@ -4327,12 +4346,37 @@ async function salvarEdicao(selectElem, id, tipo, valorOriginal) {
       }
     }
 
-    // 3) Atualiza telas + recarrega estoque (pra você ver na hora)
+    // 3) ✅ ATUALIZAÇÃO VISUAL IMEDIATA DO SELECT/PILL
+    // Garante que o elemento visual mostre o novo valor ANTES de recarregar tudo
+    if (selectElem) {
+      selectElem.value = novoValor;
+      selectElem.style.pointerEvents = 'auto';
+    }
+
+    // Atualiza também as pills na tabela (caso esteja usando pills em vez de selects)
+    const todasPillsStatus = document.querySelectorAll(`span[onclick*="abrirMenuStatus(this, ${id}, 'status'"]`);
+    const todasPillsPagamento = document.querySelectorAll(`span[onclick*="abrirMenuStatus(this, ${id}, 'pagamento'"]`);
+    
+    if (tipo === 'status') {
+      todasPillsStatus.forEach(pill => {
+        pill.textContent = novoValor;
+        pill.className = `${getStatusPill(novoValor, true)} cursor-pointer`;
+      });
+      console.log(`✅ Pills de status atualizadas visualmente para: ${novoValor}`);
+    } else if (tipo === 'pagamento') {
+      todasPillsPagamento.forEach(pill => {
+        pill.textContent = novoValor;
+        pill.className = `${getPagamentoPill(novoValor, true)} cursor-pointer`;
+      });
+      console.log(`✅ Pills de pagamento atualizadas visualmente para: ${novoValor}`);
+    }
+
+    // 4) Atualiza telas + recarrega estoque (pra você ver na hora)
     if (typeof atualizarDashboard === 'function') atualizarDashboard();
     if (typeof carregarGestaoContratos === 'function') carregarGestaoContratos();
     if (typeof carregarEstoque === 'function') carregarEstoque();
 
-    // Força atualização imediata das notificações
+    // 5) Força atualização imediata das notificações
     if (typeof window.forcarAtualizacaoNotificacoes === 'function') {
       setTimeout(() => {
         window.forcarAtualizacaoNotificacoes();
