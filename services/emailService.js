@@ -265,15 +265,18 @@ async function enviarEmail(destinatario, assunto, htmlContent) {
   // MÉTODO 1: Resend (preferencial)
   if (emailMethod === 'resend') {
     try {
-      const data = await resend.emails.send({
+      const response = await resend.emails.send({
         from: emailFrom,
         to: [destinatario],
         subject: assunto,
         html: htmlContent
       });
 
-      console.log(`✅ Email enviado com sucesso via Resend! ID: ${data.id}`);
-      return { success: true, messageId: data.id, method: 'resend' };
+      // Resend pode retornar { data: { id: '...' } } ou { id: '...' }
+      const emailId = response?.data?.id || response?.id || 'sent';
+      
+      console.log(`✅ Email enviado com sucesso via Resend! ID: ${emailId}`);
+      return { success: true, messageId: emailId, method: 'resend' };
 
     } catch (error) {
       console.error('❌ Falha ao enviar via Resend:', error.message);
