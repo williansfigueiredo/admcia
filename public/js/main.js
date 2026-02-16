@@ -9336,20 +9336,29 @@ window.initCalendar = function () {
       // Extrai apenas o nome do serviço do título (remove ícone e nome do funcionário)
       // Título formato: "📋 Nome - Nome do Serviço" ou "✋ Nome - Serviço - Tipo"
       let nomeServico = info.event.title;
+      console.log('🔍 Título original:', nomeServico);
       
-      // Remove o ícone e tudo até o primeiro " - "
+      // Remove o ícone (primeiro caractere que pode ser emoji)
+      nomeServico = nomeServico.replace(/^[📋✋📅]\s*/, '');
+      console.log('🔍 Após remover ícone:', nomeServico);
+      
+      // Remove o nome do funcionário (tudo até o primeiro " - ")
       const primeiroDash = nomeServico.indexOf(' - ');
       if (primeiroDash !== -1) {
         nomeServico = nomeServico.substring(primeiroDash + 3); // +3 para pular " - "
+        console.log('🔍 Após remover funcionário:', nomeServico);
         
         // Se for escala manual, ainda tem " - Tipo" no final, remove também
         if (dados.is_manual === 1) {
           const segundoDash = nomeServico.lastIndexOf(' - ');
           if (segundoDash !== -1) {
             nomeServico = nomeServico.substring(0, segundoDash);
+            console.log('🔍 Após remover tipo:', nomeServico);
           }
         }
       }
+      
+      console.log('✅ Nome final do serviço:', nomeServico);
 
       // Monta o conteúdo HTML do modal
       const conteudo = `
@@ -10130,24 +10139,38 @@ function renderizarCalendarioFuncionario(listaJobs) {
     const isAllDay = !job.hora_inicio_evento && !job.hora_fim_evento;
 
     // Monta o título baseado no tipo de registro e campo is_manual
+    console.log(`🔍 Job #${job.id}:`, {
+      tipo_registro: job.tipo_registro, 
+      job_id: job.job_id, 
+      is_manual: job.is_manual,
+      descricao: job.descricao
+    });
+    
     let icone = '📋'; // Padrão para jobs
     
     if (job.tipo_registro === 'escala') {
       if (!job.job_id) {
         // Escala standalone (sem job associado)
         icone = '📅';
+        console.log('  → Ícone: 📅 (escala standalone)');
       } else if (job.is_manual === 1) {
         // Escala manual criada pelo usuário
         icone = '✋';
+        console.log('  → Ícone: ✋ (escala manual)');
       } else {
         // Escala automática da equipe
         icone = '📋';
+        console.log('  → Ícone: 📋 (escala automática)');
       }
+    } else {
+      console.log('  → Ícone: 📋 (job)');
     }
 
     const titulo = job.tipo_registro === 'escala'
       ? `${icone} ${job.descricao}`
       : `📋 Job #${job.id} - ${job.descricao}`;
+    
+    console.log('  → Título final:', titulo);
 
     return {
       id: `${job.tipo_registro || 'job'}-${job.id}`,
