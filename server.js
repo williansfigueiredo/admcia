@@ -1067,7 +1067,7 @@ app.post('/jobs', (req, res) => {
 
         if (dataInicio) {
           const sqlEscalas = `
-          INSERT INTO escalas (funcionario_id, job_id, data_escala, data_inicio, data_fim, tipo, observacao)
+          INSERT INTO escalas (funcionario_id, job_id, data_escala, data_inicio, data_fim, tipo, observacao, is_manual)
           VALUES ?
         `;
           const valoresEscalas = equipeCompleta.map(m => [
@@ -1077,7 +1077,8 @@ app.post('/jobs', (req, res) => {
             dataInicio,
             dataFim,
             'Trabalho',
-            `Job #${novoId} - ${data.descricao || 'Pedido'}`
+            `Job #${novoId} - ${data.descricao || 'Pedido'}`,
+            0  // is_manual = 0 (automático, criado pelo sistema)
           ]);
 
           console.log('📅 Criando escalas para equipe:', valoresEscalas);
@@ -1281,7 +1282,7 @@ app.put('/jobs/:id', (req, res) => {
 
             if (dataInicio) {
               const sqlEscalas = `
-              INSERT INTO escalas (funcionario_id, job_id, data_escala, data_inicio, data_fim, tipo, observacao)
+              INSERT INTO escalas (funcionario_id, job_id, data_escala, data_inicio, data_fim, tipo, observacao, is_manual)
               VALUES ?
             `;
               const valoresEscalas = data.equipe.map(m => [
@@ -1291,7 +1292,8 @@ app.put('/jobs/:id', (req, res) => {
                 dataInicio,
                 dataFim,
                 'Trabalho',
-                `Job #${id} - ${data.descricao || 'Pedido'}`
+                `Job #${id} - ${data.descricao || 'Pedido'}`,
+                0  // is_manual = 0 (automático, criado pelo sistema)
               ]);
 
               console.log('📅 Criando escalas atualizadas para equipe:', valoresEscalas);
