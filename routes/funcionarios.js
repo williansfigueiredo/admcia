@@ -423,11 +423,12 @@ router.post('/:id/definir-senha', requireMaster, async (req, res) => {
             : 'Senha definida com sucesso!',
           email_enviado: emailEnviado
         });
-    });
-  } catch (error) {
-    console.error('Erro ao gerar hash:', error);
-    return res.status(500).json({ success: false, error: 'Erro ao processar senha' });
-  }
+      });
+    } catch (error) {
+      console.error('Erro ao gerar hash:', error);
+      return res.status(500).json({ success: false, error: 'Erro ao processar senha' });
+    }
+  });
 });
 
 /**
