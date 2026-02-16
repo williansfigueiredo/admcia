@@ -1261,9 +1261,11 @@ app.put('/jobs/:id', (req, res) => {
       db.query("DELETE FROM job_equipe WHERE job_id = ?", [id], (errDelEq) => {
         if (errDelEq) console.error("Erro ao limpar equipe antiga:", errDelEq);
 
-        // B. LIMPA ESCALAS ANTIGAS DESTE JOB (Para recriar atualizado)
-        db.query("DELETE FROM escalas WHERE job_id = ?", [id], (errDelEsc) => {
+        // B. LIMPA APENAS ESCALAS AUTOMÁTICAS DESTE JOB (Para recriar atualizado)
+        // ⚠️ IMPORTANTE: NÃO apaga escalas manuais (is_manual=1), só automáticas (is_manual=0)
+        db.query("DELETE FROM escalas WHERE job_id = ? AND is_manual = 0", [id], (errDelEsc) => {
           if (errDelEsc) console.error("Erro ao limpar escalas antigas:", errDelEsc);
+          else console.log(`🗑️ Escalas automáticas do job ${id} removidas (mantendo escalas manuais)`);
 
           // C. INSERE DADOS NOVOS (SE HOUVER EQUIPE)
           if (data.equipe && data.equipe.length > 0) {
