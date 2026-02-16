@@ -530,7 +530,11 @@ db.getConnection((err, connection) => {
                         () => executarMigracaoComRetry(
                           'ALTER TABLE jobs ADD COLUMN prazo_pagamento INT',
                           'prazo_pagamento (jobs)',
-                          () => console.log('✅ Todas as migrações concluídas!')
+                          () => executarMigracaoComRetry(
+                            'ALTER TABLE escalas ADD COLUMN is_manual TINYINT(1) NOT NULL DEFAULT 1',
+                            'is_manual (escalas)',
+                            () => console.log('✅ Todas as migrações concluídas!')
+                          )
                         )
                       )
                     )
@@ -3002,7 +3006,8 @@ app.get('/agenda', (req, res) => {
       f.nome as operador_nome,
       '' as localizacao,
       'escala' as tipo_evento,
-      e.job_id
+      e.job_id,
+      COALESCE(e.is_manual, 1) as is_manual
     FROM escalas e
     JOIN funcionarios f ON e.funcionario_id = f.id
     LEFT JOIN jobs j ON e.job_id = j.id
@@ -3119,10 +3124,17 @@ app.get('/agenda', (req, res) => {
       const dias = gerarDiasEntre(dataInicioStr, dataFimStr);
 
       // Monta o título com ícone correto:
-      // 📋 = trabalho de um pedido (tem job_id E tipo é "Trabalho")
-      // 📅 = escala manual/avulsa ou tipo diferente de Trabalho (Treinamento, Folga, Férias, etc.)
-      const isTrabalhoDeJob = e.job_id && e.tipo_escala === 'Trabalho';
-      const icone = isTrabalhoDeJob ? '📋' : '📅';
+      // ✋ = escala MANUAL (criada pelo usuário com datas específicas)
+      // 📋 = trabalho automático de um pedido (vindo de job_equipe, não mostrado aqui)
+      // 📅 = escala avulsa sem job vinculado
+      const isManual = e.is_manual === 1 || e.is_manual === true;
+      let icone;
+      if (e.job_id) {
+        // Escala vinculada a job
+        icone = isManual ? '✋' : '📋'; // Manual vs Automática
+      } else {
+        icone = '📅'; // Escala avulsa
+      }
       let titulo = `${icone} ${e.funcionario_nome}`;
 
       // Marca que esse funcionário tem escala vinculada a este job (para evitar duplicação)
@@ -3162,7 +3174,8 @@ app.get('/agenda', (req, res) => {
           localizacao: e.localizacao,
           backgroundColor: cor,
           borderColor: cor,
-          tipo_evento: e.tipo_evento
+          tipo_evento: e.tipo_evento,
+          is_manual: isManual ? 1 : 0
         });
       });
     });
@@ -3216,6 +3229,7 @@ app.get('/agenda', (req, res) => {
             backgroundColor: cor,
             borderColor: cor,
             tipo_evento: 'job',
+            is_manual: 0,  // Evento automático do job
             // 📅 Datas reais do job (período completo) em formato string
             data_inicio_real: dataInicioStr,
             data_fim_real: dataFimStr
@@ -3299,6 +3313,8 @@ app.post('/escalas', (req, res) => {
   const dataInicio = data.data_inicio || data.data;
   const dataFim = data.data_fim || data.data;
   const jobId = data.job_id || null;
+  // Escala manual = criada pelo usuário manualmente (is_manual = 1)
+  const isManual = data.is_manual !== undefined ? data.is_manual : 1;
 
   // Se tem job_id, busca o nome do job para a observação
   if (jobId) {
@@ -3313,8 +3329,8 @@ app.post('/escalas', (req, res) => {
       const observacaoAuto = `Job #${jobId} - ${nomeJob}`;
 
       const sql = `
-        INSERT INTO escalas (funcionario_id, data_escala, data_inicio, data_fim, tipo, observacao, job_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO escalas (funcionario_id, data_escala, data_inicio, data_fim, tipo, observacao, job_id, is_manual)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const values = [
@@ -3324,7 +3340,8 @@ app.post('/escalas', (req, res) => {
         dataFim,
         data.tipo,
         observacaoAuto,  // Observação automática com nome do job
-        jobId
+        jobId,
+        isManual
       ];
 
       db.query(sql, values, (err, result) => {
@@ -3339,8 +3356,8 @@ app.post('/escalas', (req, res) => {
   } else {
     // Escala avulsa (sem job vinculado)
     const sql = `
-      INSERT INTO escalas (funcionario_id, data_escala, data_inicio, data_fim, tipo, observacao, job_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO escalas (funcionario_id, data_escala, data_inicio, data_fim, tipo, observacao, job_id, is_manual)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -3350,7 +3367,8 @@ app.post('/escalas', (req, res) => {
       dataFim,
       data.tipo,
       data.obs || null,  // Usa a obs do formulário
-      null
+      null,
+      isManual
     ];
 
     db.query(sql, values, (err, result) => {

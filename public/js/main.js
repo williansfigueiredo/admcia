@@ -2336,9 +2336,9 @@ window.salvarNovoJob = async function () {
       alert(isEdit ? "✅ Pedido atualizado!" : "✅ Pedido criado e estoque baixado!");
 
       // 2. ATUALIZAÇÃO DO CALENDÁRIO (Gatilho para mudar cor e posição)
-      if (window.calendar) {
+      if (typeof recarregarCalendario === 'function') {
         console.log("🔄 Recarregando eventos no calendário...");
-        window.calendar.refetchEvents();
+        recarregarCalendario();
       }
 
       // Limpeza
@@ -9404,7 +9404,15 @@ window.toggleFuncView = function (modo) {
     // (Necessário porque o FullCalendar precisa que a div esteja visível para calcular altura)
     setTimeout(() => {
       initCalendar();
-      if (calendar) calendar.updateSize();
+      if (calendar) {
+        calendar.updateSize();
+        // Se tinha recarga pendente, executa agora
+        if (window.calendarioPendenteRecarga) {
+          window.calendarioPendenteRecarga = false;
+          calendar.refetchEvents();
+          console.log("✅ Recarga pendente executada ao exibir calendário");
+        }
+      }
     }, 50);
   }
 };
@@ -9464,25 +9472,16 @@ window.salvarEscalaManual = async function () {
   const jobId = document.getElementById('escalaJobManual')?.value || null;
 
   try {
-    // Se tem job selecionado, adiciona funcionário à equipe do job
-    if (jobId) {
-      await fetch(`${API_URL}/jobs/${jobId}/equipe/adicionar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          funcionario_id: funcionarioId,
-          funcao: tipo
-        })
-      });
-      console.log('✅ Funcionário adicionado à equipe do job');
-    }
+    // NÃO adiciona à job_equipe - escala manual usa apenas a tabela escalas
+    // Isso evita duplicação de eventos no calendário
 
     const dados = {
       data: document.getElementById('escalaData').value,
       funcionario_id: funcionarioId,
       tipo: tipo,
       obs: document.getElementById('escalaObsManual').value,
-      job_id: jobId || null
+      job_id: jobId || null,
+      is_manual: 1  // Marca como escala manual
     };
 
     await fetch(`${API_URL}/escalas`, {
@@ -9498,8 +9497,8 @@ window.salvarEscalaManual = async function () {
     const modal = bootstrap.Modal.getInstance(el);
     if (modal) modal.hide();
 
-    // Recarrega calendário
-    if (calendar) calendar.refetchEvents();
+    // Recarrega calendário de forma segura
+    recarregarCalendario();
   } catch (err) {
     console.error("Erro ao salvar escala:", err);
     alert("Erro ao salvar: " + err);
@@ -9522,18 +9521,8 @@ window.salvarNovaEscala = async function () {
   }
 
   try {
-    // Se tem job selecionado, adiciona funcionário à equipe do job (para aparecer na Equipe do Evento)
-    if (jobId) {
-      await fetch(`${API_URL}/jobs/${jobId}/equipe/adicionar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          funcionario_id: funcionarioId,
-          funcao: tipo
-        })
-      });
-      console.log('✅ Funcionário adicionado à equipe do job');
-    }
+    // NÃO adiciona à job_equipe - escala manual usa apenas a tabela escalas
+    // Isso evita duplicação de eventos no calendário (job_equipe expande para todas as datas do job)
 
     // Cria a escala com as datas selecionadas pelo usuário
     const dados = {
@@ -9542,7 +9531,8 @@ window.salvarNovaEscala = async function () {
       data_fim: dataFim,
       tipo: tipo,
       obs: obs,
-      job_id: jobId || null
+      job_id: jobId || null,
+      is_manual: 1  // Marca como escala manual
     };
 
     const res = await fetch(`${API_URL}/escalas`, {
@@ -9562,8 +9552,8 @@ window.salvarNovaEscala = async function () {
     // Limpa formulário
     document.getElementById('formNovaEscala').reset();
 
-    // Recarrega calendário
-    if (calendar) calendar.refetchEvents();
+    // Recarrega calendário de forma segura
+    recarregarCalendario();
 
   } catch (err) {
     console.error("Erro ao salvar escala:", err);
@@ -9630,8 +9620,25 @@ window.recarregarCalendario = function () {
   console.log("🔄 Recarregando calendário...");
 
   if (calendar) {
-    calendar.refetchEvents();
-    console.log("✅ Eventos recarregados!");
+    // Verifica se o container do calendário está visível
+    const container = document.getElementById('container-calendario');
+    const isVisible = container && container.style.display !== 'none' && container.offsetParent !== null;
+    
+    if (isVisible) {
+      // Se estiver visível, recarrega imediatamente
+      calendar.refetchEvents();
+      // Aguarda um pouco e atualiza o tamanho para garantir renderização correta
+      setTimeout(() => {
+        if (calendar) {
+          calendar.updateSize();
+        }
+      }, 100);
+      console.log("✅ Eventos recarregados!");
+    } else {
+      // Se não estiver visível, marca para recarregar quando ficar visível
+      window.calendarioPendenteRecarga = true;
+      console.log("⏳ Calendário não visível, marcado para recarga posterior");
+    }
   } else {
     console.warn("⚠️ Calendário não está inicializado ainda");
   }
@@ -10231,8 +10238,8 @@ window.excluirEscalaAvulsa = async function (escalaId) {
       }
 
       // Também atualiza o calendário se existir
-      if (window.calendarInstance) {
-        window.calendarInstance.refetchEvents();
+      if (typeof recarregarCalendario === 'function') {
+        recarregarCalendario();
       }
     } else {
       alert('Erro ao excluir escala: ' + (data.error || 'Erro desconhecido'));
