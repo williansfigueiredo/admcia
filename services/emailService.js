@@ -24,7 +24,7 @@ let emailFrom = null;
 function inicializarEmail() {
   // Ler variáveis aqui (não no topo) para garantir que estão carregadas
   const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587; // Mudança: 587 TLS como padrão
+  const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587; // TLS como padrão para Railway
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || '';
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || '';
   const useSecure = smtpPort === 465; // SSL para porta 465
@@ -51,13 +51,15 @@ function inicializarEmail() {
       connectionTimeout: 60000, // 60 segundos
       greetingTimeout: 30000, // 30 segundos  
       socketTimeout: 60000, // 60 segundos
-      // Configurações adicionais para compatibilidade
+      // Configurações adicionais para compatibilidade Railway
       tls: {
         // Não falha em certificados auto-assinados
         rejectUnauthorized: false,
-        // Permite conexões menos seguras (necessário para alguns provedores)
+        // Permite conexões menos seguras
         ciphers: 'SSLv3'
       },
+      // Força IPv4 para evitar problemas ENETUNREACH
+      family: 4,
       // Pool de conexões para melhor performance
       pool: true,
       maxConnections: 5,
@@ -83,8 +85,11 @@ function inicializarEmail() {
       transporter.verify((error, success) => {
         if (error) {
           console.error('❌ Falha na verificação do email:', error.message);
-          console.log('💡 Dica: Para Gmail use porta 587 + TLS, ou 465 + SSL');
-          console.log('💡 Verifique se EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS estão corretos');
+          console.log('💡 Dicas para resolver problemas de conectividade:');
+          console.log('   • Para Railway: Use EMAIL_PORT=587 (TLS) ao invés de 465 (SSL)');
+          console.log('   • Para Gmail: Generate App Password em myaccount.google.com');
+          console.log('   • Configuração recomendada: HOST=smtp.gmail.com, PORT=587');
+          console.log('   • Se ENETUNREACH: problema IPv6, tente outro provedor ou porta');
         } else {
           console.log('✅ Servidor de email verificado com sucesso! Pronto para enviar emails.');
         }
@@ -300,7 +305,7 @@ async function enviarEmail(destinatario, assunto, htmlContent) {
       }
 
       // Se não é erro recuperável ou esgotou tentativas
-      const errorMessage = this.getErrorMessage(error);
+      const errorMessage = getErrorMessage(error);
       console.error(`💥 Falha definitiva após ${attempt} tentativa(s):`, errorMessage);
       
       return { 
@@ -321,7 +326,8 @@ async function enviarEmail(destinatario, assunto, htmlContent) {
  */
 function getErrorMessage(error) {
   const errorMap = {
-    'ETIMEDOUT': 'Timeout na conexão com servidor de email. Verifique configurações de rede.',
+    'ETIMEDOUT': 'Timeout na conexão com servidor de email. Tente EMAIL_PORT=587 para Railway.',
+    'ENETUNREACH': 'Rede inacessível (provável problema IPv6). Use EMAIL_PORT=587 ou outro provedor.',
     'ECONNRESET': 'Conexão foi resetada pelo servidor. Tente novamente.',
     'ENOTFOUND': 'Servidor de email não encontrado. Verifique EMAIL_HOST.',
     'ECONNREFUSED': 'Conexão recusada. Verifique porta e configurações de firewall.',
@@ -375,23 +381,25 @@ async function testarConfiguracaoEmail() {
     };
   }
 
-  // Configurações comuns para teste
+  // Configurações comuns para teste (priorizando TLS para Railway)
   const configuracoes = [
-    // Gmail TLS (mais comum)
+    // Gmail TLS (melhor para Railway/deploy)
     {
-      name: 'Gmail TLS (Recomendado)',
+      name: 'Gmail TLS (Railway)',
       host: 'smtp.gmail.com',
       port: 587,
       secure: false,
-      requireTLS: true
+      requireTLS: true,
+      family: 4 // IPv4 only
     },
-    // Gmail SSL
+    // Gmail SSL (fallback)
     {
-      name: 'Gmail SSL',
+      name: 'Gmail SSL', 
       host: 'smtp.gmail.com', 
       port: 465,
       secure: true,
-      requireTLS: false
+      requireTLS: false,
+      family: 4 // IPv4 only
     },
     // Outlook/Hotmail
     {
@@ -399,7 +407,8 @@ async function testarConfiguracaoEmail() {
       host: 'smtp-mail.outlook.com',
       port: 587,
       secure: false,
-      requireTLS: true
+      requireTLS: true,
+      family: 4 // IPv4 only
     },
     // Yahoo
     {
@@ -407,7 +416,8 @@ async function testarConfiguracaoEmail() {
       host: 'smtp.mail.yahoo.com',
       port: 587,
       secure: false,
-      requireTLS: true
+      requireTLS: true,
+      family: 4 // IPv4 only
     }
   ];
 
@@ -422,6 +432,7 @@ async function testarConfiguracaoEmail() {
         port: config.port,
         secure: config.secure,
         requireTLS: config.requireTLS,
+        family: config.family || 4, // IPv4 prioritário
         auth: {
           user: smtpUser,
           pass: smtpPass
