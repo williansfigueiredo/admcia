@@ -3707,7 +3707,7 @@ app.get('/funcionarios/:id/historico', (req, res) => {
 
   const sql = `
         /* 1. Busca se ele está na lista de EQUIPE (Tabela Nova) - EXCETO jobs com escala manual */
-        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, je.funcao, 'job' as tipo_registro, NULL as job_id
+        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, je.funcao, 'job' as tipo_registro, NULL as job_id, 0 as is_manual
         FROM jobs j
         JOIN job_equipe je ON j.id = je.job_id
         WHERE je.funcionario_id = ?
@@ -3720,7 +3720,7 @@ app.get('/funcionarios/:id/historico', (req, res) => {
         UNION ALL
 
         /* 2. Busca se ele é o OPERADOR PRINCIPAL (Tabela Antiga/Dropdown) */
-        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, 'Operador Principal' as funcao, 'job' as tipo_registro, NULL as job_id
+        SELECT j.id, j.descricao, j.data_inicio, j.data_fim, j.status, 'Operador Principal' as funcao, 'job' as tipo_registro, NULL as job_id, 0 as is_manual
         FROM jobs j
         WHERE j.operador_id = ?
 
@@ -3738,7 +3738,8 @@ app.get('/funcionarios/:id/historico', (req, res) => {
           COALESCE(j.status, 'Escala') as status, 
           e.tipo as funcao,
           'escala' as tipo_registro,
-          e.job_id as job_id
+          e.job_id as job_id,
+          COALESCE(e.is_manual, 1) as is_manual
         FROM escalas e
         LEFT JOIN jobs j ON e.job_id = j.id
         WHERE e.funcionario_id = ?

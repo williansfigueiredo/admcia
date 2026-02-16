@@ -10129,10 +10129,24 @@ function renderizarCalendarioFuncionario(listaJobs) {
     // Determina se é evento de dia inteiro
     const isAllDay = !job.hora_inicio_evento && !job.hora_fim_evento;
 
-    // Monta o título baseado no tipo de registro
-    const isEscala = job.tipo_registro === 'escala';
-    const titulo = isEscala
-      ? `📅 ${job.descricao}`
+    // Monta o título baseado no tipo de registro e campo is_manual
+    let icone = '📋'; // Padrão para jobs
+    
+    if (job.tipo_registro === 'escala') {
+      if (!job.job_id) {
+        // Escala standalone (sem job associado)
+        icone = '📅';
+      } else if (job.is_manual === 1) {
+        // Escala manual criada pelo usuário
+        icone = '✋';
+      } else {
+        // Escala automática da equipe
+        icone = '📋';
+      }
+    }
+
+    const titulo = job.tipo_registro === 'escala'
+      ? `${icone} ${job.descricao}`
       : `📋 Job #${job.id} - ${job.descricao}`;
 
     return {
