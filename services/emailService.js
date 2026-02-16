@@ -32,10 +32,16 @@ function inicializarEmail() {
   if (resendApiKey) {
     try {
       resend = new Resend(resendApiKey);
-      emailFrom = process.env.RESEND_FROM || process.env.EMAIL_FROM || 'onboarding@resend.dev';
+      
+      // Para Resend, usar apenas RESEND_FROM ou padrão
+      // NÃO usar EMAIL_FROM pois pode ser @gmail.com (não permitido)
+      emailFrom = process.env.RESEND_FROM || 'Sistema CIA <onboarding@resend.dev>';
       emailMethod = 'resend';
+      
       console.log('✅ Resend configurado com sucesso!');
       console.log(`📧 Remetente: ${emailFrom}`);
+      console.log('⚠️ Para enviar de seu domínio, configure RESEND_FROM e verifique domínio em resend.com/domains');
+      
       return true;
     } catch (error) {
       console.error('❌ Erro ao configurar Resend:', error.message);
