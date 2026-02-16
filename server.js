@@ -2945,40 +2945,58 @@ app.get('/debug/email-status', (req, res) => {
   try {
     const emailService = require('./services/emailService');
     const configurado = emailService.emailConfigurado();
+    const metodo = emailService.getEmailMethod();
     
-    // Mostra configuração atual
-    const configAtual = {
-      host: process.env.EMAIL_HOST || process.env.SMTP_HOST || 'não configurado',
-      port: process.env.EMAIL_PORT || process.env.SMTP_PORT || 'não configurado',
-      user: process.env.EMAIL_USER || process.env.SMTP_USER || 'não configurado',
-      pass: (process.env.EMAIL_PASS || process.env.SMTP_PASS) ? '***configurado***' : 'não configurado'
-    };
-
-    // Verificar se está usando porta problemática
-    const portaAtual = parseInt(configAtual.port) || 0;
-    const portaProblematica = portaAtual === 465;
+    // Configuração específica por método
+    let configAtual = {};
+    let variaveis = [];
+    
+    if (metodo === 'resend') {
+      configAtual = {
+        metodo: 'Resend API ✅',
+        api_key: process.env.RESEND_API_KEY ? '***configurado***' : 'não configurado',
+        from: process.env.RESEND_FROM || process.env.EMAIL_FROM || 'onboarding@resend.dev'
+      };
+      variaveis = [
+        'RESEND_API_KEY (obrigatório - pegue em resend.com/api-keys)',
+        'RESEND_FROM ou EMAIL_FROM (ex: Sistema CIA <onboarding@resend.dev>)'
+      ];
+    } else if (metodo === 'smtp') {
+      configAtual = {
+        metodo: 'SMTP',
+        host: process.env.EMAIL_HOST || process.env.SMTP_HOST || 'não configurado',
+        port: process.env.EMAIL_PORT || process.env.SMTP_PORT || 'não configurado',
+        user: process.env.EMAIL_USER || process.env.SMTP_USER || 'não configurado',
+        pass: (process.env.EMAIL_PASS || process.env.SMTP_PASS) ? '***configurado***' : 'não configurado'
+      };
+      variaveis = [
+        'SMTP_HOST ou EMAIL_HOST (ex: smtp.gmail.com)',
+        'SMTP_PORT ou EMAIL_PORT (recomendado: 587)',
+        'SMTP_USER ou EMAIL_USER (seu email)',
+        'SMTP_PASS ou EMAIL_PASS (senha de app)'
+      ];
+    } else {
+      configAtual = {
+        metodo: 'Nenhum configurado'
+      };
+      variaveis = [
+        'OPÇÃO 1 (Recomendada): RESEND_API_KEY',
+        'OPÇÃO 2: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS'
+      ];
+    }
     
     res.json({
       success: true,
       configurado: configurado,
-      message: configurado ? '✅ Serviço de email configurado' : '⚠️ Serviço de email não configurado',
+      metodo_ativo: metodo,
+      message: configurado 
+        ? `✅ Email configurado via ${metodo.toUpperCase()}` 
+        : '⚠️ Serviço de email não configurado',
       configuracao_atual: configAtual,
-      alerta: portaProblematica ? {
-        nivel: 'WARNING',
-        mensagem: '⚠️ ATENÇÃO: Porta 465 (SSL) causa ENETUNREACH no Railway!',
-        solucao: 'Mude EMAIL_PORT para 587 no Railway → Settings → Environment',
-        comando: 'EMAIL_PORT=587 (TLS funciona melhor que SSL em plataformas de deploy)'
-      } : null,
-      variaveis_necessarias: [
-        'EMAIL_HOST ou SMTP_HOST (ex: smtp.gmail.com)',
-        'EMAIL_PORT ou SMTP_PORT (RECOMENDADO: 587 para Railway)',
-        'EMAIL_USER ou SMTP_USER (seu email)',
-        'EMAIL_PASS ou SMTP_PASS (sua senha de app)',
-        'SMTP_FROM_NAME (nome do remetente - opcional)'
-      ],
+      variaveis_necessarias: variaveis,
       instrucao: configurado 
         ? 'Email funcionando! Use /debug/testar-email para enviar um teste'
-        : 'Configure as variáveis de ambiente no Railway primeiro'
+        : 'Configure RESEND_API_KEY (recomendado) ou SMTP no Railway'
     });
   } catch (error) {
     res.status(500).json({

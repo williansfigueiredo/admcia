@@ -462,30 +462,58 @@ router.post('/recuperar-senha', (req, res) => {
     console.log(`🔑 Código de recuperação para ${email}: ${codigo}`);
 
     // Tenta enviar email (se configurado)
+    let emailEnviado = false;
+    let emailError = null;
+    
     try {
       const emailService = require('../services/emailService');
       if (emailService.emailConfigurado()) {
-        await emailService.enviarEmailRecuperacaoSenha(
+        const resultado = await emailService.enviarEmailRecuperacaoSenha(
           funcionario.nome,
           funcionario.email,
           codigo,
           `${req.protocol}://${req.get('host')}/login`
         );
-        console.log(`📧 Email de recuperação enviado para ${email}`);
+        
+        if (resultado.success) {
+          console.log(`✅ Email de recuperação enviado para ${email}`);
+          emailEnviado = true;
+        } else {
+          console.error(`❌ Falha ao enviar email: ${resultado.error}`);
+          emailError = resultado.error;
+        }
       } else {
         console.log(`⚠️ Email não configurado. Código: ${codigo}`);
+        emailError = 'Serviço de email não configurado';
       }
-    } catch (emailError) {
-      console.error('Erro ao enviar email:', emailError);
-      // Continua mesmo se o email falhar
+    } catch (error) {
+      console.error('Erro ao enviar email:', error.message);
+      emailError = error.message;
     }
 
-    return res.json({ 
+    // Monta resposta
+    const response = { 
       success: true, 
-      message: 'Código enviado para o email',
-      // Em desenvolvimento, retorna o código (remover em produção!)
-      ...(process.env.NODE_ENV !== 'production' && { codigo_debug: codigo })
-    });
+      codigo_gerado: true,
+      email_enviado: emailEnviado
+    };
+
+    if (emailEnviado) {
+      response.message = 'Código de recuperação enviado para seu email!';
+    } else {
+      response.message = 'Código gerado, mas email não foi enviado. Entre em contato com o administrador.';
+      response.aviso = emailError || 'Serviço de email indisponível';
+      // Em caso de falha, retorna o código para o usuário não ficar bloqueado
+      response.codigo_backup = codigo;
+      console.log(`⚠️ Email falhou. Código backup retornado ao usuário: ${codigo}`);
+    }
+    
+    // Em desenvolvimento, sempre retorna o código
+    if (process.env.NODE_ENV !== 'production') {
+      response.codigo_debug = codigo;
+    }
+
+    return res.json(response);
   });
 });
 

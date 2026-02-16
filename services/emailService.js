@@ -4,151 +4,113 @@
  * ============================================
  * 
  * Configuração para envio de emails automáticos
+ * - Suporta Resend (recomendado) e SMTP (fallback)
  * - Novo acesso ao sistema
  * - Reset de senha
  * - Esqueci minha senha
  */
 
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 // ============================================
-// CONFIGURAÇÃO DO TRANSPORTER
+// CONFIGURAÇÃO DO SERVIÇO DE EMAIL
 // ============================================
 
+let resend = null;
 let transporter = null;
 let emailFrom = null;
+let emailMethod = 'none'; // 'resend', 'smtp', 'none'
 
 /**
- * Inicializa o transporter de email
+ * Inicializa o serviço de email (Resend ou SMTP)
  */
 function inicializarEmail() {
-  // Ler variáveis aqui (não no topo) para garantir que estão carregadas
-  const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587; // TLS como padrão para Railway
+  // PRIORIDADE 1: Resend (recomendado para Railway)
+  const resendApiKey = process.env.RESEND_API_KEY;
+  
+  if (resendApiKey) {
+    try {
+      resend = new Resend(resendApiKey);
+      emailFrom = process.env.RESEND_FROM || process.env.EMAIL_FROM || 'onboarding@resend.dev';
+      emailMethod = 'resend';
+      console.log('✅ Resend configurado com sucesso!');
+      console.log(`📧 Remetente: ${emailFrom}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Erro ao configurar Resend:', error.message);
+    }
+  }
+
+  // PRIORIDADE 2: SMTP (fallback)
+  const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || '';
+  const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587;
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || '';
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || '';
-  const useSecure = smtpPort === 465; // SSL para porta 465
 
-  // Configurar remetente
-  emailFrom = process.env.SMTP_FROM_NAME
-    ? `${process.env.SMTP_FROM_NAME} <${smtpUser}>`
-    : process.env.EMAIL_FROM || smtpUser;
-
-  console.log(`📧 Tentando configurar email: host=${smtpHost}, port=${smtpPort}, secure=${useSecure}, user=${smtpUser ? smtpUser.substring(0, 5) + '...' : 'NÃO DEFINIDO'}`);
-
-  if (smtpUser && smtpPass) {
-    // WORKAROUND para Railway: Força IPv4 usando Net.Socket
-    const net = require('net');
-    const dns = require('dns');
-    
-    // DNS lookup agressivo que FORÇA IPv4 e rejeita IPv6
-    const forceIPv4Lookup = (hostname, options, callback) => {
-      console.log(`🔍 [IPv4 FORÇADO] Resolvendo: ${hostname}`);
+  if (smtpUser && smtpPass && smtpHost) {
+    try {
+      const useSecure = smtpPort === 465;
       
-      // Usar apenas DNS IPv4
-      dns.setDefaultResultOrder('ipv4first');
+      transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: useSecure,
+        requireTLS: !useSecure,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass
+        },
+        connectionTimeout: 30000,
+        greetingTimeout: 30000,
+        socketTimeout: 30000
+      });
+
+      emailFrom = process.env.SMTP_FROM_NAME
+        ? `${process.env.SMTP_FROM_NAME} <${smtpUser}>`
+        : process.env.EMAIL_FROM || smtpUser;
+
+      emailMethod = 'smtp';
       
-      dns.resolve4(hostname, (err, addresses) => {
-        if (err) {
-          console.error(`❌ Erro no DNS IPv4: ${err.message}`);
-          // Fallback: tentar alguns IPs conhecidos do Gmail
-          const gmailIPs = ['142.250.80.109', '142.250.115.109', '142.251.16.109'];
-          const randomIP = gmailIPs[Math.floor(Math.random() * gmailIPs.length)];
-          console.log(`🔄 Usando IP fallback do Gmail: ${randomIP}`);
-          return callback(null, randomIP, 4);
-        }
-        
-        const ipv4 = addresses[0];
-        console.log(`✅ Resolvido para IPv4: ${ipv4}`);
-        
-        // GARANTIR que é IPv4 (não tem :)
-        if (ipv4.includes(':')) {
-          console.error(`❌ ERRO: Ainda recebeu IPv6! ${ipv4}`);
-          const gmailIPs = ['142.250.80.109'];
-          console.log(`🔄 Forçando IP hardcoded: ${gmailIPs[0]}`);
-          return callback(null, gmailIPs[0], 4);
-        }
-        
-        callback(null, ipv4, 4);
-      });
-    };
-
-    // Configuração otimizada para Railway e outras plataformas
-    const transporterConfig = {
-      host: smtpHost,
-      port: smtpPort,
-      secure: useSecure, // true para 465, false para outros
-      requireTLS: !useSecure, // força TLS para portas não-SSL
-      auth: {
-        user: smtpUser,
-        pass: smtpPass
-      },
-      // Timeouts mais longos para Railway
-      connectionTimeout: 60000, // 60 segundos
-      greetingTimeout: 30000, // 30 segundos  
-      socketTimeout: 60000, // 60 segundos
-      // Configurações adicionais para compatibilidade Railway
-      tls: {
-        // Não falha em certificados auto-assinados
-        rejectUnauthorized: false,
-        // Permite conexões menos seguras
-        ciphers: 'SSLv3',
-        // Nome do servidor para validação TLS
-        servername: smtpHost // Importante para IPs diretos
-      },
-      // FORÇA IPv4 - múltiplas estratégias
-      family: 4,
-      lookup: forceIPv4Lookup, // DNS lookup que só retorna IPv4
-      // Pool de conexões para melhor performance
-      pool: true,
-      maxConnections: 5,
-      maxMessages: 10,
-      // Configurações de debug
-      debug: process.env.NODE_ENV === 'development',
-      logger: process.env.NODE_ENV === 'development'
-    };
-
-    console.log('🔧 Configuração final:', {
-      host: transporterConfig.host,
-      port: transporterConfig.port,
-      secure: transporterConfig.secure,
-      requireTLS: transporterConfig.requireTLS,
-      user: smtpUser.substring(0, 5) + '...',
-      timeouts: '60s connection, 30s greeting, 60s socket'
-    });
-
-    transporter = nodemailer.createTransport(transporterConfig);
-    
-    // Teste de conectividade assíncrono (não bloqueia startup)
-    setTimeout(() => {
-      transporter.verify((error, success) => {
-        if (error) {
-          console.error('❌ Falha na verificação do email:', error.message);
-          console.log('💡 Dicas para resolver problemas de conectividade:');
-          console.log('   • Para Railway: Use EMAIL_PORT=587 (TLS) ao invés de 465 (SSL)');
-          console.log('   • Para Gmail: Generate App Password em myaccount.google.com');
-          console.log('   • Configuração recomendada: HOST=smtp.gmail.com, PORT=587');
-          console.log('   • Se ENETUNREACH: problema IPv6, tente outro provedor ou porta');
-        } else {
-          console.log('✅ Servidor de email verificado com sucesso! Pronto para enviar emails.');
-        }
-      });
-    }, 5000); // Aguarda 5 segundos antes de testar
-
-    console.log('✅ Transporter de email criado! (Verificação em andamento...)');
-    return true;
-  } else {
-    console.log('⚠️ Serviço de email não configurado (EMAIL_USER ou EMAIL_PASS não definidos)');
-    return false;
+      console.log(`✅ SMTP configurado como fallback`);
+      console.log(`📧 Host: ${smtpHost}:${smtpPort}, User: ${smtpUser.substring(0, 5)}...`);
+      
+      // Testar conexão SMTP
+      setTimeout(() => {
+        transporter.verify((error, success) => {
+          if (error) {
+            console.error('❌ SMTP falhou na verificação:', error.message);
+          } else {
+            console.log('✅ SMTP verificado com sucesso!');
+          }
+        });
+      }, 2000);
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Erro ao configurar SMTP:', error.message);
+    }
   }
+
+  console.log('⚠️ Nenhum serviço de email configurado');
+  console.log('💡 Configure RESEND_API_KEY (recomendado) ou SMTP_HOST/USER/PASS');
+  return false;
 }
 
 /**
  * Verifica se o serviço de email está configurado
  */
 function emailConfigurado() {
-  return transporter !== null;
+  return resend !== null || transporter !== null;
 }
+
+/**
+ * Retorna o método de email ativo
+ */
+function getEmailMethod() {
+  return emailMethod;
+}
+
 
 // ============================================
 // TEMPLATES DE EMAIL
@@ -290,14 +252,58 @@ function templateRecuperacaoSenha(nome, codigo, urlRecuperacao, minutosExpiracao
 // ============================================
 
 /**
- * Envia email genérico
+ * Envia email genérico (Resend ou SMTP)
  */
 async function enviarEmail(destinatario, assunto, htmlContent) {
-  if (!transporter) {
+  if (!emailConfigurado()) {
     console.log('⚠️ Email não enviado: serviço não configurado');
     return { success: false, error: 'Serviço de email não configurado' };
   }
 
+  console.log(`📧 Enviando email via ${emailMethod.toUpperCase()}: ${destinatario}`);
+
+  // MÉTODO 1: Resend (preferencial)
+  if (emailMethod === 'resend') {
+    try {
+      const data = await resend.emails.send({
+        from: emailFrom,
+        to: [destinatario],
+        subject: assunto,
+        html: htmlContent
+      });
+
+      console.log(`✅ Email enviado com sucesso via Resend! ID: ${data.id}`);
+      return { success: true, messageId: data.id, method: 'resend' };
+
+    } catch (error) {
+      console.error('❌ Falha ao enviar via Resend:', error.message);
+      
+      // Se tiver SMTP configurado, tentar como fallback
+      if (transporter) {
+        console.log('🔄 Tentando SMTP como fallback...');
+        return await enviarViaSMTP(destinatario, assunto, htmlContent);
+      }
+
+      return { 
+        success: false, 
+        error: error.message,
+        method: 'resend'
+      };
+    }
+  }
+
+  // MÉTODO 2: SMTP (fallback ou principal se Resend não configurado)
+  if (emailMethod === 'smtp') {
+    return await enviarViaSMTP(destinatario, assunto, htmlContent);
+  }
+
+  return { success: false, error: 'Nenhum método de email configurado' };
+}
+
+/**
+ * Envia email via SMTP (com retry)
+ */
+async function enviarViaSMTP(destinatario, assunto, htmlContent) {
   const mailOptions = {
     from: emailFrom,
     to: destinatario,
@@ -305,55 +311,49 @@ async function enviarEmail(destinatario, assunto, htmlContent) {
     html: htmlContent
   };
 
-  // Implementar retry com timeout progressivo
-  const maxAttempts = 3;
+  const maxAttempts = 2; // Reduzido para 2 tentativas
   let attempt = 1;
 
   while (attempt <= maxAttempts) {
     try {
-      console.log(`📧 Tentativa ${attempt}/${maxAttempts} - Enviando email para ${destinatario}...`);
+      console.log(`📧 [SMTP] Tentativa ${attempt}/${maxAttempts} - Enviando para ${destinatario}...`);
       
-      // Promise com timeout customizado
       const info = await Promise.race([
         transporter.sendMail(mailOptions),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error(`Timeout na tentativa ${attempt} (90s)`)), 90000)
+          setTimeout(() => reject(new Error(`Timeout na tentativa ${attempt}`)), 30000)
         )
       ]);
 
-      console.log(`✅ Email enviado com sucesso! MessageID: ${info.messageId}`);
-      return { success: true, messageId: info.messageId };
+      console.log(`✅ Email enviado com sucesso via SMTP! MessageID: ${info.messageId}`);
+      return { success: true, messageId: info.messageId, method: 'smtp' };
 
     } catch (error) {
-      console.error(`❌ Tentativa ${attempt} falhou:`, error.message);
+      console.error(`❌ [SMTP] Tentativa ${attempt} falhou:`, error.message);
       
-      // Se é problema de timeout ou conectividade, tentar novamente
       const isRetryableError = 
         error.code === 'ETIMEDOUT' || 
         error.code === 'ECONNRESET' ||
-        error.code === 'ENOTFOUND' ||
-        error.message.includes('timeout') ||
-        error.message.includes('CONN');
+        error.message.includes('timeout');
 
       if (isRetryableError && attempt < maxAttempts) {
-        const waitTime = attempt * 2000; // 2s, 4s, 6s
+        const waitTime = 2000;
         console.log(`⏳ Aguardando ${waitTime}ms antes da próxima tentativa...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
         attempt++;
         continue;
       }
 
-      // Se não é erro recuperável ou esgotou tentativas
       const errorMessage = getErrorMessage(error);
-      console.error(`💥 Falha definitiva após ${attempt} tentativa(s):`, errorMessage);
+      console.error(`💥 [SMTP] Falha definitiva:`, errorMessage);
       
       return { 
         success: false, 
         error: errorMessage,
+        method: 'smtp',
         details: {
           code: error.code,
-          attempt: attempt,
-          isRetryable: isRetryableError
+          attempt: attempt
         }
       };
     }
@@ -530,6 +530,7 @@ async function testarConfiguracaoEmail() {
 module.exports = {
   inicializarEmail,
   emailConfigurado,
+  getEmailMethod,
   enviarEmail,
   enviarEmailNovoAcesso,
   enviarEmailSenhaResetada,
