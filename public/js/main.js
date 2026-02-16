@@ -9548,13 +9548,22 @@ window.salvarNovaEscala = async function () {
       is_manual: 1  // Marca como escala manual
     };
 
+    console.log('📤 Enviando escala manual:', dados);
+
     const res = await fetch(`${API_URL}/escalas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dados)
     });
 
-    await res.json();
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('❌ Erro na resposta:', res.status, errorText);
+      throw new Error(`Erro ${res.status}: ${errorText}`);
+    }
+
+    const resultado = await res.json();
+    console.log('✅ Resposta do servidor:', resultado);
     alert("Escala salva com sucesso!");
 
     // Fecha modal

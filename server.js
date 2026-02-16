@@ -3611,6 +3611,16 @@ app.post('/escalas', (req, res) => {
       db.query(sql, values, (err, result) => {
         if (err) {
           console.error("❌ Erro ao salvar escala:", err);
+          // Erro específico se coluna não existe
+          if (err.code === 'ER_BAD_FIELD_ERROR') {
+            console.error("⚠️ ATENÇÃO: Faltam colunas na tabela 'escalas'!");
+            console.error("⚠️ Execute: https://admcia-production.up.railway.app/debug/corrigir-tabela-escalas");
+            return res.status(500).json({ 
+              error: "Estrutura da tabela 'escalas' está desatualizada. Execute a rota de debug para corrigir.",
+              detalhes: err.message,
+              solucao: "Acesse /debug/corrigir-tabela-escalas"
+            });
+          }
           return res.status(500).json({ error: err.message });
         }
         console.log("✅ Escala salva com ID:", result.insertId, "- Obs:", observacaoAuto);
@@ -3638,6 +3648,16 @@ app.post('/escalas', (req, res) => {
     db.query(sql, values, (err, result) => {
       if (err) {
         console.error("❌ Erro ao salvar escala:", err);
+        // Erro específico se coluna não existe
+        if (err.code === 'ER_BAD_FIELD_ERROR') {
+          console.error("⚠️ ATENÇÃO: Faltam colunas na tabela 'escalas'!");
+          console.error("⚠️ Execute: https://admcia-production.up.railway.app/debug/corrigir-tabela-escalas");
+          return res.status(500).json({ 
+            error: "Estrutura da tabela 'escalas' está desatualizada. Execute a rota de debug para corrigir.",
+            detalhes: err.message,
+            solucao: "Acesse /debug/corrigir-tabela-escalas"
+          });
+        }
         return res.status(500).json({ error: err.message });
       }
       console.log("✅ Escala avulsa salva com ID:", result.insertId);
