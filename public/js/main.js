@@ -11540,6 +11540,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 let financeiroCarregado = false;
 let transacoesCache = [];
+let transacoesFiltradas = [];
+let paginaAtualTransacoes = 1;
+const itensPorPaginaTransacoes = 5;
 let financeChartInstance = null;
 
 // Inicializa o módulo financeiro
@@ -11674,11 +11677,16 @@ async function carregarTransacoes() {
   const tipo = document.getElementById('finFiltroTipo')?.value || 'todos';
   const status = document.getElementById('finFiltroStatus')?.value || 'todos';
   const busca = document.getElementById('finBusca')?.value || '';
+  const categoria = document.getElementById('finFiltroCategoria')?.value || 'todos';
+  const dataInicio = document.getElementById('finFiltroDataInicio')?.value || '';
+  const dataFim = document.getElementById('finFiltroDataFim')?.value || '';
 
   const params = new URLSearchParams();
   if (tipo !== 'todos') params.append('tipo', tipo);
   if (status !== 'todos') params.append('status', status);
   if (busca) params.append('busca', busca);
+  if (dataInicio) params.append('dataInicio', dataInicio);
+  if (dataFim) params.append('dataFim', dataFim);
 
   try {
     const response = await fetch(`${API_URL}/financeiro/transacoes?${params}`);
@@ -11692,26 +11700,36 @@ async function carregarTransacoes() {
       transacoesCache = Array.isArray(data) ? data : [];
     }
     
-    console.log('💰 Transações recebidas:', transacoesCache.length);
-    renderizarTransacoes(transacoesCache);
+    // Aplica filtro de categoria localmente (client-side)
+    transacoesFiltradas = transacoesCache;
+    if (categoria !== 'todos') {
+      transacoesFiltradas = transacoesFiltradas.filter(t => t.categoria === categoria);
+    }
+    
+    console.log('💰 Transações recebidas:', transacoesCache.length, '| Filtradas:', transacoesFiltradas.length);
+    
+    // Reseta para primeira página ao aplicar novos filtros
+    paginaAtualTransacoes = 1;
+    renderizarTransacoesPaginadas();
   } catch (error) {
     console.error('❌ Erro ao carregar transações:', error);
-    renderizarTransacoes([]);
+    transacoesFiltradas = [];
+    renderizarTransacoesPaginadas();
   }
 }
 
-// Renderiza tabela de transações
-function renderizarTransacoes(transacoes) {
+// Renderiza transações com paginação
+function renderizarTransacoesPaginadas() {
   const tbody = document.getElementById('tabelaTransacoesBody');
   if (!tbody) return;
 
-  // Garante que transacoes é um array
-  if (!Array.isArray(transacoes)) {
-    console.error('❌ Transações não é array:', transacoes);
-    transacoes = [];
+  // Garante que transacoesFiltradas é um array
+  if (!Array.isArray(transacoesFiltradas)) {
+    console.error('❌ Transações filtradas não é array:', transacoesFiltradas);
+    transacoesFiltradas = [];
   }
 
-  if (!transacoes || transacoes.length === 0) {
+  if (!transacoesFiltradas || transacoesFiltradas.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" class="text-center text-muted py-4">
@@ -11719,9 +11737,15 @@ function renderizarTransacoes(transacoes) {
         </td>
       </tr>
     `;
-    document.getElementById('finContador').textContent = 'Mostrando 0 transações';
+    atualizarInfoPaginacao(0);
     return;
   }
+
+  // Calcular índices da página atual
+  const totalPaginas = Math.ceil(transacoesFiltradas.length / itensPorPaginaTransacoes);
+  const inicio = (paginaAtualTransacoes - 1) * itensPorPaginaTransacoes;
+  const fim = inicio + itensPorPaginaTransacoes;
+  const transacoesPagina = transacoesFiltradas.slice(inicio, fim);
 
   const formatarData = (d) => {
     if (!d) return '-';
@@ -11746,7 +11770,7 @@ function renderizarTransacoes(transacoes) {
   };
 
   let html = '';
-  transacoes.forEach(t => {
+  transacoesPagina.forEach(t => {
     const tipoClass = t.tipo === 'receita' ? 'text-income' : 'text-expense';
     const isJob = t.origem === 'job';
     
@@ -11790,7 +11814,79 @@ function renderizarTransacoes(transacoes) {
   });
 
   tbody.innerHTML = html;
-  document.getElementById('finContador').textContent = `Mostrando ${transacoes.length} transações`;
+  atualizarInfoPaginacao(transacoesFiltradas.length);
+}
+
+// Renderiza tabela de transações (mantido para compatibilidade)
+function renderizarTransacoes(transacoes) {
+  transacoesFiltradas = Array.isArray(transacoes) ? transacoes : [];
+  paginaAtualTransacoes = 1;
+  renderizarTransacoesPaginadas();
+}
+
+// Atualiza informações de paginação
+function atualizarInfoPaginacao(total) {
+  const totalPaginas = total > 0 ? Math.ceil(total / itensPorPaginaTransacoes) : 0;
+  const inicio = total > 0 ? (paginaAtualTransacoes - 1) * itensPorPaginaTransacoes + 1 : 0;
+  const fim = Math.min(paginaAtualTransacoes * itensPorPaginaTransacoes, total);
+  
+  // Atualiza texto contador
+  const contadorEl = document.getElementById('finContador');
+  if (contadorEl) {
+    if (total === 0) {
+      contadorEl.textContent = 'Mostrando 0 transações';
+    } else {
+      contadorEl.textContent = `Mostrando ${inicio} a ${fim} de ${total} transações`;
+    }
+  }
+  
+  // Atualiza informação de página
+  const paginaInfoEl = document.getElementById('paginaAtualInfo');
+  if (paginaInfoEl) {
+    paginaInfoEl.textContent = `Página ${totalPaginas > 0 ? paginaAtualTransacoes : 0} de ${totalPaginas}`;
+  }
+  
+  // Atualiza estado dos botões
+  const btnPrimeira = document.getElementById('btnPrimeiraPagina');
+  const btnAnterior = document.getElementById('btnPaginaAnterior');
+  const btnProxima = document.getElementById('btnProximaPagina');
+  const btnUltima = document.getElementById('btnUltimaPagina');
+  
+  const desabilitarAnterior = paginaAtualTransacoes <= 1;
+  const desabilitarProxima = paginaAtualTransacoes >= totalPaginas || totalPaginas === 0;
+  
+  if (btnPrimeira) btnPrimeira.disabled = desabilitarAnterior;
+  if (btnAnterior) btnAnterior.disabled = desabilitarAnterior;
+  if (btnProxima) btnProxima.disabled = desabilitarProxima;
+  if (btnUltima) btnUltima.disabled = desabilitarProxima;
+}
+
+// Muda página
+function mudarPagina(direcao) {
+  const totalPaginas = Math.ceil(transacoesFiltradas.length / itensPorPaginaTransacoes);
+  const novaPagina = paginaAtualTransacoes + direcao;
+  
+  if (novaPagina >= 1 && novaPagina <= totalPaginas) {
+    paginaAtualTransacoes = novaPagina;
+    renderizarTransacoesPaginadas();
+  }
+}
+
+// Vai para primeira página
+function irParaPrimeiraPagina() {
+  if (paginaAtualTransacoes !== 1) {
+    paginaAtualTransacoes = 1;
+    renderizarTransacoesPaginadas();
+  }
+}
+
+// Vai para última página
+function irParaUltimaPagina() {
+  const totalPaginas = Math.ceil(transacoesFiltradas.length / itensPorPaginaTransacoes);
+  if (paginaAtualTransacoes !== totalPaginas && totalPaginas > 0) {
+    paginaAtualTransacoes = totalPaginas;
+    renderizarTransacoesPaginadas();
+  }
 }
 
 // Filtrar transações
