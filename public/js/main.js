@@ -4241,23 +4241,30 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
 
     console.log("✅ Atualização concluída!");
 
-    // ✅ ATUALIZAÇÃO VISUAL IMEDIATA DAS PILLS (não espera recarregar)
-    // Atualiza todos os spans (pills) deste job na tabela
-    const todasPillsStatus = document.querySelectorAll(`span[onclick*="abrirMenuStatus(this, ${id}, 'status'"]`);
-    const todasPillsPagamento = document.querySelectorAll(`span[onclick*="abrirMenuStatus(this, ${id}, 'pagamento'"]`);
-    
-    if (tipo === 'status') {
-      todasPillsStatus.forEach(pill => {
-        pill.textContent = novoValor;
-        pill.className = `${getStatusPill(novoValor, true)} cursor-pointer`;
-      });
-      console.log(`✅ Pills de status atualizadas visualmente para: ${novoValor}`);
-    } else if (tipo === 'pagamento') {
-      todasPillsPagamento.forEach(pill => {
-        pill.textContent = novoValor;
-        pill.className = `${getPagamentoPill(novoValor, true)} cursor-pointer`;
-      });
-      console.log(`✅ Pills de pagamento atualizadas visualmente para: ${novoValor}`);
+    // ✅ ATUALIZAR O CACHE LOCAL PRIMEIRO (antes de recarregar)
+    // Isso garante que quando recarregarmos a tabela, os dados já estão corretos
+    if (window.todosOsJobsCache && Array.isArray(window.todosOsJobsCache)) {
+      const jobNoCache = window.todosOsJobsCache.find(j => j.id == id);
+      if (jobNoCache) {
+        if (tipo === 'status') {
+          jobNoCache.status = novoValor;
+        } else if (tipo === 'pagamento') {
+          jobNoCache.pagamento = novoValor;
+        }
+        console.log(`✅ Cache local atualizado: ${tipo} = ${novoValor}`);
+      }
+      
+      // Atualiza também jobsFiltrados se existir
+      if (window.jobsFiltrados && Array.isArray(window.jobsFiltrados)) {
+        const jobNoFiltro = window.jobsFiltrados.find(j => j.id == id);
+        if (jobNoFiltro) {
+          if (tipo === 'status') {
+            jobNoFiltro.status = novoValor;
+          } else if (tipo === 'pagamento') {
+            jobNoFiltro.pagamento = novoValor;
+          }
+        }
+      }
     }
 
     // Força atualização imediata das notificações
@@ -4267,7 +4274,7 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
       }, 300);
     }
 
-    // 🎨 RECARREGA O CALENDÁRIO PARA MOSTRAR AS CORES NOVAS
+    // 🎨 RECARREGA AS TELAS COM OS DADOS JÁ ATUALIZADOS NO CACHE
     setTimeout(() => {
       if (typeof recarregarCalendario === 'function') {
         window.recarregarCalendario();
@@ -4275,10 +4282,13 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
 
       if (typeof carregarEstoque === 'function') carregarEstoque();
       if (typeof atualizarDashboard === 'function') atualizarDashboard();
-      if (typeof carregarGestaoContratos === 'function') carregarGestaoContratos();
+      if (typeof renderizarTabelaContratos === 'function') {
+        // Renderiza a tabela com o cache atualizado (não busca do servidor)
+        renderizarTabelaContratos(window.paginaAtual || 1);
+      }
 
       alert(`✅ Pedido atualizado para: ${novoValor}`);
-    }, 500);
+    }, 200);
 
   } catch (err) {
     console.error("❌ Erro:", err);
@@ -4346,34 +4356,38 @@ async function salvarEdicao(selectElem, id, tipo, valorOriginal) {
       }
     }
 
-    // 3) ✅ ATUALIZAÇÃO VISUAL IMEDIATA DO SELECT/PILL
-    // Garante que o elemento visual mostre o novo valor ANTES de recarregar tudo
-    if (selectElem) {
-      selectElem.value = novoValor;
-      selectElem.style.pointerEvents = 'auto';
-    }
-
-    // Atualiza também as pills na tabela (caso esteja usando pills em vez de selects)
-    const todasPillsStatus = document.querySelectorAll(`span[onclick*="abrirMenuStatus(this, ${id}, 'status'"]`);
-    const todasPillsPagamento = document.querySelectorAll(`span[onclick*="abrirMenuStatus(this, ${id}, 'pagamento'"]`);
-    
-    if (tipo === 'status') {
-      todasPillsStatus.forEach(pill => {
-        pill.textContent = novoValor;
-        pill.className = `${getStatusPill(novoValor, true)} cursor-pointer`;
-      });
-      console.log(`✅ Pills de status atualizadas visualmente para: ${novoValor}`);
-    } else if (tipo === 'pagamento') {
-      todasPillsPagamento.forEach(pill => {
-        pill.textContent = novoValor;
-        pill.className = `${getPagamentoPill(novoValor, true)} cursor-pointer`;
-      });
-      console.log(`✅ Pills de pagamento atualizadas visualmente para: ${novoValor}`);
+    // 3) ✅ ATUALIZAR O CACHE LOCAL PRIMEIRO
+    // Garante que quando recarregarmos a tabela, os dados já estão corretos
+    if (window.todosOsJobsCache && Array.isArray(window.todosOsJobsCache)) {
+      const jobNoCache = window.todosOsJobsCache.find(j => j.id == id);
+      if (jobNoCache) {
+        if (tipo === 'status') {
+          jobNoCache.status = novoValor;
+        } else if (tipo === 'pagamento') {
+          jobNoCache.pagamento = novoValor;
+        }
+        console.log(`✅ Cache local atualizado: ${tipo} = ${novoValor}`);
+      }
+      
+      // Atualiza também jobsFiltrados se existir
+      if (window.jobsFiltrados && Array.isArray(window.jobsFiltrados)) {
+        const jobNoFiltro = window.jobsFiltrados.find(j => j.id == id);
+        if (jobNoFiltro) {
+          if (tipo === 'status') {
+            jobNoFiltro.status = novoValor;
+          } else if (tipo === 'pagamento') {
+            jobNoFiltro.pagamento = novoValor;
+          }
+        }
+      }
     }
 
     // 4) Atualiza telas + recarrega estoque (pra você ver na hora)
     if (typeof atualizarDashboard === 'function') atualizarDashboard();
-    if (typeof carregarGestaoContratos === 'function') carregarGestaoContratos();
+    if (typeof renderizarTabelaContratos === 'function') {
+      // Renderiza a tabela com o cache atualizado (não busca do servidor)
+      renderizarTabelaContratos(window.paginaAtual || 1);
+    }
     if (typeof carregarEstoque === 'function') carregarEstoque();
 
     // 5) Força atualização imediata das notificações
