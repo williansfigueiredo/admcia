@@ -1660,7 +1660,7 @@ app.put('/financeiro/transacoes/:id', (req, res) => {
   }
 
   // Campos adicionais se enviados
-  ['categoria', 'descricao', 'valor', 'data_vencimento', 'forma_pagamento', 'observacoes'].forEach(campo => {
+  ['tipo', 'categoria', 'descricao', 'valor', 'data_vencimento', 'forma_pagamento', 'observacoes', 'cliente_id'].forEach(campo => {
     if (outros[campo] !== undefined) {
       sql += `, ${campo} = ?`;
       params.push(outros[campo]);
