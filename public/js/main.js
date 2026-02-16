@@ -9404,7 +9404,7 @@ window.initCalendar = function () {
         modal.show();
       } else {
         // Fallback: usa alert se o modal não existir (cache antigo)
-        const mensagem = `${tipo}\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📝 Serviço: ${info.event.title}\n🎯 Status: ${status}\n👤 Operador: ${operador}\n📍 Local: ${localizacao}\n📅 Início: ${dataInicio}\n📅 Fim: ${dataFim}\n━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+        const mensagem = `${tipo}\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📝 Serviço: ${nomeServico}\n🎯 Status: ${status}\n👤 Operador: ${operador}\n📍 Local: ${localizacao}\n📅 Início: ${dataInicio}\n📅 Fim: ${dataFim}\n━━━━━━━━━━━━━━━━━━━━━━━━━━`;
         alert(mensagem);
       }
     }

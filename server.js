@@ -3255,7 +3255,15 @@ app.get('/agenda', (req, res) => {
       e.tipo as description,
       e.funcionario_id as funcionario_id,
       f.nome as funcionario_nome,
-      '' as localizacao,
+      CASE 
+        WHEN j.logradouro IS NOT NULL OR j.cidade IS NOT NULL THEN
+          CONCAT_WS(', ', 
+            NULLIF(CONCAT_WS(' ', j.logradouro, j.numero), ''),
+            NULLIF(j.bairro, ''),
+            NULLIF(j.cidade, '')
+          )
+        ELSE NULL
+      END as localizacao,
       'escala' as tipo_evento,
       e.job_id,
       COALESCE(e.is_manual, 1) as is_manual
@@ -3386,7 +3394,8 @@ app.get('/agenda', (req, res) => {
       } else {
         icone = '📅'; // Escala avulsa
       }
-      const servicoNome = e.job_descricao || e.tipo_escala || 'Escala Manual';
+      // Nome do serviço é APENAS o nome do job/evento, sem concatenar funcionário ou tipo
+      const servicoNome = e.job_descricao || 'Escala Avulsa';
       let titulo = `${icone} ${e.funcionario_nome}`;
 
       // Marca que esse funcionário tem escala vinculada a este job (para evitar duplicação)
@@ -3630,6 +3639,29 @@ app.post('/escalas', (req, res) => {
           return res.status(500).json({ error: err.message });
         }
         console.log("✅ Escala salva com ID:", result.insertId, "- Obs:", observacaoAuto);
+        
+        // Adiciona funcionário na equipe do evento com função baseada no tipo da escala
+        const funcaoEquipe = data.tipo || 'Treinamento';
+        const sqlCheckEquipe = "SELECT id FROM job_equipe WHERE job_id = ? AND funcionario_id = ?";
+        db.query(sqlCheckEquipe, [jobId, data.funcionario_id], (errCheck, existeEquipe) => {
+          if (errCheck) {
+            console.error("⚠️ Erro ao verificar equipe:", errCheck);
+            // Não falha a operação, apenas loga
+          } else if (existeEquipe.length === 0) {
+            // Adiciona na equipe com a função (tipo da escala)
+            const sqlAddEquipe = "INSERT INTO job_equipe (job_id, funcionario_id, funcao) VALUES (?, ?, ?)";
+            db.query(sqlAddEquipe, [jobId, data.funcionario_id, funcaoEquipe], (errAdd) => {
+              if (errAdd) {
+                console.error("⚠️ Erro ao adicionar na equipe:", errAdd);
+              } else {
+                console.log(`✅ Funcionário ${data.funcionario_id} adicionado na equipe do job ${jobId} com função: ${funcaoEquipe}`);
+              }
+            });
+          } else {
+            console.log(`📋 Funcionário ${data.funcionario_id} já está na equipe do job ${jobId}`);
+          }
+        });
+        
         res.json({ message: "Escala salva com sucesso!", id: result.insertId });
       });
     });
