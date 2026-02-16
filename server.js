@@ -2131,6 +2131,80 @@ app.get('/debug/criar-tabela-transacoes', (req, res) => {
 
 
 // =============================================================
+// ROTA DE EMERGÊNCIA: CRIAR TABELAS DE NOTIFICAÇÕES
+// =============================================================
+app.get('/debug/criar-tabelas-notificacoes', (req, res) => {
+  console.log("🔧 Criando tabelas de notificações...");
+
+  const tabelasNotificacao = [
+    // Tabela principal de notificações
+    `CREATE TABLE IF NOT EXISTS notificacoes (
+      id INT(11) AUTO_INCREMENT PRIMARY KEY,
+      tipo ENUM('sucesso', 'erro', 'alerta', 'info') NOT NULL DEFAULT 'info',
+      titulo VARCHAR(255) NOT NULL,
+      texto TEXT,
+      job_id INT(11),
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_criado_em (criado_em)
+    )`,
+    
+    // Tabela de controle de leitura
+    `CREATE TABLE IF NOT EXISTS notificacoes_lidas (
+      id INT(11) AUTO_INCREMENT PRIMARY KEY,
+      notificacao_id INT(11) NOT NULL,
+      funcionario_id INT(11) NOT NULL,
+      lido_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_notif_func (notificacao_id, funcionario_id),
+      FOREIGN KEY (notificacao_id) REFERENCES notificacoes(id) ON DELETE CASCADE
+    )`
+  ];
+
+  let executadas = 0;
+  const resultados = [];
+
+  tabelasNotificacao.forEach((sql, index) => {
+    const nomeTabela = index === 0 ? 'notificacoes' : 'notificacoes_lidas';
+    
+    db.query(sql, (err) => {
+      executadas++;
+      
+      if (err) {
+        console.error(`❌ Erro ao criar tabela ${nomeTabela}:`, err);
+        resultados.push({
+          tabela: nomeTabela,
+          success: false,
+          error: err.message
+        });
+      } else {
+        console.log(`✅ Tabela ${nomeTabela} criada com sucesso!`);
+        resultados.push({
+          tabela: nomeTabela,
+          success: true,
+          message: 'Criada com sucesso!'
+        });
+      }
+
+      // Quando todas as tabelas forem processadas
+      if (executadas === tabelasNotificacao.length) {
+        const sucesso = resultados.every(r => r.success);
+        
+        res.json({
+          success: sucesso,
+          message: sucesso 
+            ? "✅ Todas as tabelas de notificações foram criadas com sucesso!"
+            : "⚠️ Algumas tabelas tiveram problemas na criação",
+          detalhes: resultados,
+          instrucao: sucesso 
+            ? "Agora o sistema de notificações está funcionando! 🎉" 
+            : "Verifique os erros acima"
+        });
+      }
+    });
+  });
+});
+
+
+// =============================================================
 // ROTA DE EMERGÊNCIA: CORRIGIR TABELA ESCALAS
 // =============================================================
 app.get('/debug/corrigir-tabela-escalas', (req, res) => {
