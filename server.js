@@ -2946,13 +2946,32 @@ app.get('/debug/email-status', (req, res) => {
     const emailService = require('./services/emailService');
     const configurado = emailService.emailConfigurado();
     
+    // Mostra configuração atual
+    const configAtual = {
+      host: process.env.EMAIL_HOST || process.env.SMTP_HOST || 'não configurado',
+      port: process.env.EMAIL_PORT || process.env.SMTP_PORT || 'não configurado',
+      user: process.env.EMAIL_USER || process.env.SMTP_USER || 'não configurado',
+      pass: (process.env.EMAIL_PASS || process.env.SMTP_PASS) ? '***configurado***' : 'não configurado'
+    };
+
+    // Verificar se está usando porta problemática
+    const portaAtual = parseInt(configAtual.port) || 0;
+    const portaProblematica = portaAtual === 465;
+    
     res.json({
       success: true,
       configurado: configurado,
       message: configurado ? '✅ Serviço de email configurado' : '⚠️ Serviço de email não configurado',
+      configuracao_atual: configAtual,
+      alerta: portaProblematica ? {
+        nivel: 'WARNING',
+        mensagem: '⚠️ ATENÇÃO: Porta 465 (SSL) causa ENETUNREACH no Railway!',
+        solucao: 'Mude EMAIL_PORT para 587 no Railway → Settings → Environment',
+        comando: 'EMAIL_PORT=587 (TLS funciona melhor que SSL em plataformas de deploy)'
+      } : null,
       variaveis_necessarias: [
         'EMAIL_HOST ou SMTP_HOST (ex: smtp.gmail.com)',
-        'EMAIL_PORT ou SMTP_PORT (ex: 587 ou 465)',
+        'EMAIL_PORT ou SMTP_PORT (RECOMENDADO: 587 para Railway)',
         'EMAIL_USER ou SMTP_USER (seu email)',
         'EMAIL_PASS ou SMTP_PASS (sua senha de app)',
         'SMTP_FROM_NAME (nome do remetente - opcional)'
