@@ -3249,8 +3249,8 @@ app.get('/agenda', (req, res) => {
       j.hora_chegada_prevista as job_hora_chegada,
       j.hora_fim_evento as job_hora_fim,
       e.tipo as description,
-      f.id as operador_id,
-      f.nome as operador_nome,
+      e.funcionario_id as funcionario_id,
+      f.nome as funcionario_nome,
       '' as localizacao,
       'escala' as tipo_evento,
       e.job_id,
@@ -3387,13 +3387,14 @@ app.get('/agenda', (req, res) => {
       // Marca que esse funcionário tem escala vinculada a este job (para evitar duplicação)
       // Marca TODAS as escalas com job_id para evitar que apareça duplicado do sqlJobs
       if (e.job_id) {
-        escalasComJob.add(`${e.operador_id}-${e.job_id}`);
+        // Usa funcionario_id que é o FK da escala, não operador_id
+        escalasComJob.add(`${e.funcionario_id}-${e.job_id}`);
       }
 
       if (e.job_descricao) {
         titulo += ` - ${e.job_descricao}`;
       }
-      titulo += ` - ${e.tipo_escala}`;
+      // NÃO adiciona tipo_escala (removia "Trabalho")
 
       // Define cor: se tem job vinculado, usa cor do status do job; senão, azul padrão
       let cor = '#3b82f6'; // azul padrão para escalas avulsas
@@ -3416,8 +3417,8 @@ app.get('/agenda', (req, res) => {
           end: `${dataStr} ${horaFim}`,
           title: titulo,
           description: e.job_status || e.description,
-          operador_id: e.operador_id,
-          operador_nome: e.operador_nome,
+          operador_id: e.funcionario_id,  // Usa funcionario_id da escala
+          operador_nome: e.funcionario_nome,
           localizacao: e.localizacao,
           backgroundColor: cor,
           borderColor: cor,
