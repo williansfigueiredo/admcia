@@ -3921,7 +3921,7 @@ app.get('/funcionarios/:id/historico', (req, res) => {
           NULL as job_id, 
           0 as is_manual,
           f.nome as operador_nome,
-          CONCAT_WS(', ', NULLIF(j.rua, ''), NULLIF(j.cidade, ''), NULLIF(j.estado, '')) as localizacao
+          CONCAT_WS(', ', NULLIF(j.logradouro, ''), NULLIF(j.cidade, ''), NULLIF(j.uf, '')) as localizacao
         FROM jobs j
         JOIN job_equipe je ON j.id = je.job_id
         LEFT JOIN funcionarios f ON j.operador_id = f.id
@@ -3946,7 +3946,7 @@ app.get('/funcionarios/:id/historico', (req, res) => {
           NULL as job_id, 
           0 as is_manual,
           f.nome as operador_nome,
-          CONCAT_WS(', ', NULLIF(j.rua, ''), NULLIF(j.cidade, ''), NULLIF(j.estado, '')) as localizacao
+          CONCAT_WS(', ', NULLIF(j.logradouro, ''), NULLIF(j.cidade, ''), NULLIF(j.uf, '')) as localizacao
         FROM jobs j
         LEFT JOIN funcionarios f ON j.operador_id = f.id
         WHERE j.operador_id = ?
@@ -3965,7 +3965,7 @@ app.get('/funcionarios/:id/historico', (req, res) => {
           e.job_id as job_id,
           COALESCE(e.is_manual, 1) as is_manual,
           f.nome as operador_nome,
-          CONCAT_WS(', ', NULLIF(j.rua, ''), NULLIF(j.cidade, ''), NULLIF(j.estado, '')) as localizacao
+          CONCAT_WS(', ', NULLIF(j.logradouro, ''), NULLIF(j.cidade, ''), NULLIF(j.uf, '')) as localizacao
         FROM escalas e
         LEFT JOIN jobs j ON e.job_id = j.id
         LEFT JOIN funcionarios f ON j.operador_id = f.id
