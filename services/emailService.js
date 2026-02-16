@@ -157,8 +157,14 @@ function templateBase(conteudo, titulo) {
       ${conteudo}
     </div>
     <div class="footer">
-      <p>Este é um email automático. Por favor, não responda.</p>
-      <p>© ${new Date().getFullYear()} - Sistema de Gestão TP</p>
+      <p><strong>Sistema CIA - Gestão Empresarial</strong></p>
+      <p>Este é um email transacional automático do seu sistema.</p>
+      <p style="margin-top: 15px; color: #999;">
+        Se você não solicitou esta ação, pode ignorar este email com segurança.
+      </p>
+      <p style="margin-top: 10px;">
+        © ${new Date().getFullYear()} Sistema CIA. Todos os direitos reservados.
+      </p>
     </div>
   </div>
 </body>
