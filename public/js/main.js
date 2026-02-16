@@ -832,7 +832,7 @@ async function handleAvatarUpload(event) {
   }
 
   // Faz upload para o servidor
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   if (!token) {
     alert('Sessão expirada. Faça login novamente.');
     return;
@@ -909,7 +909,7 @@ async function handleLogout() {
   if (confirm('Tem certeza que deseja sair do sistema?')) {
     try {
       // Chama endpoint de logout
-      const token = localStorage.getItem('auth_token');
+      const token = sessionStorage.getItem('auth_token');
       await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
         headers: {
@@ -922,8 +922,8 @@ async function handleLogout() {
     }
 
     // Limpa dados locais
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('usuario');
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('usuario');
 
     console.log('🚪 Logout realizado');
 
@@ -940,7 +940,7 @@ async function loadUserProfileData() {
   let userData = null;
 
   // Tenta buscar dados atualizados do servidor
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   if (token) {
     try {
       const response = await fetch(`${API_URL}/api/auth/me`, {
@@ -965,12 +965,12 @@ async function loadUserProfileData() {
             avatar_base64_inicio: userData.avatar_base64 ? userData.avatar_base64.substring(0, 30) + '...' : 'NULO'
           });
 
-          localStorage.setItem('usuario', JSON.stringify(userData));
+          sessionStorage.setItem('usuario', JSON.stringify(userData));
         }
       } else if (response.status === 401) {
         // Token expirado - redireciona para login
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('usuario');
+        sessionStorage.removeItem('auth_token');
+        sessionStorage.removeItem('usuario');
         window.location.href = '/login';
         return;
       }
@@ -1097,6 +1097,148 @@ console.log('🔥 MAIN.JS VERSÃO 2.0 CARREGADO - COM PAGINAÇÃO FUNCIONÁRIOS'
 const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
+
+console.log('🌐 API_URL:', API_URL);
+
+/* =============================================================
+   SISTEMA DE AUTENTICAÇÃO E GESTÃO DE SESSÃO
+   ============================================================= */
+
+// Verifica autenticação ao carregar a página
+async function verificarAutenticacaoInicial() {
+  const token = sessionStorage.getItem('auth_token');
+  
+  if (!token) {
+    console.log('⚠️ Sem token - redirecionando para login');
+    window.location.href = '/login';
+    return false;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/auth/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Cache-Control': 'no-cache'
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error('Token inválido');
+    }
+
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error('Autenticação falhou');
+    }
+
+    console.log('✅ Autenticação válida');
+    return true;
+
+  } catch (error) {
+    console.error('❌ Erro de autenticação:', error.message);
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('usuario');
+    window.location.href = '/login';
+    return false;
+  }
+}
+
+// Monitora status de conexão (online/offline)
+function iniciarMonitoramentoConexao() {
+  let estaOffline = false;
+
+  // Detecta quando fica offline
+  window.addEventListener('offline', () => {
+    console.log('🔴 Conexão perdida');
+    estaOffline = true;
+  });
+
+  // Detecta quando volta online e verifica autenticação
+  window.addEventListener('online', async () => {
+    console.log('🟢 Conexão restaurada - verificando autenticação...');
+    
+    if (estaOffline) {
+      const token = sessionStorage.getItem('auth_token');
+      
+      if (!token) {
+        console.log('⚠️ Sem token após reconexão - redirecionando para login');
+        window.location.href = '/login';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache'
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok || !(await response.json()).success) {
+          throw new Error('Token inválido após reconexão');
+        }
+
+        console.log('✅ Token válido após reconexão');
+        estaOffline = false;
+        
+        // Recarrega a página para atualizar dados
+        window.location.reload();
+
+      } catch (error) {
+        console.error('❌ Sessão expirada após reconexão:', error.message);
+        sessionStorage.removeItem('auth_token');
+        sessionStorage.removeItem('usuario');
+        alert('Sua sessão expirou. Por favor, faça login novamente.');
+        window.location.href = '/login';
+      }
+    }
+  });
+
+  // Verificação periódica de token (a cada 5 minutos)
+  setInterval(async () => {
+    const token = sessionStorage.getItem('auth_token');
+    
+    if (token && navigator.onLine) {
+      try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache'
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Token expirado');
+        }
+
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error('Sessão inválida');
+        }
+
+      } catch (error) {
+        console.error('❌ Sessão expirada:', error.message);
+        sessionStorage.removeItem('auth_token');
+        sessionStorage.removeItem('usuario');
+        alert('Sua sessão expirou. Por favor, faça login novamente.');
+        window.location.href = '/login';
+      }
+    }
+  }, 5 * 60 * 1000); // 5 minutos
+
+  console.log('🔒 Monitoramento de sessão ativado');
+}
+
+// Inicializa verificações de segurança
+(async function inicializarSeguranca() {
+  const autenticado = await verificarAutenticacaoInicial();
+  if (autenticado) {
+    iniciarMonitoramentoConexao();
+  }
+})();
 
 console.log('🌐 API_URL configurada:', API_URL);
 

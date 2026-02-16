@@ -17,7 +17,7 @@ let usuarioLogado = null;
  * Carrega dados do usuário logado ao abrir Configurações
  */
 async function carregarDadosPerfil() {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   
   if (!token) {
     console.log('⚠️ Usuário não autenticado');
@@ -56,8 +56,8 @@ async function carregarDadosPerfil() {
         avatar_base64_preview: data.usuario.avatar_base64 ? data.usuario.avatar_base64.substring(0, 50) + '...' : 'NULO'
       });
       
-      // Atualiza localStorage com dados frescos
-      localStorage.setItem('usuario', JSON.stringify(data.usuario));
+      // Atualiza sessionStorage com dados frescos
+      sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
       
       preencherFormularioPerfil(usuarioLogado);
       controlarAbaSeguranca(usuarioLogado.is_master);
@@ -197,7 +197,7 @@ function controlarAbaSeguranca(isMaster) {
  * Salva alterações do perfil
  */
 async function salvarPerfil() {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   
   if (!token) {
     alert('Sessão expirada. Faça login novamente.');
@@ -252,7 +252,7 @@ async function salvarPerfil() {
       
       // Atualiza dados locais
       usuarioLogado = { ...usuarioLogado, ...dados };
-      localStorage.setItem('usuario', JSON.stringify(usuarioLogado));
+      sessionStorage.setItem('usuario', JSON.stringify(usuarioLogado));
       
       // Atualiza header
       if (typeof loadUserProfileData === 'function') {
@@ -271,7 +271,7 @@ async function salvarPerfil() {
  * Upload de avatar
  */
 async function uploadAvatar(file) {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   
   if (!token) {
     alert('Sessão expirada. Faça login novamente.');
@@ -321,7 +321,7 @@ async function uploadAvatar(file) {
       
       // Atualiza usuário local
       usuarioLogado.avatar = result.avatar;
-      localStorage.setItem('usuario', JSON.stringify(usuarioLogado));
+      sessionStorage.setItem('usuario', JSON.stringify(usuarioLogado));
       
       // Atualiza header
       if (typeof loadUserProfileData === 'function') {
@@ -340,7 +340,7 @@ async function uploadAvatar(file) {
  * Remove avatar
  */
 async function removerAvatar() {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   
   if (!confirm('Tem certeza que deseja remover sua foto?')) return;
 
@@ -367,7 +367,7 @@ async function removerAvatar() {
       
       // Atualiza usuário local
       usuarioLogado.avatar = null;
-      localStorage.setItem('usuario', JSON.stringify(usuarioLogado));
+      sessionStorage.setItem('usuario', JSON.stringify(usuarioLogado));
       
       // Atualiza header
       if (typeof loadUserProfileData === 'function') {
@@ -386,7 +386,7 @@ async function removerAvatar() {
  * Altera a própria senha
  */
 async function alterarSenha() {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   
   const senhaAtual = document.getElementById('configSenhaAtual')?.value;
   const novaSenha = document.getElementById('configNovaSenha')?.value;
@@ -427,7 +427,7 @@ async function alterarSenha() {
       document.getElementById('configConfirmarSenha').value = '';
       
       // Faz logout completo - limpa TODOS os dados de sessão local
-      localStorage.clear();
+      sessionStorage.clear();
       sessionStorage.clear();
       
       alert('✅ Senha alterada com sucesso! Você será redirecionado para fazer login novamente.');
@@ -451,7 +451,7 @@ async function alterarSenha() {
  * Carrega lista de funcionários para gerenciamento de acesso
  */
 async function carregarFuncionariosParaAcesso() {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   const container = document.getElementById('listaControleAcessoMaster');
   
   if (!container) return;
@@ -600,7 +600,7 @@ function renderizarTabelaAcesso(funcionarios) {
  * Ativa/desativa acesso de um funcionário
  */
 async function toggleAcesso(id, ativar) {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   
   try {
     const response = await fetch(`${CONFIG_API_URL}/api/funcionarios/${id}/acesso`, {
@@ -630,7 +630,7 @@ async function toggleAcesso(id, ativar) {
  * Promove/rebaixa Master
  */
 async function toggleMaster(id, promover, nome) {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   
   const acao = promover ? 'promover a Administrador' : 'remover permissão de Administrador';
   if (!confirm(`Tem certeza que deseja ${acao} o funcionário ${nome}?`)) return;
@@ -686,7 +686,7 @@ function abrirModalDefinirSenha(id, nome) {
  * Define senha para um funcionário
  */
 async function definirSenhaFuncionario(id, senha) {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   
   try {
     const response = await fetch(`${CONFIG_API_URL}/api/funcionarios/${id}/definir-senha`, {
@@ -717,7 +717,7 @@ async function definirSenhaFuncionario(id, senha) {
  * Reseta senha de um funcionário
  */
 async function resetarSenha(id, nome) {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   
   if (!confirm(`Resetar senha de ${nome}?\n\nUma senha temporária será gerada.`)) return;
   
@@ -817,3 +817,4 @@ window.toggleMaster = toggleMaster;
 window.abrirModalDefinirSenha = abrirModalDefinirSenha;
 window.definirSenhaFuncionario = definirSenhaFuncionario;
 window.resetarSenha = resetarSenha;
+

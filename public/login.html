@@ -607,10 +607,10 @@
           throw new Error(data.error || 'Erro ao fazer login');
         }
 
-        // Salva token no localStorage como backup
+        // Salva token no sessionStorage (limpa ao fechar navegador)
         if (data.token) {
-          localStorage.setItem('auth_token', data.token);
-          localStorage.setItem('usuario', JSON.stringify(data.usuario));
+          sessionStorage.setItem('auth_token', data.token);
+          sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
         }
 
         // Redireciona para o dashboard
@@ -642,7 +642,7 @@
      * Verifica se já está logado
      */
     async function checkExistingAuth() {
-      const token = localStorage.getItem('auth_token');
+      const token = sessionStorage.getItem('auth_token');
       
       if (token) {
         try {
@@ -663,8 +663,8 @@
           }
         } catch (error) {
           // Token inválido, limpa
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('usuario');
+          sessionStorage.removeItem('auth_token');
+          sessionStorage.removeItem('usuario');
         }
       }
     }
