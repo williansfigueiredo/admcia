@@ -292,7 +292,7 @@ async function renderizarNotificacoes() {
     const tempo = formatarTempoNotificacao(new Date(notif.criado_em));
 
     html += `
-      <div class="notificacao-item ${notif.lida ? '' : 'nao-lida'}" onclick="marcarComoLida(${notif.id})">
+      <div class="notificacao-item ${notif.lida ? '' : 'nao-lida'}" data-notif-id="${notif.id}" onclick="marcarComoLida(${notif.id}, event)">
         <div class="notificacao-icon tipo-${notif.tipo}">
           <i class="bi ${icone}"></i>
         </div>
@@ -369,15 +369,41 @@ function fecharNotificacoesAoClicarFora(event) {
   }
 }
 
-// Marca notificação como lida
-async function marcarComoLida(id) {
+// Marca notificação como lida com feedback visual instantâneo
+async function marcarComoLida(id, event) {
   const funcionarioId = obterFuncionarioId();
   if (!funcionarioId) return;
 
-  try {
-    console.log(`✓ Marcando notificação ${notificacaoId} como lida...`);
+  // Prevenir propagação do evento
+  if (event) event.stopPropagation();
+
+  // 1. FEEDBACK VISUAL IMEDIATO
+  const notifElement = document.querySelector(`[data-notif-id="${id}"]`);
+  if (notifElement) {
+    // Remove destaque de não lida
+    notifElement.classList.remove('nao-lida');
+    // Adiciona classe para animação de fade-out
+    notifElement.classList.add('marcando-lida');
+  }
+
+  // 2. ATUALIZAR BADGE IMEDIATAMENTE (decrementar)
+  const badge = document.getElementById('badgeNotificacoes');
+  if (badge) {
+    const numAtual = parseInt(badge.textContent) || 0;
+    const novoNum = Math.max(0, numAtual - 1);
     
-    const response = await fetch(`${window.API_URL}/notificacoes/${notificacaoId}/lida`, {
+    if (novoNum > 0) {
+      badge.textContent = novoNum > 99 ? '99+' : novoNum;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // 3. CHAMAR API EM BACKGROUND
+  try {
+    console.log(`✓ Marcando notificação ${id} como lida...`);
+    
+    const response = await fetch(`${window.API_URL}/notificacoes/${id}/lida`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -390,13 +416,47 @@ async function marcarComoLida(id) {
       throw new Error(`Erro ${response.status}`);
     }
 
-    console.log(`✅ Notificação ${notificacaoId} marcada como lida`);
+    console.log(`✅ Notificação ${id} marcada como lida`);
 
-    // Atualiza a interface
-    await renderizarNotificacoes();
-    atualizarBadgeNotificacoes();
+    // 4. REMOVER DA LISTA COM ANIMAÇÃO (após 300ms)
+    setTimeout(() => {
+      if (notifElement) {
+        notifElement.style.maxHeight = notifElement.offsetHeight + 'px';
+        setTimeout(() => {
+          notifElement.style.maxHeight = '0';
+          notifElement.style.padding = '0 16px';
+          notifElement.style.opacity = '0';
+        }, 10);
+        
+        // Remove do DOM após animação
+        setTimeout(() => {
+          notifElement.remove();
+          
+          // Se não houver mais notificações, mostrar mensagem de vazio
+          const lista = document.getElementById('listaNotificacoes');
+          if (lista && lista.children.length === 0) {
+            lista.innerHTML = `
+              <div class="text-center text-muted py-4">
+                <i class="bi bi-bell-slash fs-3"></i>
+                <p class="mb-0 mt-2 small">Nenhuma notificação</p>
+              </div>
+            `;
+          }
+        }, 300);
+      }
+    }, 300);
+    
   } catch (error) {
     console.error('❌ Erro ao marcar notificação como lida:', error);
+    
+    // Reverter mudanças visuais em caso de erro
+    if (notifElement) {
+      notifElement.classList.add('nao-lida');
+      notifElement.classList.remove('marcando-lida');
+    }
+    
+    // Re-atualizar o badge corretamente
+    atualizarBadgeNotificacoes();
   }
 }
 

@@ -8683,6 +8683,14 @@ button:hover #iconTheme {
   background-color: #eff6ff;
 }
 
+.notificacao-item.marcando-lida {
+  background-color: #f8fafc;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  max-height: 200px;
+  overflow: hidden;
+}
+
 .notificacao-icon {
   flex-shrink: 0;
   width: 36px;
@@ -8761,6 +8769,11 @@ button:hover #iconTheme {
 
 [data-bs-theme="dark"] .notificacao-item.nao-lida {
   background-color: #1e3a5f;
+}
+
+[data-bs-theme="dark"] .notificacao-item.marcando-lida {
+  background-color: #2d3748;
+  opacity: 0.7;
 }
 
 [data-bs-theme="dark"] .notificacao-titulo {
