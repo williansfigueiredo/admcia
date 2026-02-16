@@ -18,7 +18,7 @@ let usuarioLogado = null;
  */
 async function carregarDadosPerfil() {
   const token = sessionStorage.getItem('auth_token');
-  
+
   if (!token) {
     console.log('⚠️ Usuário não autenticado');
     return;
@@ -44,10 +44,10 @@ async function carregarDadosPerfil() {
     }
 
     const data = await response.json();
-    
+
     if (data.success && data.usuario) {
       usuarioLogado = data.usuario;
-      
+
       // 🐛 DEBUG: Mostra o que chegou do servidor
       console.log('📥 Dados recebidos do servidor:', {
         nome: data.usuario.nome,
@@ -55,13 +55,13 @@ async function carregarDadosPerfil() {
         temAvatarBase64: !!data.usuario.avatar_base64,
         avatar_base64_preview: data.usuario.avatar_base64 ? data.usuario.avatar_base64.substring(0, 50) + '...' : 'NULO'
       });
-      
+
       // Atualiza sessionStorage com dados frescos
       sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
-      
+
       preencherFormularioPerfil(usuarioLogado);
       controlarAbaSeguranca(usuarioLogado.is_master);
-      
+
       console.log('✅ Perfil carregado:', usuarioLogado.nome);
     }
   } catch (error) {
@@ -74,13 +74,13 @@ async function carregarDadosPerfil() {
  */
 function preencherFormularioPerfil(usuario) {
   console.log('📝 Preenchendo formulário com:', usuario);
-  
+
   // Avatar
   const avatarPreview = document.getElementById('configAvatarPreview');
   if (avatarPreview) {
     // Prioriza avatar_base64 (persiste no Railway) sobre avatar (arquivo local)
     let avatarUrl = null;
-    
+
     if (usuario.avatar_base64) {
       avatarUrl = usuario.avatar_base64; // Já é uma data URL completa
       console.log('🖼️ Usando avatar_base64 (Railway)');
@@ -96,7 +96,7 @@ function preencherFormularioPerfil(usuario) {
     } else {
       console.log('⚠️ Nenhum avatar encontrado!');
     }
-    
+
     if (avatarUrl) {
       avatarPreview.innerHTML = `<img src="${avatarUrl}" alt="" class="config-avatar-img" style="width:100%;height:100%;object-fit:cover;border-radius:12px;" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=config-avatar-initials>${usuario.nome ? usuario.nome.charAt(0).toUpperCase() : '?'}</div>';">`;
     } else {
@@ -108,20 +108,20 @@ function preencherFormularioPerfil(usuario) {
   // Função auxiliar para formatar data
   const formatarData = (dataISO) => {
     if (!dataISO) return '';
-    
+
     // Ignora datas inválidas comuns
     if (dataISO === '0000-00-00' || dataISO.startsWith('1901-') || dataISO.startsWith('1900-')) {
       return '';
     }
-    
+
     const data = new Date(dataISO);
     // Verifica se é uma data válida
     if (isNaN(data.getTime())) return '';
-    
+
     const ano = data.getFullYear();
     // Ignora anos muito antigos (provavelmente dados inválidos)
     if (ano < 1950) return '';
-    
+
     const mes = String(data.getMonth() + 1).padStart(2, '0');
     const dia = String(data.getDate()).padStart(2, '0');
     return `${ano}-${mes}-${dia}`;
@@ -176,13 +176,13 @@ function preencherFormularioPerfil(usuario) {
 function controlarAbaSeguranca(isMaster) {
   // Seção de gerenciamento de acesso (dentro da tab-seguranca)
   const secaoGerenciamento = document.getElementById('secaoGerenciamentoAcesso');
-  
+
   if (isMaster) {
     // Mostra seção de gerenciamento para Master
     if (secaoGerenciamento) {
       secaoGerenciamento.style.display = '';
     }
-    
+
     // Carrega lista de funcionários para gerenciamento
     carregarFuncionariosParaAcesso();
   } else {
@@ -198,7 +198,7 @@ function controlarAbaSeguranca(isMaster) {
  */
 async function salvarPerfil() {
   const token = sessionStorage.getItem('auth_token');
-  
+
   if (!token) {
     alert('Sessão expirada. Faça login novamente.');
     window.location.href = '/login';
@@ -249,11 +249,11 @@ async function salvarPerfil() {
 
     if (response.ok && result.success) {
       alert('✅ Perfil atualizado com sucesso!');
-      
+
       // Atualiza dados locais
       usuarioLogado = { ...usuarioLogado, ...dados };
       sessionStorage.setItem('usuario', JSON.stringify(usuarioLogado));
-      
+
       // Atualiza header
       if (typeof loadUserProfileData === 'function') {
         loadUserProfileData();
@@ -272,7 +272,7 @@ async function salvarPerfil() {
  */
 async function uploadAvatar(file) {
   const token = sessionStorage.getItem('auth_token');
-  
+
   if (!token) {
     alert('Sessão expirada. Faça login novamente.');
     return;
@@ -310,7 +310,7 @@ async function uploadAvatar(file) {
 
     if (response.ok && result.success) {
       alert('✅ Foto atualizada!');
-      
+
       // Atualiza preview com caminho completo
       const avatarPreview = document.getElementById('configAvatarPreview');
       if (avatarPreview && result.avatar) {
@@ -318,11 +318,11 @@ async function uploadAvatar(file) {
         const avatarUrl = result.avatar.startsWith('/') ? result.avatar : `/uploads/avatars/${result.avatar}`;
         avatarPreview.innerHTML = `<img src="${avatarUrl}?t=${Date.now()}" alt="Avatar" class="config-avatar-img">`;
       }
-      
+
       // Atualiza usuário local
       usuarioLogado.avatar = result.avatar;
       sessionStorage.setItem('usuario', JSON.stringify(usuarioLogado));
-      
+
       // Atualiza header
       if (typeof loadUserProfileData === 'function') {
         loadUserProfileData();
@@ -341,7 +341,7 @@ async function uploadAvatar(file) {
  */
 async function removerAvatar() {
   const token = sessionStorage.getItem('auth_token');
-  
+
   if (!confirm('Tem certeza que deseja remover sua foto?')) return;
 
   try {
@@ -357,18 +357,18 @@ async function removerAvatar() {
 
     if (response.ok && result.success) {
       alert('✅ Foto removida!');
-      
+
       // Atualiza preview com iniciais
       const avatarPreview = document.getElementById('configAvatarPreview');
       const iniciais = usuarioLogado?.nome?.charAt(0)?.toUpperCase() || '?';
       if (avatarPreview) {
         avatarPreview.innerHTML = `<div class="config-avatar-initials">${iniciais}</div>`;
       }
-      
+
       // Atualiza usuário local
       usuarioLogado.avatar = null;
       sessionStorage.setItem('usuario', JSON.stringify(usuarioLogado));
-      
+
       // Atualiza header
       if (typeof loadUserProfileData === 'function') {
         loadUserProfileData();
@@ -387,7 +387,7 @@ async function removerAvatar() {
  */
 async function alterarSenha() {
   const token = sessionStorage.getItem('auth_token');
-  
+
   const senhaAtual = document.getElementById('configSenhaAtual')?.value;
   const novaSenha = document.getElementById('configNovaSenha')?.value;
   const confirmarSenha = document.getElementById('configConfirmarSenha')?.value;
@@ -425,13 +425,13 @@ async function alterarSenha() {
       document.getElementById('configSenhaAtual').value = '';
       document.getElementById('configNovaSenha').value = '';
       document.getElementById('configConfirmarSenha').value = '';
-      
+
       // Faz logout completo - limpa TODOS os dados de sessão local
       sessionStorage.clear();
       sessionStorage.clear();
-      
+
       alert('✅ Senha alterada com sucesso! Você será redirecionado para fazer login novamente.');
-      
+
       // Redireciona para a rota de logout do servidor (que limpa o cookie e redireciona para login)
       window.location.href = '/auth/logout';
     } else {
@@ -453,7 +453,7 @@ async function alterarSenha() {
 async function carregarFuncionariosParaAcesso() {
   const token = sessionStorage.getItem('auth_token');
   const container = document.getElementById('listaControleAcessoMaster');
-  
+
   if (!container) return;
 
   try {
@@ -479,7 +479,7 @@ async function carregarFuncionariosParaAcesso() {
     }
 
     const data = await response.json();
-    
+
     if (data.success && data.funcionarios) {
       renderizarTabelaAcesso(data.funcionarios);
     }
@@ -527,24 +527,24 @@ function renderizarTabelaAcesso(funcionarios) {
     }
 
     // Master badge
-    const masterBadge = f.is_master 
-      ? '<span class="badge bg-purple ms-1" title="Administrador"><i class="bi bi-star-fill"></i></span>' 
+    const masterBadge = f.is_master
+      ? '<span class="badge bg-purple ms-1" title="Administrador"><i class="bi bi-star-fill"></i></span>'
       : '';
 
     // Avatar - lidar com caminho completo ou só nome
-    const avatarSrc = f.avatar 
+    const avatarSrc = f.avatar
       ? (f.avatar.startsWith('/') ? f.avatar : `/uploads/avatars/${f.avatar}`)
       : null;
-    const avatar = avatarSrc 
+    const avatar = avatarSrc
       ? `<img src="${avatarSrc}" class="rounded-circle me-2" width="32" height="32" style="object-fit:cover;">`
       : `<div class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center me-2" style="width:32px;height:32px;font-size:0.8rem;">${f.nome?.charAt(0)?.toUpperCase() || '?'}</div>`;
 
     // Botões de ação
     let acoes = '';
-    
+
     // Não permite editar a si mesmo (algumas ações)
     const isCurrentUser = usuarioLogado && f.id === usuarioLogado.id;
-    
+
     if (!isCurrentUser) {
       // Botão ativar/desativar acesso
       if (!f.data_demissao) {
@@ -554,14 +554,14 @@ function renderizarTabelaAcesso(funcionarios) {
           acoes += `<button class="btn btn-sm btn-outline-success me-1" onclick="toggleAcesso(${f.id}, true)" title="Liberar acesso"><i class="bi bi-unlock"></i></button>`;
         }
       }
-      
+
       // Botão definir/resetar senha
       if (!f.tem_senha) {
         acoes += `<button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalDefinirSenha(${f.id}, '${f.nome}')" title="Definir senha"><i class="bi bi-key"></i></button>`;
       } else {
         acoes += `<button class="btn btn-sm btn-outline-warning me-1" onclick="resetarSenha(${f.id}, '${f.nome}')" title="Resetar senha"><i class="bi bi-arrow-clockwise"></i></button>`;
       }
-      
+
       // Botão Master
       if (f.is_master) {
         acoes += `<button class="btn btn-sm btn-outline-secondary" onclick="toggleMaster(${f.id}, false, '${f.nome}')" title="Remover Admin"><i class="bi bi-star"></i></button>`;
@@ -586,9 +586,9 @@ function renderizarTabelaAcesso(funcionarios) {
         <td>${f.cargo || '-'}</td>
         <td>${statusBadge}</td>
         <td class="text-center">
-          ${f.acesso_ativo && !f.data_demissao 
-            ? '<i class="bi bi-check-circle text-success"></i>' 
-            : '<i class="bi bi-x-circle text-danger"></i>'}
+          ${f.acesso_ativo && !f.data_demissao
+        ? '<i class="bi bi-check-circle text-success"></i>'
+        : '<i class="bi bi-x-circle text-danger"></i>'}
         </td>
         <td class="text-center">${acoes}</td>
       </tr>
@@ -601,7 +601,7 @@ function renderizarTabelaAcesso(funcionarios) {
  */
 async function toggleAcesso(id, ativar) {
   const token = sessionStorage.getItem('auth_token');
-  
+
   try {
     const response = await fetch(`${CONFIG_API_URL}/api/funcionarios/${id}/acesso`, {
       method: 'PATCH',
@@ -631,13 +631,13 @@ async function toggleAcesso(id, ativar) {
  */
 async function toggleMaster(id, promover, nome) {
   const token = sessionStorage.getItem('auth_token');
-  
+
   const acao = promover ? 'promover a Administrador' : 'remover permissão de Administrador';
   if (!confirm(`Tem certeza que deseja ${acao} o funcionário ${nome}?`)) return;
-  
+
   try {
     console.log('🔄 Iniciando toggle master para ID:', id, 'Promover:', promover);
-    
+
     const response = await fetch(`${CONFIG_API_URL}/api/funcionarios/${id}/master`, {
       method: 'PATCH',
       headers: {
@@ -671,9 +671,9 @@ async function toggleMaster(id, promover, nome) {
  */
 function abrirModalDefinirSenha(id, nome) {
   const senha = prompt(`Digite a senha inicial para ${nome}:\n(mínimo 6 caracteres)`);
-  
+
   if (!senha) return;
-  
+
   if (senha.length < 6) {
     alert('A senha deve ter pelo menos 6 caracteres.');
     return;
@@ -687,7 +687,7 @@ function abrirModalDefinirSenha(id, nome) {
  */
 async function definirSenhaFuncionario(id, senha) {
   const token = sessionStorage.getItem('auth_token');
-  
+
   try {
     const response = await fetch(`${CONFIG_API_URL}/api/funcionarios/${id}/definir-senha`, {
       method: 'POST',
@@ -718,12 +718,12 @@ async function definirSenhaFuncionario(id, senha) {
  */
 async function resetarSenha(id, nome) {
   const token = sessionStorage.getItem('auth_token');
-  
+
   if (!confirm(`Resetar senha de ${nome}?\n\nUma senha temporária será gerada.`)) return;
-  
+
   try {
     console.log('🔄 Iniciando reset de senha para ID:', id);
-    
+
     const response = await fetch(`${CONFIG_API_URL}/api/funcionarios/${id}/reset-senha`, {
       method: 'POST',
       headers: {
@@ -755,7 +755,7 @@ async function resetarSenha(id, nome) {
 // EVENT LISTENERS
 // ============================================
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   // Input de avatar
   const avatarInput = document.getElementById('configAvatarInput');
   if (avatarInput) {

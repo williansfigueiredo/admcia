@@ -2124,6 +2124,7 @@ tr[onclick]:active {
 
 /* ========== IMPRESSÃO - REGRAS GERAIS ========== */
 @media print {
+
   /* Esconde elementos de navegação e botões */
   .sidebar,
   .sidebar-overlay,
@@ -9045,7 +9046,8 @@ body.hide-values .sensitive-value {
 
 body.hide-values .sensitive-value::before {
   content: '••••••';
-  font-size: 1.875rem; /* fs-3 equiv */
+  font-size: 1.875rem;
+  /* fs-3 equiv */
   color: #64748b;
   font-weight: 600;
   letter-spacing: 3px;

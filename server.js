@@ -663,10 +663,10 @@ app.get('/jobs/semana', (req, res) => {
 
       // Total da semana atual
       const totalSemana = diasSemana.reduce((acc, val) => acc + val, 0);
-      
+
       // Total da semana anterior
       const totalSemanaAnterior = resultsAnterior[0]?.total || 0;
-      
+
       // Calcula variação percentual
       let variacao = 0;
       if (totalSemanaAnterior > 0) {
@@ -695,10 +695,10 @@ app.get('/jobs', (req, res) => {
       AND pagamento NOT IN ('Pago', 'Vencido')
       AND status != 'Cancelado'
   `;
-  
+
   db.query(sqlUpdateVencidos, (errUpdate) => {
     if (errUpdate) console.error('Erro ao atualizar vencidos:', errUpdate);
-    
+
     // AQUI ESTÁ O SEGREDO: "f.nome as nome_operador"
     const sqlJobs = `
           SELECT j.*, 
@@ -1482,13 +1482,13 @@ app.get('/financeiro/resumo', (req, res) => {
     `
   };
 
-  const resultado = { 
-    aReceber: 0, 
-    recebidoMes: 0, 
+  const resultado = {
+    aReceber: 0,
+    recebidoMes: 0,
     recebidoMesAnterior: 0,
-    despesasMes: 0, 
+    despesasMes: 0,
     despesasMesAnterior: 0,
-    vencidas: 0, 
+    vencidas: 0,
     qtdVencidas: 0,
     saldo: 0,
     saldoMesAnterior: 0,
@@ -1506,34 +1506,34 @@ app.get('/financeiro/resumo', (req, res) => {
 
   db.query(queries.aReceber, (err, r1) => {
     if (!err && r1[0]) resultado.aReceber = parseFloat(r1[0].total) || 0;
-    
+
     db.query(queries.recebidoMesAtual, (err, r2) => {
       if (!err && r2[0]) resultado.recebidoMes = parseFloat(r2[0].total) || 0;
-      
+
       db.query(queries.recebidoMesAnterior, (err, r2b) => {
         if (!err && r2b[0]) resultado.recebidoMesAnterior = parseFloat(r2b[0].total) || 0;
-        
+
         db.query(queries.despesasMesAtual, (err, r3) => {
           if (!err && r3[0]) resultado.despesasMes = parseFloat(r3[0].total) || 0;
-          
+
           db.query(queries.despesasMesAnterior, (err, r3b) => {
             if (!err && r3b[0]) resultado.despesasMesAnterior = parseFloat(r3b[0].total) || 0;
-            
+
             db.query(queries.vencidas, (err, r4) => {
               if (!err && r4[0]) {
                 resultado.vencidas = parseFloat(r4[0].total) || 0;
                 resultado.qtdVencidas = r4[0].qtd || 0;
               }
-              
+
               // Calcula saldos
               resultado.saldo = resultado.recebidoMes - resultado.despesasMes;
               resultado.saldoMesAnterior = resultado.recebidoMesAnterior - resultado.despesasMesAnterior;
-              
+
               // Calcula variações percentuais
               resultado.variacaoRecebido = calcularVariacao(resultado.recebidoMes, resultado.recebidoMesAnterior);
               resultado.variacaoDespesas = calcularVariacao(resultado.despesasMes, resultado.despesasMesAnterior);
               resultado.variacaoSaldo = calcularVariacao(resultado.saldo, resultado.saldoMesAnterior);
-              
+
               res.json(resultado);
             });
           });
@@ -1735,17 +1735,17 @@ app.delete('/financeiro/transacoes/:id', (req, res) => {
 // CRIAR NOTIFICAÇÃO (chamado pelo backend quando acontecem eventos)
 app.post('/notificacoes', (req, res) => {
   const { tipo, titulo, texto, job_id } = req.body;
-  
+
   const sql = 'INSERT INTO notificacoes (tipo, titulo, texto, job_id) VALUES (?, ?, ?, ?)';
   db.query(sql, [tipo, titulo, texto, job_id || null], (err, result) => {
     if (err) {
       console.error('Erro ao criar notificação:', err);
       return res.status(500).json({ error: err.message });
     }
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       id: result.insertId,
-      message: 'Notificação criada com sucesso!' 
+      message: 'Notificação criada com sucesso!'
     });
   });
 });
@@ -1753,11 +1753,11 @@ app.post('/notificacoes', (req, res) => {
 // BUSCAR NOTIFICAÇÕES (não lidas + últimas 50)
 app.get('/notificacoes', (req, res) => {
   const { funcionario_id } = req.query;
-  
+
   if (!funcionario_id) {
     return res.status(400).json({ error: 'funcionario_id é obrigatório' });
   }
-  
+
   // Busca notificações dos últimos 7 dias, ordenadas por data (mais recentes primeiro)
   const sql = `
     SELECT 
@@ -1772,7 +1772,7 @@ app.get('/notificacoes', (req, res) => {
     ORDER BY n.criado_em DESC
     LIMIT 100
   `;
-  
+
   db.query(sql, [funcionario_id], (err, results) => {
     if (err) {
       console.error('Erro ao buscar notificações:', err);
@@ -1786,11 +1786,11 @@ app.get('/notificacoes', (req, res) => {
 app.post('/notificacoes/:id/lida', (req, res) => {
   const { id } = req.params;
   const { funcionario_id } = req.body;
-  
+
   if (!funcionario_id) {
     return res.status(400).json({ error: 'funcionario_id é obrigatório' });
   }
-  
+
   const sql = 'INSERT IGNORE INTO notificacoes_lidas (notificacao_id, funcionario_id) VALUES (?, ?)';
   db.query(sql, [id, funcionario_id], (err, result) => {
     if (err) {
@@ -1804,11 +1804,11 @@ app.post('/notificacoes/:id/lida', (req, res) => {
 // MARCAR TODAS AS NOTIFICAÇÕES COMO LIDAS
 app.post('/notificacoes/marcar-todas-lidas', (req, res) => {
   const { funcionario_id } = req.body;
-  
+
   if (!funcionario_id) {
     return res.status(400).json({ error: 'funcionario_id é obrigatório' });
   }
-  
+
   // Busca todas as notificações não lidas dos últimos 7 dias
   const sqlSelect = `
     SELECT n.id 
@@ -1817,21 +1817,21 @@ app.post('/notificacoes/marcar-todas-lidas', (req, res) => {
     WHERE nl.id IS NULL 
     AND n.criado_em >= DATE_SUB(NOW(), INTERVAL 7 DAY)
   `;
-  
+
   db.query(sqlSelect, [funcionario_id], (errSelect, notificacoes) => {
     if (errSelect) {
       console.error('Erro ao buscar notificações:', errSelect);
       return res.status(500).json({ error: errSelect.message });
     }
-    
+
     if (notificacoes.length === 0) {
       return res.json({ success: true, message: 'Nenhuma notificação para marcar' });
     }
-    
+
     // Marca todas como lidas
     const ids = notificacoes.map(n => n.id);
     const values = ids.map(id => [id, funcionario_id]);
-    
+
     const sqlInsert = 'INSERT IGNORE INTO notificacoes_lidas (notificacao_id, funcionario_id) VALUES ?';
     db.query(sqlInsert, [values], (errInsert, result) => {
       if (errInsert) {
@@ -1866,52 +1866,52 @@ app.put('/financeiro/jobs/:id/pagar', (req, res) => {
       console.error('❌ Erro ao buscar job:', errJob);
       return res.status(500).json({ error: errJob.message });
     }
-    
+
     if (jobResults.length === 0) {
       return res.status(404).json({ error: 'Job não encontrado' });
     }
-    
+
     const job = jobResults[0];
-    
+
     // Verifica se já existe uma transação para esse job
     db.query('SELECT id FROM transacoes WHERE job_id = ? AND tipo = "receita"', [id], (errTrans, transResults) => {
       if (errTrans) {
         console.error('❌ Erro ao verificar transação existente:', errTrans);
       }
-      
+
       // Atualiza o status do job para Pago
       const sql = `UPDATE jobs SET pagamento = 'Pago' WHERE id = ?`;
-      
+
       db.query(sql, [id], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
-        
+
         console.log(`✅ Job #${id} marcado como pago`);
-        
+
         // Se já existe transação, não cria nova
         if (transResults && transResults.length > 0) {
           console.log(`ℹ️ Transação já existe para Job #${id}, apenas atualizando status`);
-          
+
           // Atualiza a transação existente para pago
-          db.query('UPDATE transacoes SET status = "pago", data_pagamento = ? WHERE job_id = ? AND tipo = "receita"', 
-            [data_pagamento || new Date().toISOString().split('T')[0], id], 
+          db.query('UPDATE transacoes SET status = "pago", data_pagamento = ? WHERE job_id = ? AND tipo = "receita"',
+            [data_pagamento || new Date().toISOString().split('T')[0], id],
             (errUpdate) => {
               if (errUpdate) console.error('Erro ao atualizar transação:', errUpdate);
             }
           );
-          
+
           return res.json({ message: 'Pagamento registrado!', affected: result.affectedRows });
         }
-        
+
         // Cria nova transação de receita automaticamente
         const descricaoTransacao = `Pagamento Job #${id} - ${job.descricao || 'Serviço'}`;
         const valorJob = parseFloat(job.valor) || 0;
         const dataPagamentoFinal = data_pagamento || new Date().toISOString().split('T')[0];
-        
+
         const sqlTransacao = `
           INSERT INTO transacoes (tipo, categoria, descricao, valor, data_vencimento, data_pagamento, status, cliente_id, job_id)
           VALUES ('receita', 'Serviços', ?, ?, ?, ?, 'pago', ?, ?)
         `;
-        
+
         const valoresTransacao = [
           descricaoTransacao,
           valorJob,
@@ -1920,7 +1920,7 @@ app.put('/financeiro/jobs/:id/pagar', (req, res) => {
           job.cliente_id,
           id
         ];
-        
+
         db.query(sqlTransacao, valoresTransacao, (errInsert, insertResult) => {
           if (errInsert) {
             console.error('❌ Erro ao criar transação automática:', errInsert);
@@ -1929,7 +1929,7 @@ app.put('/financeiro/jobs/:id/pagar', (req, res) => {
             console.log(`✅ Transação de receita #${insertResult.insertId} criada para Job #${id}`);
           }
         });
-        
+
         res.json({ message: 'Pagamento registrado!', affected: result.affectedRows });
       });
     });
@@ -1980,14 +1980,14 @@ app.get('/financeiro/grafico-fluxo', (req, res) => {
       const entradas = Array(12).fill(0);
       const saidas = Array(12).fill(0);
 
-      receitas.forEach(r => { 
+      receitas.forEach(r => {
         if (r.mes >= 1 && r.mes <= 12) {
-          entradas[r.mes - 1] = parseFloat(r.total); 
+          entradas[r.mes - 1] = parseFloat(r.total);
         }
       });
-      despesas.forEach(d => { 
+      despesas.forEach(d => {
         if (d.mes >= 1 && d.mes <= 12) {
-          saidas[d.mes - 1] = parseFloat(d.total); 
+          saidas[d.mes - 1] = parseFloat(d.total);
         }
       });
 
@@ -2033,21 +2033,21 @@ app.get('/financeiro/despesas-por-categoria', (req, res) => {
       console.error('❌ Erro ao buscar despesas por categoria:', err);
       return res.status(500).json({ error: err.message });
     }
-    
+
     console.log('🍰 Resultados da query:', results);
-    
+
     // Calcula total primeiro
     const totalGeral = results.reduce((acc, r) => acc + (parseFloat(r.total) || 0), 0);
-    
+
     // Agrupa categorias pequenas (< 3% do total) em "Outros"
     const limitePercentual = 0.03; // 3%
     let outrosValor = 0;
     const categoriasAgrupadas = [];
-    
+
     results.forEach(r => {
       const valor = parseFloat(r.total) || 0;
       const percentual = totalGeral > 0 ? valor / totalGeral : 0;
-      
+
       if (percentual < limitePercentual && r.categoria !== 'Outros') {
         // Agrupa em "Outros"
         outrosValor += valor;
@@ -2058,7 +2058,7 @@ app.get('/financeiro/despesas-por-categoria', (req, res) => {
         });
       }
     });
-    
+
     // Adiciona "Outros" se tiver valor
     if (outrosValor > 0) {
       // Verifica se já existe "Outros"
@@ -2069,17 +2069,17 @@ app.get('/financeiro/despesas-por-categoria', (req, res) => {
         categoriasAgrupadas.push({ categoria: 'Outros', valor: outrosValor });
       }
     }
-    
+
     // Ordena por valor decrescente
     categoriasAgrupadas.sort((a, b) => b.valor - a.valor);
-    
+
     // Formata para o gráfico
     const dados = {
       labels: categoriasAgrupadas.map(r => r.categoria),
       valores: categoriasAgrupadas.map(r => r.valor),
       total: totalGeral
     };
-    
+
     console.log('🍰 Enviando para frontend (agrupado):', dados);
     res.json(dados);
   });
@@ -2121,8 +2121,8 @@ app.get('/debug/criar-tabela-transacoes', (req, res) => {
       return res.status(500).json({ error: err.message });
     }
     console.log("✅ Tabela transacoes criada com sucesso!");
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: "Tabela 'transacoes' criada com sucesso!",
       instrucao: "Agora você pode usar o módulo Financeiro normalmente."
     });
@@ -2147,7 +2147,7 @@ app.get('/debug/criar-tabelas-notificacoes', (req, res) => {
       criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_criado_em (criado_em)
     )`,
-    
+
     // Tabela de controle de leitura
     `CREATE TABLE IF NOT EXISTS notificacoes_lidas (
       id INT(11) AUTO_INCREMENT PRIMARY KEY,
@@ -2164,10 +2164,10 @@ app.get('/debug/criar-tabelas-notificacoes', (req, res) => {
 
   tabelasNotificacao.forEach((sql, index) => {
     const nomeTabela = index === 0 ? 'notificacoes' : 'notificacoes_lidas';
-    
+
     db.query(sql, (err) => {
       executadas++;
-      
+
       if (err) {
         console.error(`❌ Erro ao criar tabela ${nomeTabela}:`, err);
         resultados.push({
@@ -2187,15 +2187,15 @@ app.get('/debug/criar-tabelas-notificacoes', (req, res) => {
       // Quando todas as tabelas forem processadas
       if (executadas === tabelasNotificacao.length) {
         const sucesso = resultados.every(r => r.success);
-        
+
         res.json({
           success: sucesso,
-          message: sucesso 
+          message: sucesso
             ? "✅ Todas as tabelas de notificações foram criadas com sucesso!"
             : "⚠️ Algumas tabelas tiveram problemas na criação",
           detalhes: resultados,
-          instrucao: sucesso 
-            ? "Agora o sistema de notificações está funcionando! 🎉" 
+          instrucao: sucesso
+            ? "Agora o sistema de notificações está funcionando! 🎉"
             : "Verifique os erros acima"
         });
       }
@@ -2311,7 +2311,7 @@ app.get('/debug/listar-escalas', (req, res) => {
 // Escalas que cobrem EXATAMENTE o período do job são consideradas automáticas
 app.get('/debug/corrigir-escalas-automaticas', (req, res) => {
   console.log("🔧 Corrigindo escalas criadas automaticamente...");
-  
+
   // Atualiza escalas que:
   // 1. Têm job_id (estão vinculadas a um job)
   // 2. Têm is_manual = 1 (marcadas como manual por default)
@@ -2329,16 +2329,16 @@ app.get('/debug/corrigir-escalas-automaticas', (req, res) => {
         OR (DATE(e.data_inicio) = DATE(j.data_inicio) AND DATE(COALESCE(e.data_fim, e.data_inicio)) = DATE(COALESCE(j.data_fim, j.data_inicio)))
       )
   `;
-  
+
   db.query(sql, (err, result) => {
     if (err) {
       console.error("❌ Erro ao corrigir escalas:", err);
       return res.status(500).json({ error: err.message });
     }
-    
+
     const afetados = result.affectedRows || 0;
     console.log(`✅ ${afetados} escalas corrigidas para is_manual=0`);
-    
+
     res.json({
       success: true,
       message: `${afetados} escalas foram marcadas como automáticas.`,
@@ -2351,20 +2351,20 @@ app.get('/debug/corrigir-escalas-automaticas', (req, res) => {
 // Rota de debug para sincronizar escalas manuais com a equipe do job
 app.get('/debug/sincronizar-escalas-equipe', (req, res) => {
   console.log("🔧 Sincronizando escalas manuais com equipe dos jobs...");
-  
+
   // Busca todas as escalas manuais que têm job vinculado
   const sqlEscalas = `
     SELECT e.id, e.funcionario_id, e.job_id, e.tipo
     FROM escalas e
     WHERE e.is_manual = 1 AND e.job_id IS NOT NULL
   `;
-  
+
   db.query(sqlEscalas, (err, escalas) => {
     if (err) {
       console.error("❌ Erro ao buscar escalas:", err);
       return res.status(500).json({ error: err.message });
     }
-    
+
     if (escalas.length === 0) {
       return res.json({
         success: true,
@@ -2372,16 +2372,16 @@ app.get('/debug/sincronizar-escalas-equipe', (req, res) => {
         adicionados: 0
       });
     }
-    
+
     let processados = 0;
     let adicionados = 0;
     let jaExistentes = 0;
-    
+
     escalas.forEach(escala => {
       const sqlCheck = "SELECT id FROM job_equipe WHERE job_id = ? AND funcionario_id = ?";
       db.query(sqlCheck, [escala.job_id, escala.funcionario_id], (errCheck, existe) => {
         processados++;
-        
+
         if (errCheck) {
           console.error(`⚠️ Erro ao verificar equipe para escala ${escala.id}:`, errCheck);
         } else if (existe.length === 0) {
@@ -2399,7 +2399,7 @@ app.get('/debug/sincronizar-escalas-equipe', (req, res) => {
         } else {
           jaExistentes++;
         }
-        
+
         // Quando terminar todos
         if (processados === escalas.length) {
           setTimeout(() => {
@@ -2897,9 +2897,9 @@ app.get('/debug/testar-notificacoes', (req, res) => {
         ['info', tituloTeste, textoTeste],
         (err3, result3) => {
           if (err3) {
-            return res.status(500).json({ 
-              error: 'Erro ao criar notificação de teste', 
-              details: err3.message 
+            return res.status(500).json({
+              error: 'Erro ao criar notificação de teste',
+              details: err3.message
             });
           }
 
@@ -2908,9 +2908,9 @@ app.get('/debug/testar-notificacoes', (req, res) => {
           // 3. Buscar todas as notificações
           db.query('SELECT * FROM notificacoes ORDER BY criado_em DESC LIMIT 10', (err4, notificacoes) => {
             if (err4) {
-              return res.status(500).json({ 
-                error: 'Erro ao buscar notificações', 
-                details: err4.message 
+              return res.status(500).json({
+                error: 'Erro ao buscar notificações',
+                details: err4.message
               });
             }
 
@@ -2934,6 +2934,224 @@ app.get('/debug/testar-notificacoes', (req, res) => {
       );
     });
   });
+});
+
+// =============================================================
+// ROTAS DE CONFIGURAÇÃO E TESTE DE EMAIL
+// =============================================================
+
+// Verificar status do serviço de email
+app.get('/debug/email-status', (req, res) => {
+  try {
+    const emailService = require('./services/emailService');
+    const configurado = emailService.emailConfigurado();
+    
+    res.json({
+      success: true,
+      configurado: configurado,
+      message: configurado ? '✅ Serviço de email configurado' : '⚠️ Serviço de email não configurado',
+      variaveis_necessarias: [
+        'EMAIL_HOST ou SMTP_HOST (ex: smtp.gmail.com)',
+        'EMAIL_PORT ou SMTP_PORT (ex: 587 ou 465)',
+        'EMAIL_USER ou SMTP_USER (seu email)',
+        'EMAIL_PASS ou SMTP_PASS (sua senha de app)',
+        'SMTP_FROM_NAME (nome do remetente - opcional)'
+      ],
+      instrucao: configurado 
+        ? 'Email funcionando! Use /debug/testar-email para enviar um teste'
+        : 'Configure as variáveis de ambiente no Railway primeiro'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Erro ao verificar configuração de email'
+    });
+  }
+});
+
+// Testar envio de email
+app.post('/debug/testar-email', (req, res) => {
+  try {
+    const emailService = require('./services/emailService');
+    
+    if (!emailService.emailConfigurado()) {
+      return res.status(400).json({
+        success: false,
+        message: '⚠️ Serviço de email não configurado',
+        instrucao: 'Configure as variáveis de ambiente primeiro'
+      });
+    }
+    
+    const { destinatario, assunto, mensagem } = req.body;
+    
+    if (!destinatario) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email destinatário é obrigatório',
+        exemplo: {
+          destinatario: 'teste@exemplo.com',
+          assunto: 'Teste de Email (opcional)',
+          mensagem: 'Mensagem de teste (opcional)'
+        }
+      });
+    }
+    
+    const assuntoFinal = assunto || '🧪 Teste de Email do Sistema';
+    const mensagemFinal = mensagem || `
+      <h2>✅ Email funcionando!</h2>
+      <p>Este é um email de teste enviado em ${new Date().toLocaleString('pt-BR')}.</p>
+      <p>Se você recebeu este email, a configuração está correta! 🎉</p>
+    `;
+    
+    emailService.enviarEmail(destinatario, assuntoFinal, mensagemFinal)
+      .then(resultado => {
+        if (resultado.success) {
+          res.json({
+            success: true,
+            message: `✅ Email enviado com sucesso para ${destinatario}!`,
+            messageId: resultado.messageId,
+            detalhes: {
+              destinatario,
+              assunto: assuntoFinal,
+              enviado_em: new Date().toLocaleString('pt-BR')
+            }
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            message: '❌ Erro ao enviar email',
+            error: resultado.error
+          });
+        }
+      })
+      .catch(error => {
+        res.status(500).json({
+          success: false,
+          message: '❌ Erro ao enviar email',
+          error: error.message
+        });
+      });
+      
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Erro interno ao processar teste de email'
+    });
+  }
+});
+
+// Enviar email de novo acesso a funcionário
+app.post('/email/novo-acesso', (req, res) => {
+  try {
+    const emailService = require('./services/emailService');
+    
+    if (!emailService.emailConfigurado()) {
+      return res.status(400).json({
+        success: false,
+        message: '⚠️ Serviço de email não configurado'
+      });
+    }
+    
+    const { nome, email, senha, urlSistema } = req.body;
+    
+    if (!nome || !email || !senha) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nome, email e senha são obrigatórios'
+      });
+    }
+    
+    const url = urlSistema || process.env.APP_URL || 'https://admcia-production.up.railway.app';
+    
+    emailService.enviarEmailNovoAcesso(nome, email, senha, url)
+      .then(resultado => {
+        if (resultado.success) {
+          res.json({
+            success: true,
+            message: `✅ Email de boas-vindas enviado para ${email}!`,
+            messageId: resultado.messageId
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            message: '❌ Erro ao enviar email',
+            error: resultado.error
+          });
+        }
+      })
+      .catch(error => {
+        res.status(500).json({
+          success: false,
+          message: '❌ Erro ao enviar email',
+          error: error.message
+        });
+      });
+      
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Erro interno ao processar email de novo acesso'
+    });
+  }
+});
+
+// Enviar email de senha resetada
+app.post('/email/senha-resetada', (req, res) => {
+  try {
+    const emailService = require('./services/emailService');
+    
+    if (!emailService.emailConfigurado()) {
+      return res.status(400).json({
+        success: false,
+        message: '⚠️ Serviço de email não configurado'
+      });
+    }
+    
+    const { nome, email, senha, urlSistema } = req.body;
+    
+    if (!nome || !email || !senha) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nome, email e senha são obrigatórios'
+      });
+    }
+    
+    const url = urlSistema || process.env.APP_URL || 'https://admcia-production.up.railway.app';
+    
+    emailService.enviarEmailSenhaResetada(nome, email, senha, url)
+      .then(resultado => {
+        if (resultado.success) {
+          res.json({
+            success: true,
+            message: `✅ Email de senha resetada enviado para ${email}!`,
+            messageId: resultado.messageId
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            message: '❌ Erro ao enviar email',
+            error: resultado.error
+          });
+        }
+      })
+      .catch(error => {
+        res.status(500).json({
+          success: false,
+          message: '❌ Erro ao enviar email',
+          error: error.message
+        });
+      });
+      
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Erro interno ao processar email de senha resetada'
+    });
+  }
 });
 
 // =============================================================
@@ -3050,7 +3268,7 @@ app.delete('/jobs/:id', async (req, res) => {
       : "Pedido excluído e estoque devolvido com sucesso!";
 
     console.log(`✅ Job ${id} excluído com sucesso`);
-    
+
     // Cria notificação de pedido excluído para todos os usuários
     db.query(
       'INSERT INTO notificacoes (tipo, titulo, texto, job_id) VALUES (?, ?, ?, ?)',
@@ -3059,7 +3277,7 @@ app.delete('/jobs/:id', async (req, res) => {
         if (errNotif) console.error('Erro ao criar notificação:', errNotif);
       }
     );
-    
+
     res.json({ success: true, message: msg });
 
   } catch (error) {
@@ -3922,7 +4140,7 @@ app.get('/agenda', (req, res) => {
       if (e.job_descricao) {
         titulo += ` - ${e.job_descricao}`;
       }
-      
+
       // Adiciona tipo_escala apenas se for ESCALA MANUAL (✋)
       if (isManual && e.tipo_escala) {
         titulo += ` - ${e.tipo_escala}`;
@@ -4144,7 +4362,7 @@ app.post('/escalas', (req, res) => {
           if (err.code === 'ER_BAD_FIELD_ERROR') {
             console.error("⚠️ ATENÇÃO: Faltam colunas na tabela 'escalas'!");
             console.error("⚠️ Execute: https://admcia-production.up.railway.app/debug/corrigir-tabela-escalas");
-            return res.status(500).json({ 
+            return res.status(500).json({
               error: "Estrutura da tabela 'escalas' está desatualizada. Execute a rota de debug para corrigir.",
               detalhes: err.message,
               solucao: "Acesse /debug/corrigir-tabela-escalas"
@@ -4153,7 +4371,7 @@ app.post('/escalas', (req, res) => {
           return res.status(500).json({ error: err.message });
         }
         console.log("✅ Escala salva com ID:", result.insertId, "- Obs:", observacaoAuto);
-        
+
         // Adiciona funcionário na equipe do evento com função baseada no tipo da escala
         const funcaoEquipe = data.tipo || 'Treinamento';
         const sqlCheckEquipe = "SELECT id FROM job_equipe WHERE job_id = ? AND funcionario_id = ?";
@@ -4175,7 +4393,7 @@ app.post('/escalas', (req, res) => {
             console.log(`📋 Funcionário ${data.funcionario_id} já está na equipe do job ${jobId}`);
           }
         });
-        
+
         res.json({ message: "Escala salva com sucesso!", id: result.insertId });
       });
     });
@@ -4204,7 +4422,7 @@ app.post('/escalas', (req, res) => {
         if (err.code === 'ER_BAD_FIELD_ERROR') {
           console.error("⚠️ ATENÇÃO: Faltam colunas na tabela 'escalas'!");
           console.error("⚠️ Execute: https://admcia-production.up.railway.app/debug/corrigir-tabela-escalas");
-          return res.status(500).json({ 
+          return res.status(500).json({
             error: "Estrutura da tabela 'escalas' está desatualizada. Execute a rota de debug para corrigir.",
             detalhes: err.message,
             solucao: "Acesse /debug/corrigir-tabela-escalas"
@@ -4251,15 +4469,15 @@ app.delete('/escalas/:id', (req, res) => {
 
     const escala = escalaData[0];
     const sql = "DELETE FROM escalas WHERE id = ?";
-    
+
     db.query(sql, [escalaId], (err, result) => {
       if (err) {
         console.error("❌ Erro ao deletar escala:", err);
         return res.status(500).json({ error: err.message });
       }
-      
+
       console.log(`✅ Escala ${escalaId} deletada com sucesso`);
-      
+
       // Se era escala manual com job vinculado, remove também da equipe
       if (escala.is_manual === 1 && escala.job_id) {
         const sqlDelEquipe = "DELETE FROM job_equipe WHERE job_id = ? AND funcionario_id = ?";
@@ -4271,7 +4489,7 @@ app.delete('/escalas/:id', (req, res) => {
           }
         });
       }
-      
+
       res.json({ message: "Escala deletada com sucesso!", deleted: result.affectedRows });
     });
   });

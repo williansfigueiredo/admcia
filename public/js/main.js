@@ -582,7 +582,7 @@ async function updateStatusIndicators() {
   }
 
   console.log('✅ Indicadores atualizados');
-  
+
   // 4. ATUALIZA GRÁFICO DE JOBS DA SEMANA
   atualizarGraficoJobsSemana();
 }
@@ -595,15 +595,15 @@ async function atualizarGraficoJobsSemana() {
   const kpiTotal = document.getElementById('kpi-jobs');
   const kpiTrend = document.getElementById('kpi-jobs-trend');
   const kpiPct = document.getElementById('kpi-jobs-pct');
-  
+
   if (!miniChart) return;
 
   try {
     const response = await fetch(`${API_URL}/jobs/semana`);
     const dados = await response.json();
-    
+
     console.log('📊 Dados semana:', dados);
-    
+
     // Atualiza valor total
     if (kpiTotal) {
       kpiTotal.textContent = dados.total;
@@ -613,12 +613,12 @@ async function atualizarGraficoJobsSemana() {
     if (kpiTrend && kpiPct) {
       const variacao = parseFloat(dados.variacao);
       const sinal = variacao >= 0 ? '+' : '';
-      
+
       kpiPct.textContent = `${sinal}${Math.abs(variacao).toFixed(1)}%`;
-      
+
       // Remove classes antigas
       kpiTrend.classList.remove('positive', 'negative', 'neutral');
-      
+
       // Adiciona classe baseada na variação
       if (variacao > 0) {
         kpiTrend.classList.add('positive');
@@ -647,7 +647,7 @@ async function atualizarGraficoJobsSemana() {
       barra.style.height = `${altura}%`;
       barra.style.cursor = "pointer";
       barra.title = `${labels[index]}: ${valor} job${valor !== 1 ? 's' : ''}`;
-      
+
       // Destaca o dia atual
       const hoje = new Date().getDay(); // 0 = Dom, 1 = Seg, ...
       if (index === hoje) {
@@ -1129,7 +1129,7 @@ async function verificarAutenticacaoInicial() {
   verificandoAutenticacao = true;
 
   const token = sessionStorage.getItem('auth_token');
-  
+
   if (!token) {
     console.log('⚠️ Sem token - limpando sessão e redirecionando');
     // Limpa TUDO do sessionStorage incluindo currentView
@@ -1188,10 +1188,10 @@ function iniciarMonitoramentoConexao() {
   // Detecta quando volta online e verifica autenticação
   window.addEventListener('online', async () => {
     console.log('🟢 Conexão restaurada - verificando autenticação...');
-    
+
     if (estaOffline) {
       const token = sessionStorage.getItem('auth_token');
-      
+
       if (!token) {
         console.log('⚠️ Sem token após reconexão - redirecionando para login');
         window.location.replace('/login');
@@ -1213,7 +1213,7 @@ function iniciarMonitoramentoConexao() {
 
         console.log('✅ Token válido após reconexão');
         estaOffline = false;
-        
+
         // Recarrega a página para atualizar dados
         window.location.reload();
 
@@ -1235,7 +1235,7 @@ function iniciarMonitoramentoConexao() {
     }
 
     const token = sessionStorage.getItem('auth_token');
-    
+
     if (token && navigator.onLine) {
       try {
         const response = await fetch(`${API_URL}/api/auth/me`, {
@@ -1282,7 +1282,7 @@ function obterViewInicial() {
   }
 
   const viewSalva = sessionStorage.getItem('currentView');
-  
+
   // Se não houver view salva, retorna principal
   if (!viewSalva) {
     console.log('🏠 Nenhuma view salva - usando principal');
@@ -2100,7 +2100,7 @@ window.salvarJobTelaCheia = async function () {
   let vencimentoFinal = "À vista";
   let prazo_pagamento = null;
   let data_vencimento = null;
-  
+
   const modoDataEl = document.getElementById('modoData');
   const modoPrazoEl = document.getElementById('modoPrazo');
 
@@ -2292,7 +2292,7 @@ window.salvarJobTelaCheia = async function () {
 
       if (sucessoEstoque) {
         alert(isEdit ? "✅ Pedido atualizado com sucesso!" : "✅ Pedido criado com sucesso!");
-        
+
         // Adiciona notificação se for um novo pedido
         if (!isEdit && typeof window.notificarNovoPedido === 'function') {
           window.notificarNovoPedido(jobData.descricao);
@@ -2573,7 +2573,7 @@ window.salvarNovoJob = async function () {
         });
       }
       alert(isEdit ? "✅ Pedido atualizado!" : "✅ Pedido criado e estoque baixado!");
-      
+
       // Adiciona notificação se for um novo pedido
       if (!isEdit && typeof window.notificarNovoPedido === 'function') {
         window.notificarNovoPedido(job.descricao || 'Novo pedido');
@@ -2787,32 +2787,32 @@ function iniciarGraficos() {
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              y: { 
-                display: true, 
-                beginAtZero: true, 
-                grid: { 
-                  color: "rgba(255, 255, 255, 0.06)", 
-                  borderDash: [5, 5] 
-                }, 
-                ticks: { 
-                  callback: function(value) {
+              y: {
+                display: true,
+                beginAtZero: true,
+                grid: {
+                  color: "rgba(255, 255, 255, 0.06)",
+                  borderDash: [5, 5]
+                },
+                ticks: {
+                  callback: function (value) {
                     if (value === 0) return 'R$ 0';
-                    
+
                     // Se for 1 milhão ou mais, mostra em milhões
                     if (value >= 1000000) {
                       return 'R$ ' + (value / 1000000).toFixed(1) + 'M';
                     }
-                    
+
                     // Se for 1 mil ou mais, mostra em milhares
                     if (value >= 1000) {
                       return 'R$ ' + (value / 1000).toFixed(1) + 'K';
                     }
-                    
+
                     // Se for menos de 1 mil, mostra o valor inteiro
                     return 'R$ ' + value.toFixed(0);
-                  }, 
-                  color: "#6b7a90" 
-                } 
+                  },
+                  color: "#6b7a90"
+                }
               },
               x: { display: true, grid: { display: false }, ticks: { color: "#6b7a90" } }
             },
@@ -4188,12 +4188,12 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
     // Notificações de mudança de status
     if (tipo === 'status') {
       const descricaoPedido = jobAtual ? jobAtual.descricao : 'Pedido';
-      
+
       // Notifica mudança de status (exceto se já vamos notificar cancelamento)
       if (window.notificarMudancaStatus && statusAntigo !== novoValor) {
         window.notificarMudancaStatus(descricaoPedido, statusAntigo, novoValor);
       }
-      
+
       // Notificação específica para cancelamento
       if (novoValor === 'Cancelado' && window.notificarPedidoCancelado) {
         window.notificarPedidoCancelado(descricaoPedido);
@@ -4264,13 +4264,13 @@ async function salvarEdicao(selectElem, id, tipo, valorOriginal) {
         const resJobs = await fetch(`${API_URL}/jobs`);
         const todosJobs = await resJobs.json();
         const jobAtual = todosJobs.find(j => j.id == id);
-        
+
         if (jobAtual && jobAtual.descricao) {
           // Notifica mudança de status
           if (window.notificarMudancaStatus && valorOriginal !== novoValor) {
             window.notificarMudancaStatus(jobAtual.descricao, valorOriginal, novoValor);
           }
-          
+
           // Notificação específica para cancelamento
           if (novoValor === 'Cancelado' && window.notificarPedidoCancelado) {
             window.notificarPedidoCancelado(jobAtual.descricao);
@@ -9154,14 +9154,42 @@ window.salvarFuncionario = function () {
     : `${API_URL}/funcionarios`;
 
   const method = window.idFuncionarioEditando ? 'PUT' : 'POST';
+  const isNovoFuncionario = !window.idFuncionarioEditando;
 
   fetch(url, {
     method: method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dados)
   })
-    .then(() => {
+    .then(response => response.json())
+    .then(async (resultado) => {
       alert("Funcionário salvo com sucesso!");
+      
+      // Se é um novo funcionário e tem email, tentar enviar email de boas-vindas
+      if (isNovoFuncionario && dados.email && resultado.senha_temporaria) {
+        try {
+          console.log('📧 Tentando enviar email de boas-vindas...');
+          
+          if (window.emailService) {
+            const emailEnviado = await window.emailService.notificarNovoFuncionario({
+              nome: dados.nome,
+              email: dados.email,
+              senha_temporaria: resultado.senha_temporaria
+            });
+            
+            if (emailEnviado) {
+              console.log('✅ Email de boas-vindas enviado com sucesso!');
+            } else {
+              console.log('⚠️ Email não foi enviado (serviço não configurado ou erro)');
+            }
+          } else {
+            console.log('⚠️ Serviço de email não disponível');
+          }
+        } catch (error) {
+          console.error('❌ Erro ao enviar email de boas-vindas:', error);
+        }
+      }
+      
       switchView('funcionarios');
       carregarFuncionarios();
     })
@@ -9621,7 +9649,7 @@ window.initCalendar = function () {
       const status = dados.status || 'Sem status';
       const operador = dados.operador || 'Não informado';
       const localizacao = dados.localizacao || 'Não informado';
-      
+
       // Define o tipo baseado em tipo_evento E is_manual:
       // - Jobs (tipo='job') sempre são PEDIDO DE SERVIÇO
       // - Escalas (tipo='escala') com is_manual=0 são PEDIDO DE SERVIÇO (criadas automaticamente pela equipe)
@@ -9684,7 +9712,7 @@ window.initCalendar = function () {
       }
 
       nomeServico = (nomeServico || '').trim() || 'Não informado';
-      
+
       // Formata localização para não mostrar valores vazios
       let localFormatado = localizacao || '';
       localFormatado = localFormatado.replace(/^[,\s-]+|[,\s-]+$/g, '').replace(/,\s*,/g, ',').trim();
@@ -9742,16 +9770,16 @@ window.initCalendar = function () {
       if (modalElemento && modalContainer) {
         // Se o modal existe, usa ele
         modalElemento.innerHTML = conteudo;
-        
+
         // Monta o footer com botões
         let footerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>';
-        
+
         // Se for escala manual, adiciona botão de deletar
         if (dados.is_manual === 1 && dados.tipo === 'escala') {
           // Extrai o ID real da escala do ID do evento (formato: "escala-123-2026-02-17" ou "123-2026-02-17")
           const eventoId = info.event.id;
           let escalaId = null;
-          
+
           if (eventoId.startsWith('escala-')) {
             // Formato: "escala-123-2026-02-17" -> pegar "123"
             const partes = eventoId.replace('escala-', '').split('-');
@@ -9761,18 +9789,18 @@ window.initCalendar = function () {
             const partes = eventoId.split('-');
             escalaId = partes[0];
           }
-          
+
           if (escalaId && !isNaN(escalaId)) {
             footerHTML = `<button type="button" class="btn btn-danger" onclick="deletarEscalaManual(${escalaId})">
               🗑️ Apagar Escala
             </button>` + footerHTML;
           }
         }
-        
+
         if (modalFooter) {
           modalFooter.innerHTML = footerHTML;
         }
-        
+
         const modal = new bootstrap.Modal(modalContainer);
         modal.show();
       } else {
@@ -9788,39 +9816,39 @@ window.initCalendar = function () {
 };
 
 // Função para deletar escala manual
-window.deletarEscalaManual = function(escalaId) {
+window.deletarEscalaManual = function (escalaId) {
   if (!confirm('Tem certeza que deseja apagar esta escala manual?\n\nO funcionário também será removido da equipe do evento.')) {
     return;
   }
-  
+
   fetch(`${API_URL}/escalas/${escalaId}`, {
     method: 'DELETE'
   })
-  .then(res => res.json())
-  .then(data => {
-    if (data.error) {
-      alert('Erro ao deletar escala: ' + data.error);
-      return;
-    }
-    
-    // Fecha o modal
-    const modalContainer = document.getElementById('modalDetalhesEvento');
-    if (modalContainer) {
-      const modal = bootstrap.Modal.getInstance(modalContainer);
-      if (modal) modal.hide();
-    }
-    
-    // Recarrega o calendário
-    if (typeof recarregarCalendario === 'function') {
-      recarregarCalendario();
-    }
-    
-    alert('✅ Escala deletada com sucesso!');
-  })
-  .catch(err => {
-    console.error('Erro ao deletar escala:', err);
-    alert('Erro ao deletar escala: ' + err.message);
-  });
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        alert('Erro ao deletar escala: ' + data.error);
+        return;
+      }
+
+      // Fecha o modal
+      const modalContainer = document.getElementById('modalDetalhesEvento');
+      if (modalContainer) {
+        const modal = bootstrap.Modal.getInstance(modalContainer);
+        if (modal) modal.hide();
+      }
+
+      // Recarrega o calendário
+      if (typeof recarregarCalendario === 'function') {
+        recarregarCalendario();
+      }
+
+      alert('✅ Escala deletada com sucesso!');
+    })
+    .catch(err => {
+      console.error('Erro ao deletar escala:', err);
+      alert('Erro ao deletar escala: ' + err.message);
+    });
 };
 
 
@@ -10081,7 +10109,7 @@ window.recarregarCalendario = function () {
     // Verifica se o container do calendário está visível
     const container = document.getElementById('container-calendario');
     const isVisible = container && container.style.display !== 'none' && container.offsetParent !== null;
-    
+
     if (isVisible) {
       // Se estiver visível, recarrega imediatamente
       calendar.refetchEvents();
@@ -10548,14 +10576,14 @@ function renderizarCalendarioFuncionario(listaJobs) {
 
     // Monta o título baseado no tipo de registro e campo is_manual
     console.log(`🔍 Job #${job.id}:`, {
-      tipo_registro: job.tipo_registro, 
-      job_id: job.job_id, 
+      tipo_registro: job.tipo_registro,
+      job_id: job.job_id,
       is_manual: job.is_manual,
       descricao: job.descricao
     });
-    
+
     let icone = '📋'; // Padrão para jobs
-    
+
     if (job.tipo_registro === 'escala') {
       if (!job.job_id) {
         // Escala standalone (sem job associado)
@@ -10575,7 +10603,7 @@ function renderizarCalendarioFuncionario(listaJobs) {
     }
 
     const titulo = `📋 #${job.id} - ${job.descricao || 'Sem descrição'}`;
-    
+
     console.log('  → Título final:', titulo);
 
     return {
@@ -10630,7 +10658,7 @@ function renderizarCalendarioFuncionario(listaJobs) {
       const status = dados.status || 'Sem status';
       const operador = dados.operador || 'Não informado';
       const localizacao = dados.localizacao || 'Não informado';
-      
+
       // Define o tipo baseado no registro
       let tipo;
       if (dados.tipo_registro === 'escala') {
@@ -10638,17 +10666,17 @@ function renderizarCalendarioFuncionario(listaJobs) {
       } else {
         tipo = '📋 PEDIDO DE SERVIÇO';
       }
-      
+
       // Nome do serviço
       const nomeServico = dados.descricao || 'Não informado';
-      
+
       // Formata localização para não mostrar valores vazios
       let localFormatado = localizacao || '';
       localFormatado = localFormatado.replace(/^[,\s-]+|[,\s-]+$/g, '').replace(/,\s*,/g, ',').trim();
       if (!localFormatado || localFormatado === ',' || localFormatado === '-') {
         localFormatado = 'Não informado';
       }
-      
+
       // Datas
       const formatarData = (dataStr) => {
         if (!dataStr) return 'Não informado';
@@ -10656,10 +10684,10 @@ function renderizarCalendarioFuncionario(listaJobs) {
         const d = new Date(ano, mes - 1, dia);
         return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       };
-      
+
       const dataInicio = formatarData(dados.data_inicio);
       const dataFim = formatarData(dados.data_fim);
-      
+
       // Monta o conteúdo HTML do modal igual ao calendário principal
       const conteudo = `
         <div class="mb-3 p-3 rounded" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-left: 4px solid #6366f1;">
@@ -10701,23 +10729,23 @@ function renderizarCalendarioFuncionario(listaJobs) {
           </tr>
         </table>
       `;
-      
+
       // Preenche e exibe o modal
       const modalElemento = document.getElementById('modalEventoConteudo');
       const modalContainer = document.getElementById('modalDetalhesEvento');
       const modalFooter = document.getElementById('modalEventoFooter');
-      
+
       if (modalElemento && modalContainer) {
         modalElemento.innerHTML = conteudo;
-        
+
         // Monta o footer com botões
         let footerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>';
-        
+
         // Se for escala manual, adiciona botão de deletar
         if (dados.is_manual === 1 && dados.tipo_registro === 'escala') {
           const eventoId = info.event.id;
           let escalaId = null;
-          
+
           if (eventoId.startsWith('escala-')) {
             const partes = eventoId.replace('escala-', '').split('-');
             escalaId = partes[0];
@@ -10725,18 +10753,18 @@ function renderizarCalendarioFuncionario(listaJobs) {
             const partes = eventoId.split('-');
             escalaId = partes[0];
           }
-          
+
           if (escalaId && !isNaN(escalaId)) {
             footerHTML = `<button type="button" class="btn btn-danger" onclick="deletarEscalaManualFuncionario(${escalaId})">
               🗑️ Apagar Escala
             </button>` + footerHTML;
           }
         }
-        
+
         if (modalFooter) {
           modalFooter.innerHTML = footerHTML;
         }
-        
+
         const modal = new bootstrap.Modal(modalContainer);
         modal.show();
       } else {
@@ -10750,40 +10778,40 @@ function renderizarCalendarioFuncionario(listaJobs) {
 }
 
 // Função para deletar escala manual do calendário do funcionário
-window.deletarEscalaManualFuncionario = function(escalaId) {
+window.deletarEscalaManualFuncionario = function (escalaId) {
   if (!confirm('Tem certeza que deseja apagar esta escala manual?\n\nO funcionário também será removido da equipe do evento.')) {
     return;
   }
-  
+
   fetch(`${API_URL}/escalas/${escalaId}`, {
     method: 'DELETE'
   })
-  .then(res => res.json())
-  .then(data => {
-    if (data.error) {
-      alert('Erro ao deletar escala: ' + data.error);
-      return;
-    }
-    
-    // Fecha o modal
-    const modalContainer = document.getElementById('modalDetalhesEvento');
-    if (modalContainer) {
-      const modal = bootstrap.Modal.getInstance(modalContainer);
-      if (modal) modal.hide();
-    }
-    
-    // Recarrega o histórico do funcionário
-    const idFuncionario = window.idClienteEdicao || window.idFuncionarioAtual;
-    if (idFuncionario && typeof carregarHistoricoJobs === 'function') {
-      carregarHistoricoJobs(idFuncionario);
-    }
-    
-    alert('✅ Escala deletada com sucesso!');
-  })
-  .catch(err => {
-    console.error('Erro ao deletar escala:', err);
-    alert('Erro ao deletar escala: ' + err.message);
-  });
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        alert('Erro ao deletar escala: ' + data.error);
+        return;
+      }
+
+      // Fecha o modal
+      const modalContainer = document.getElementById('modalDetalhesEvento');
+      if (modalContainer) {
+        const modal = bootstrap.Modal.getInstance(modalContainer);
+        if (modal) modal.hide();
+      }
+
+      // Recarrega o histórico do funcionário
+      const idFuncionario = window.idClienteEdicao || window.idFuncionarioAtual;
+      if (idFuncionario && typeof carregarHistoricoJobs === 'function') {
+        carregarHistoricoJobs(idFuncionario);
+      }
+
+      alert('✅ Escala deletada com sucesso!');
+    })
+    .catch(err => {
+      console.error('Erro ao deletar escala:', err);
+      alert('Erro ao deletar escala: ' + err.message);
+    });
 };
 
 window.abrirJobVisualizacaoPeloHistorico = function (eventoId) {
@@ -11370,6 +11398,38 @@ window.resetarSenhaFuncionario = async function () {
 
     alert(`✅ Senha resetada!\n\nNova senha temporária: ${result.senha_temporaria}\n\n⚠️ Anote esta senha! Ela só será exibida uma vez.`);
 
+    // Tentar enviar email de senha resetada se possível
+    if (result.email && result.senha_temporaria) {
+      try {
+        console.log('📧 Tentando enviar email de senha resetada...');
+        
+        if (window.emailService) {
+          const emailEnviado = await window.emailService.notificarResetSenha({
+            nome: nome,
+            email: result.email,
+            senha_nova: result.senha_temporaria
+          });
+          
+          if (emailEnviado) {
+            console.log('✅ Email de senha resetada enviado com sucesso!');
+            
+            // Adicionar informação visual se possível
+            setTimeout(() => {
+              if (window.mostrarNotificacao) {
+                window.mostrarNotificacao('📧 Email com nova senha enviado!', 'success');
+              }
+            }, 1000);
+          } else {
+            console.log('⚠️ Email não foi enviado (serviço não configurado ou erro)');
+          }
+        } else {
+          console.log('⚠️ Serviço de email não disponível');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao enviar email de senha resetada:', error);
+      }
+    }
+
   } catch (error) {
     console.error('Erro ao resetar senha:', error);
     alert('❌ Erro: ' + error.message);
@@ -11874,9 +11934,9 @@ let financeChartInstance = null;
 function inicializarFinanceiro() {
   // Sempre recarrega quando entrar na view (removido check de financeiroCarregado)
   financeiroCarregado = true;
-  
+
   console.log('💰 Inicializando módulo financeiro...');
-  
+
   // Verifica se Chart.js está carregado
   if (typeof Chart === 'undefined') {
     console.error('❌ Chart.js não está carregado!');
@@ -11884,10 +11944,10 @@ function inicializarFinanceiro() {
   } else {
     console.log('✅ Chart.js está carregado:', Chart.version);
   }
-  
+
   carregarResumoFinanceiro();
   carregarTransacoes();
-  
+
   // Pequeno delay para garantir que o canvas já está renderizado
   setTimeout(() => {
     console.log('🎨 Iniciando carregamento dos gráficos...');
@@ -11901,7 +11961,7 @@ async function carregarResumoFinanceiro() {
   try {
     const response = await fetch(`${API_URL}/financeiro/resumo`);
     const dados = await response.json();
-    
+
     // Formata valores
     const formatarValor = (v) => {
       const num = parseFloat(v) || 0;
@@ -11930,13 +11990,13 @@ async function carregarResumoFinanceiro() {
     document.getElementById('finAReceber').textContent = formatarValor(dados.aReceber);
     document.getElementById('finRecebido').textContent = formatarValor(dados.recebidoMes);
     document.getElementById('finDespesas').textContent = formatarValor(dados.despesasMes);
-    
+
     // Saldo com cor
     const saldoEl = document.getElementById('finSaldo');
     saldoEl.textContent = formatarValor(dados.saldo);
     saldoEl.classList.remove('text-success', 'text-danger');
     saldoEl.classList.add(dados.saldo >= 0 ? 'text-success' : 'text-danger');
-    
+
     // Quantidade de vencidas
     const qtdEl = document.getElementById('finQtdVencidas');
     if (qtdEl) {
@@ -11950,7 +12010,7 @@ async function carregarResumoFinanceiro() {
     }
 
     // ========== VARIAÇÕES PERCENTUAIS ==========
-    
+
     // Badge de variação do Recebido
     const varRecebidoEl = document.getElementById('finVarRecebido');
     if (varRecebidoEl) {
@@ -11990,7 +12050,7 @@ async function carregarResumoFinanceiro() {
         varSaldoEl.classList.add('bg-danger-subtle', 'text-danger');
       }
     }
-    
+
     console.log('✅ Resumo financeiro carregado', dados);
   } catch (error) {
     console.error('❌ Erro ao carregar resumo financeiro:', error);
@@ -12016,7 +12076,7 @@ async function carregarTransacoes() {
   try {
     const response = await fetch(`${API_URL}/financeiro/transacoes?${params}`);
     const data = await response.json();
-    
+
     // Verifica se há erro na resposta
     if (data && data.error) {
       console.error('❌ Erro da API:', data.error);
@@ -12024,15 +12084,15 @@ async function carregarTransacoes() {
     } else {
       transacoesCache = Array.isArray(data) ? data : [];
     }
-    
+
     // Aplica filtro de categoria localmente (client-side)
     transacoesFiltradas = transacoesCache;
     if (categoria !== 'todos') {
       transacoesFiltradas = transacoesFiltradas.filter(t => t.categoria === categoria);
     }
-    
+
     console.log('💰 Transações recebidas:', transacoesCache.length, '| Filtradas:', transacoesFiltradas.length);
-    
+
     // Reseta para primeira página ao aplicar novos filtros
     paginaAtualTransacoes = 1;
     renderizarTransacoesPaginadas();
@@ -12099,7 +12159,7 @@ function renderizarTransacoesPaginadas() {
   transacoesPagina.forEach(t => {
     const tipoClass = t.tipo === 'receita' ? 'text-income' : 'text-expense';
     const isJob = t.origem === 'job';
-    
+
     html += `
       <tr>
         <td>
@@ -12150,7 +12210,7 @@ function renderizarTransacoesPaginadas() {
 // Atualiza o resumo das transações filtradas
 function atualizarResumoTransacoesFiltradas() {
   const resumoContainer = document.getElementById('resumoTransacoesFiltradas');
-  
+
   if (!Array.isArray(transacoesFiltradas) || transacoesFiltradas.length === 0) {
     if (resumoContainer) resumoContainer.style.display = 'none';
     return;
@@ -12165,7 +12225,7 @@ function atualizarResumoTransacoesFiltradas() {
 
   transacoesFiltradas.forEach(t => {
     const valor = parseFloat(t.valor) || 0;
-    
+
     if (t.tipo === 'receita') {
       if (t.status === 'pendente' || t.status === 'atrasado') {
         totalAReceber += valor;
@@ -12195,7 +12255,7 @@ function atualizarResumoTransacoesFiltradas() {
   if (elemAReceber) elemAReceber.textContent = formatarValor(totalAReceber);
   if (elemAPagar) elemAPagar.textContent = formatarValor(totalAPagar);
   if (elemPagoRecebido) elemPagoRecebido.textContent = formatarValor(totalPagoRecebido);
-  
+
   if (elemBalanco) {
     elemBalanco.textContent = formatarValor(balancoFiltrado);
     elemBalanco.className = 'h5 mb-0 fw-bold ' + (balancoFiltrado >= 0 ? 'text-success' : 'text-danger');
@@ -12212,7 +12272,7 @@ function renderizarTransacoes(transacoes) {
 // Renderiza botões de paginação (padrão do site)
 function renderizarBotoesPaginacaoTransacoes(totalItens) {
   const totalPaginas = totalItens > 0 ? Math.ceil(totalItens / itensPorPaginaTransacoes) : 0;
-  
+
   const containerPaginacao = document.getElementById('paginacao-transacoes');
   if (!containerPaginacao) {
     console.error('❌ Container de paginação não encontrado!');
@@ -12280,11 +12340,11 @@ function renderizarBotoesPaginacaoTransacoes(totalItens) {
 }
 
 // Muda página (função global para ser chamada pelo onclick)
-window.mudarPaginaTransacoes = function(novaPagina) {
+window.mudarPaginaTransacoes = function (novaPagina) {
   const totalPaginas = Math.ceil(transacoesFiltradas.length / itensPorPaginaTransacoes);
-  
+
   if (novaPagina < 1 || novaPagina > totalPaginas) return;
-  
+
   paginaAtualTransacoes = novaPagina;
   renderizarTransacoesPaginadas();
 };
@@ -12298,21 +12358,21 @@ function filtrarTransacoes() {
 function atualizarCategoriasTransacao() {
   const tipo = document.getElementById('transacaoTipo').value;
   const select = document.getElementById('transacaoCategoria');
-  
+
   const categoriasDespesa = [
-    'Combustível', 'Manutenção', 'Logística', 'Folha de Pagamento', 
+    'Combustível', 'Manutenção', 'Logística', 'Folha de Pagamento',
     'Aluguel', 'Materiais', 'Marketing', 'Impostos', 'Fornecedores',
     'Energia/Água', 'Internet/Telefone', 'Outros'
   ];
-  
+
   const categoriasReceita = [
     'Locação', 'Serviço', 'Locação + Serviço', 'Consultoria',
     'Venda de Equipamento', 'Reembolso', 'Outros'
   ];
-  
+
   const categorias = tipo === 'receita' ? categoriasReceita : categoriasDespesa;
-  
-  select.innerHTML = categorias.map(cat => 
+
+  select.innerHTML = categorias.map(cat =>
     `<option value="${cat}">${cat}</option>`
   ).join('');
 }
@@ -12331,10 +12391,10 @@ function abrirModalNovaTransacao() {
   document.getElementById('transacaoFormaPgto').value = '';
   document.getElementById('transacaoCliente').value = '';
   document.getElementById('transacaoObs').value = '';
-  
+
   // Carrega clientes no dropdown
   carregarClientesDropdownTransacao();
-  
+
   // Habilita todos os campos
   const campos = [
     'transacaoTipo',
@@ -12347,7 +12407,7 @@ function abrirModalNovaTransacao() {
     'transacaoCliente',
     'transacaoObs'
   ];
-  
+
   campos.forEach(campo => {
     const elemento = document.getElementById(campo);
     if (elemento) {
@@ -12355,19 +12415,19 @@ function abrirModalNovaTransacao() {
       elemento.style.backgroundColor = '';
     }
   });
-  
+
   // Mostra botão Salvar e esconde botão Editar
   const btnSalvar = document.querySelector('#modalNovaTransacao .btn-primary:not(#btnEditarTransacao)');
   const btnEditar = document.getElementById('btnEditarTransacao');
-  
+
   if (btnSalvar) {
     btnSalvar.style.display = 'inline-block';
   }
-  
+
   if (btnEditar) {
     btnEditar.style.display = 'none';
   }
-  
+
   const modal = new bootstrap.Modal(document.getElementById('modalNovaTransacao'));
   modal.show();
 }
@@ -12377,9 +12437,9 @@ async function carregarClientesDropdownTransacao() {
   try {
     const response = await fetch(`${API_URL}/clientes`);
     const clientes = await response.json();
-    
+
     const select = document.getElementById('transacaoCliente');
-    select.innerHTML = '<option value="">Nenhum</option>' + 
+    select.innerHTML = '<option value="">Nenhum</option>' +
       clientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
   } catch (error) {
     console.error('Erro ao carregar clientes:', error);
@@ -12392,7 +12452,7 @@ async function salvarTransacao() {
   const tipo = document.getElementById('transacaoTipo').value;
   const status = document.getElementById('transacaoStatus').value;
   const dataVencimento = document.getElementById('transacaoVencimento').value;
-  
+
   const dados = {
     tipo: tipo,
     categoria: document.getElementById('transacaoCategoria').value,
@@ -12442,7 +12502,7 @@ async function salvarTransacao() {
       const tipoTexto = tipo === 'receita' ? 'Receita' : 'Despesa';
       alert(id ? `${tipoTexto} atualizada com sucesso!` : `${tipoTexto} cadastrada com sucesso!`);
       bootstrap.Modal.getInstance(document.getElementById('modalNovaTransacao'))?.hide();
-      
+
       // Recarrega tudo
       carregarTransacoes();
       carregarResumoFinanceiro();
@@ -12474,7 +12534,7 @@ function visualizarTransacao(id) {
   document.getElementById('transacaoStatus').value = transacao.status;
   document.getElementById('transacaoFormaPgto').value = transacao.forma_pagamento || '';
   document.getElementById('transacaoObs').value = transacao.observacoes || '';
-  
+
   // Carrega clientes e seleciona o correto
   carregarClientesDropdownTransacao();
   setTimeout(() => {
@@ -12482,7 +12542,7 @@ function visualizarTransacao(id) {
       document.getElementById('transacaoCliente').value = transacao.cliente_id;
     }
   }, 100);
-  
+
   // Desabilita todos os campos (modo somente leitura)
   const campos = [
     'transacaoTipo',
@@ -12495,7 +12555,7 @@ function visualizarTransacao(id) {
     'transacaoCliente',
     'transacaoObs'
   ];
-  
+
   campos.forEach(campo => {
     const elemento = document.getElementById(campo);
     if (elemento) {
@@ -12503,15 +12563,15 @@ function visualizarTransacao(id) {
       elemento.style.backgroundColor = '#f8f9fa';
     }
   });
-  
+
   // Esconde botão Salvar e mostra botão Editar
   const btnSalvar = document.querySelector('#modalNovaTransacao .btn-primary:not(#btnEditarTransacao)');
   const btnCancelar = document.querySelector('#modalNovaTransacao .btn-light');
-  
+
   if (btnSalvar) {
     btnSalvar.style.display = 'none';
   }
-  
+
   // Adiciona botão de Editar se não existir
   let btnEditar = document.getElementById('btnEditarTransacao');
   if (!btnEditar) {
@@ -12526,7 +12586,7 @@ function visualizarTransacao(id) {
     btnEditar.style.display = 'inline-block';
     btnEditar.onclick = () => habilitarEdicaoTransacao(id);
   }
-  
+
   const modal = new bootstrap.Modal(document.getElementById('modalNovaTransacao'));
   modal.show();
 }
@@ -12545,7 +12605,7 @@ function habilitarEdicaoTransacao(id) {
     'transacaoCliente',
     'transacaoObs'
   ];
-  
+
   campos.forEach(campo => {
     const elemento = document.getElementById(campo);
     if (elemento) {
@@ -12553,17 +12613,17 @@ function habilitarEdicaoTransacao(id) {
       elemento.style.backgroundColor = '';
     }
   });
-  
+
   // Mostra botão Salvar e esconde botão Editar
   const btnSalvar = document.querySelector('#modalNovaTransacao .btn-primary:not(#btnEditarTransacao)');
   const btnEditar = document.getElementById('btnEditarTransacao');
-  
+
   document.getElementById('modalTransacaoTitulo').textContent = 'Editar Transação';
-  
+
   if (btnSalvar) {
     btnSalvar.style.display = 'inline-block';
   }
-  
+
   if (btnEditar) {
     btnEditar.style.display = 'none';
   }
@@ -12584,14 +12644,14 @@ function editarTransacao(id) {
   document.getElementById('transacaoStatus').value = transacao.status;
   document.getElementById('transacaoFormaPgto').value = transacao.forma_pagamento || '';
   document.getElementById('transacaoObs').value = transacao.observacoes || '';
-  
+
   carregarClientesDropdownTransacao();
   setTimeout(() => {
     if (transacao.cliente_id) {
       document.getElementById('transacaoCliente').value = transacao.cliente_id;
     }
   }, 100);
-  
+
   // Garante que todos os campos estão habilitados
   const campos = [
     'transacaoTipo',
@@ -12604,7 +12664,7 @@ function editarTransacao(id) {
     'transacaoCliente',
     'transacaoObs'
   ];
-  
+
   campos.forEach(campo => {
     const elemento = document.getElementById(campo);
     if (elemento) {
@@ -12612,19 +12672,19 @@ function editarTransacao(id) {
       elemento.style.backgroundColor = '';
     }
   });
-  
+
   // Garante que botão Salvar está visível e botão Editar escondido
   const btnSalvar = document.querySelector('#modalNovaTransacao .btn-primary:not(#btnEditarTransacao)');
   const btnEditar = document.getElementById('btnEditarTransacao');
-  
+
   if (btnSalvar) {
     btnSalvar.style.display = 'inline-block';
   }
-  
+
   if (btnEditar) {
     btnEditar.style.display = 'none';
   }
-  
+
   const modal = new bootstrap.Modal(document.getElementById('modalNovaTransacao'));
   modal.show();
 }
@@ -12707,7 +12767,7 @@ async function carregarGraficoFluxoCaixa() {
     console.log('📊 Carregando gráfico de fluxo de caixa...');
     const response = await fetch(`${API_URL}/financeiro/grafico-fluxo`);
     const dados = await response.json();
-    
+
     console.log('📊 Dados recebidos do gráfico:', dados);
     console.log('📊 Estrutura completa:', JSON.stringify(dados, null, 2));
     console.log('📊 Entradas:', dados.entradas);
@@ -12748,7 +12808,7 @@ async function carregarGraficoFluxoCaixa() {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: function(context) {
+              label: function (context) {
                 return context.dataset.label + ': R$ ' + context.raw.toLocaleString('pt-BR');
               }
             }
@@ -12758,19 +12818,19 @@ async function carregarGraficoFluxoCaixa() {
           y: {
             beginAtZero: true,
             ticks: {
-              callback: function(value) {
+              callback: function (value) {
                 if (value === 0) return 'R$ 0';
-                
+
                 // Se for 1 milhão ou mais, mostra em milhões
                 if (value >= 1000000) {
                   return 'R$ ' + (value / 1000000).toFixed(1) + 'M';
                 }
-                
+
                 // Se for 1 mil ou mais, mostra em milhares
                 if (value >= 1000) {
                   return 'R$ ' + (value / 1000).toFixed(1) + 'K';
                 }
-                
+
                 // Se for menos de 1 mil, mostra o valor inteiro
                 return 'R$ ' + value.toFixed(0);
               }
@@ -12810,7 +12870,7 @@ async function carregarGraficoDespesasCategoria() {
     console.log('🍰 Carregando gráfico de despesas por categoria...');
     const response = await fetch(`${API_URL}/financeiro/despesas-por-categoria`);
     const dados = await response.json();
-    
+
     console.log('🍰 Dados recebidos:', dados);
     console.log('🍰 Estrutura completa:', JSON.stringify(dados, null, 2));
     console.log('🍰 Labels:', dados.labels);
@@ -12869,7 +12929,7 @@ async function carregarGraficoDespesasCategoria() {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: function(context) {
+              label: function (context) {
                 const valor = context.raw || 0;
                 const porcentagem = dados.total > 0 ? ((valor / dados.total) * 100).toFixed(1) : 0;
                 return `${context.label}: R$ ${valor.toLocaleString('pt-BR')} (${porcentagem}%)`;
@@ -12914,3 +12974,209 @@ window.marcarJobPago = marcarJobPago;
 window.excluirTransacao = excluirTransacao;
 window.filtrarTransacoes = filtrarTransacoes;
 window.exportarFinanceiro = exportarFinanceiro;
+
+// ============================================
+// FUNÇÕES DE CONFIGURAÇÃO DE EMAIL
+// ============================================
+
+/**
+ * Verifica status do email na aba sistema
+ */
+async function verificarStatusEmailSistema() {
+  const container = document.getElementById('emailStatusContainer');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div class="alert alert-info d-flex align-items-center">
+      <div class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">Verificando...</span>
+      </div>
+      <div>Verificando configuração de email...</div>
+    </div>
+  `;
+  
+  try {
+    if (!window.emailService) {
+      throw new Error('Serviço de email não carregado');
+    }
+    
+    const status = await window.emailService.verificarStatus(true);
+    
+    if (status.success) {
+      const alertClass = status.configurado ? 'alert-success' : 'alert-warning';
+      const icon = status.configurado ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+      
+      container.innerHTML = `
+        <div class="alert ${alertClass} d-flex align-items-center">
+          <i class="bi ${icon} me-2 fs-5"></i>
+          <div>
+            <strong>${status.message}</strong><br>
+            <small>${status.configurado ? 
+              'Email funcionando! Boas-vindas e notificações serão enviadas automaticamente.' : 
+              'Configure as variáveis de ambiente no Railway para habilitar emails automáticos.'
+            }</small>
+          </div>
+        </div>
+      `;
+    } else {
+      container.innerHTML = `
+        <div class="alert alert-danger d-flex align-items-center">
+          <i class="bi bi-x-circle-fill me-2 fs-5"></i>
+          <div>
+            <strong>❌ Erro ao verificar email</strong><br>
+            <small>${status.message || 'Erro desconhecido'}</small>
+          </div>
+        </div>
+      `;
+    }
+  } catch (error) {
+    container.innerHTML = `
+      <div class="alert alert-danger d-flex align-items-center">
+        <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i>
+        <div>
+          <strong>❌ Falha na conexão</strong><br>
+          <small>${error.message}</small>
+        </div>
+      </div>
+    `;
+  }
+}
+
+/**
+ * Abre ferramenta de teste de email
+ */
+function abrirTesteEmail() {
+  if (window.emailService) {
+    window.emailService.abrirTesteEmail();
+  } else {
+    const url = window.location.origin + '/email-teste.html';
+    window.open(url, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+  }
+}
+
+// Auto-verificar status do email quando a aba Sistema for aberta
+document.addEventListener('DOMContentLoaded', function() {
+  // Observer para detectar quando a aba sistema é ativada
+  const tabSistema = document.querySelector('[data-bs-target="#tab-sistema"]');
+  if (tabSistema) {
+    tabSistema.addEventListener('shown.bs.tab', function() {
+      // Verificar status automaticamente quando a aba for aberta
+      setTimeout(verificarStatusEmailSistema, 100);
+    });
+  }
+});
+
+// Expor funções globalmente
+window.verificarStatusEmailSistema = verificarStatusEmailSistema;
+window.abrirTesteEmail = abrirTesteEmail;
+
+// ============================================
+// FUNÇÕES DE DEBUG DE NOTIFICAÇÕES
+// ============================================
+
+/**
+ * Testa sistema de notificações via interface
+ */
+async function testarSistemaNotificacoes() {
+  const container = document.getElementById('notificacaoStatusContainer');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="alert alert-info d-flex align-items-center">
+      <div class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">Testando...</span>
+      </div>
+      <div>Executando teste completo do sistema de notificações...</div>
+    </div>
+  `;
+
+  try {
+    // Executar teste via console e capturar resultado
+    if (typeof window.debugNotificacoes === 'function') {
+      console.log('🧪 Iniciando teste de notificações...');
+      await window.debugNotificacoes();
+      
+      container.innerHTML = `
+        <div class="alert alert-success d-flex align-items-center">
+          <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+          <div>
+            <strong>✅ Teste executado com sucesso!</strong><br>
+            <small>Verifique o console do navegador (F12) para ver detalhes completos.</small>
+          </div>
+        </div>
+      `;
+    } else {
+      throw new Error('Função de debug não encontrada');
+    }
+  } catch (error) {
+    container.innerHTML = `
+      <div class="alert alert-danger d-flex align-items-center">
+        <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i>
+        <div>
+          <strong>❌ Erro no teste</strong><br>
+          <small>${error.message}</small>
+        </div>
+      </div>
+    `;
+  }
+}
+
+/**
+ * Força criação das tabelas de notificação
+ */
+async function criarTabelasNotificacoes() {
+  const container = document.getElementById('notificacaoStatusContainer');
+  if (!container) return;
+
+  if (!confirm('Criar tabelas de notificação no banco? Esta operação é segura e não afeta dados existentes.')) {
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="alert alert-info d-flex align-items-center">
+      <div class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">Criando...</span>
+      </div>
+      <div>Criando tabelas de notificação no banco de dados...</div>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('/debug/criar-tabelas-notificacoes', { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const result = await response.json();
+
+    if (result.success) {
+      container.innerHTML = `
+        <div class="alert alert-success d-flex align-items-center">
+          <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+          <div>
+            <strong>✅ ${result.message}</strong><br>
+            <small>${result.detalhes || 'Tabelas criadas/verificadas com sucesso!'}</small>
+          </div>
+        </div>
+      `;
+    } else {
+      throw new Error(result.message || 'Erro desconhecido');
+    }
+  } catch (error) {
+    container.innerHTML = `
+      <div class="alert alert-danger d-flex align-items-center">
+        <i class="bi bi-x-circle-fill me-2 fs-5"></i>
+        <div>
+          <strong>❌ Erro ao criar tabelas</strong><br>
+          <small>${error.message}</small>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// Expor funções globalmente  
+window.testarSistemaNotificacoes = testarSistemaNotificacoes;
+window.criarTabelasNotificacoes = criarTabelasNotificacoes;
