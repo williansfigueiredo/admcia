@@ -37,17 +37,39 @@ function inicializarEmail() {
   console.log(`📧 Tentando configurar email: host=${smtpHost}, port=${smtpPort}, secure=${useSecure}, user=${smtpUser ? smtpUser.substring(0, 5) + '...' : 'NÃO DEFINIDO'}`);
 
   if (smtpUser && smtpPass) {
-    // DNS lookup customizado que FORÇA IPv4
+    // WORKAROUND para Railway: Força IPv4 usando Net.Socket
+    const net = require('net');
     const dns = require('dns');
-    const customLookup = (hostname, options, callback) => {
-      console.log(`🔍 Forçando lookup IPv4 para: ${hostname}`);
+    
+    // DNS lookup agressivo que FORÇA IPv4 e rejeita IPv6
+    const forceIPv4Lookup = (hostname, options, callback) => {
+      console.log(`🔍 [IPv4 FORÇADO] Resolvendo: ${hostname}`);
+      
+      // Usar apenas DNS IPv4
+      dns.setDefaultResultOrder('ipv4first');
+      
       dns.resolve4(hostname, (err, addresses) => {
         if (err) {
-          console.error(`❌ Erro no DNS lookup: ${err.message}`);
-          return callback(err);
+          console.error(`❌ Erro no DNS IPv4: ${err.message}`);
+          // Fallback: tentar alguns IPs conhecidos do Gmail
+          const gmailIPs = ['142.250.80.109', '142.250.115.109', '142.251.16.109'];
+          const randomIP = gmailIPs[Math.floor(Math.random() * gmailIPs.length)];
+          console.log(`🔄 Usando IP fallback do Gmail: ${randomIP}`);
+          return callback(null, randomIP, 4);
         }
-        console.log(`✅ Resolvido para IPv4: ${addresses[0]}`);
-        callback(null, addresses[0], 4);
+        
+        const ipv4 = addresses[0];
+        console.log(`✅ Resolvido para IPv4: ${ipv4}`);
+        
+        // GARANTIR que é IPv4 (não tem :)
+        if (ipv4.includes(':')) {
+          console.error(`❌ ERRO: Ainda recebeu IPv6! ${ipv4}`);
+          const gmailIPs = ['142.250.80.109'];
+          console.log(`🔄 Forçando IP hardcoded: ${gmailIPs[0]}`);
+          return callback(null, gmailIPs[0], 4);
+        }
+        
+        callback(null, ipv4, 4);
       });
     };
 
@@ -70,11 +92,13 @@ function inicializarEmail() {
         // Não falha em certificados auto-assinados
         rejectUnauthorized: false,
         // Permite conexões menos seguras
-        ciphers: 'SSLv3'
+        ciphers: 'SSLv3',
+        // Nome do servidor para validação TLS
+        servername: smtpHost // Importante para IPs diretos
       },
       // FORÇA IPv4 - múltiplas estratégias
       family: 4,
-      lookup: customLookup, // DNS lookup que só retorna IPv4
+      lookup: forceIPv4Lookup, // DNS lookup que só retorna IPv4
       // Pool de conexões para melhor performance
       pool: true,
       maxConnections: 5,
