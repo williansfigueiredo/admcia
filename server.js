@@ -1530,7 +1530,9 @@ app.get('/financeiro/transacoes', (req, res) => {
         ELSE 'pendente'
       END COLLATE utf8mb4_unicode_ci as status_calc,
       c.nome COLLATE utf8mb4_unicode_ci as cliente_nome,
-      j.cliente_id
+      j.cliente_id,
+      NULL as forma_pagamento,
+      NULL as observacoes
     FROM jobs j
     LEFT JOIN clientes c ON j.cliente_id = c.id
     WHERE j.status != 'Cancelado'
@@ -1549,7 +1551,9 @@ app.get('/financeiro/transacoes', (req, res) => {
       t.data_pagamento,
       t.status COLLATE utf8mb4_unicode_ci as status_calc,
       c.nome COLLATE utf8mb4_unicode_ci as cliente_nome,
-      t.cliente_id
+      t.cliente_id,
+      t.forma_pagamento COLLATE utf8mb4_unicode_ci as forma_pagamento,
+      t.observacoes COLLATE utf8mb4_unicode_ci as observacoes
     FROM transacoes t
     LEFT JOIN clientes c ON t.cliente_id = c.id
   `;
