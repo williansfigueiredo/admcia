@@ -3087,11 +3087,11 @@ function renderizarGraficoStatusJobs() {
 function toggleSidebarMobile() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
-  
+
   if (!sidebar) return;
-  
+
   const isOpen = sidebar.classList.contains('show');
-  
+
   if (isOpen) {
     sidebar.classList.remove('show');
     if (overlay) overlay.classList.remove('show');
@@ -3106,7 +3106,7 @@ function toggleSidebarMobile() {
 function closeSidebarMobile() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
-  
+
   if (sidebar) sidebar.classList.remove('show');
   if (overlay) overlay.classList.remove('show');
   document.body.style.overflow = '';
@@ -4137,7 +4137,7 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
       // ✅ DETECTA SE É MUDANÇA NEUTRA (não mexe com estoque)
       const ambosAtivos = ativos.includes(statusAntigo) && ativos.includes(novoValor);
       const ambosInativos = inativos.includes(statusAntigo) && inativos.includes(novoValor);
-      
+
       if (ambosAtivos || ambosInativos) {
         console.log("⚡ Mudança neutra detectada - pulando validação de estoque");
         pularValidacaoEstoque = true;
@@ -4147,7 +4147,7 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
     // ⚡ SE FOR MUDANÇA SIMPLES, SALVA DIRETO (RÁPIDO!)
     if (tipo === 'pagamento' || pularValidacaoEstoque) {
       console.log("⚡ Salvando mudança rápida...");
-      
+
       await fetch(`${API_URL}/jobs/update/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4186,7 +4186,7 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
 
       // Atualiza cache e interface
       atualizarCacheEInterface(id, tipo, novoValor);
-      
+
       return; // ⚡ SAI AQUI - NÃO EXECUTA O RESTO
     }
 
@@ -4404,7 +4404,7 @@ async function salvarEdicao(selectElem, id, tipo, valorOriginal) {
         }
         console.log(`✅ Cache local atualizado: ${tipo} = ${novoValor}`);
       }
-      
+
       // Atualiza também jobsFiltrados se existir
       if (window.jobsFiltrados && Array.isArray(window.jobsFiltrados)) {
         const jobNoFiltro = window.jobsFiltrados.find(j => j.id == id);
@@ -4457,7 +4457,7 @@ function atualizarCacheEInterface(id, tipo, novoValor) {
       }
       console.log(`✅ Cache local atualizado: ${tipo} = ${novoValor}`);
     }
-    
+
     // Atualiza também jobsFiltrados
     if (window.jobsFiltrados && Array.isArray(window.jobsFiltrados)) {
       const jobNoFiltro = window.jobsFiltrados.find(j => j.id == id);
@@ -9356,19 +9356,19 @@ window.salvarFuncionario = function () {
     .then(response => response.json())
     .then(async (resultado) => {
       alert("Funcionário salvo com sucesso!");
-      
+
       // Se é um novo funcionário e tem email, tentar enviar email de boas-vindas
       if (isNovoFuncionario && dados.email && resultado.senha_temporaria) {
         try {
           console.log('📧 Tentando enviar email de boas-vindas...');
-          
+
           if (window.emailService) {
             const emailEnviado = await window.emailService.notificarNovoFuncionario({
               nome: dados.nome,
               email: dados.email,
               senha_temporaria: resultado.senha_temporaria
             });
-            
+
             if (emailEnviado) {
               console.log('✅ Email de boas-vindas enviado com sucesso!');
             } else {
@@ -9381,7 +9381,7 @@ window.salvarFuncionario = function () {
           console.error('❌ Erro ao enviar email de boas-vindas:', error);
         }
       }
-      
+
       switchView('funcionarios');
       carregarFuncionarios();
     })
@@ -11594,17 +11594,17 @@ window.resetarSenhaFuncionario = async function () {
     if (result.email && result.senha_temporaria) {
       try {
         console.log('📧 Tentando enviar email de senha resetada...');
-        
+
         if (window.emailService) {
           const emailEnviado = await window.emailService.notificarResetSenha({
             nome: nome,
             email: result.email,
             senha_nova: result.senha_temporaria
           });
-          
+
           if (emailEnviado) {
             console.log('✅ Email de senha resetada enviado com sucesso!');
-            
+
             // Adicionar informação visual se possível
             setTimeout(() => {
               if (window.mostrarNotificacao) {
@@ -13177,7 +13177,7 @@ window.exportarFinanceiro = exportarFinanceiro;
 async function verificarStatusEmailSistema() {
   const container = document.getElementById('emailStatusContainer');
   if (!container) return;
-  
+
   container.innerHTML = `
     <div class="alert alert-info d-flex align-items-center">
       <div class="spinner-border spinner-border-sm me-2" role="status">
@@ -13186,27 +13186,27 @@ async function verificarStatusEmailSistema() {
       <div>Verificando configuração de email...</div>
     </div>
   `;
-  
+
   try {
     if (!window.emailService) {
       throw new Error('Serviço de email não carregado');
     }
-    
+
     const status = await window.emailService.verificarStatus(true);
-    
+
     if (status.success) {
       const alertClass = status.configurado ? 'alert-success' : 'alert-warning';
       const icon = status.configurado ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
-      
+
       container.innerHTML = `
         <div class="alert ${alertClass} d-flex align-items-center">
           <i class="bi ${icon} me-2 fs-5"></i>
           <div>
             <strong>${status.message}</strong><br>
-            <small>${status.configurado ? 
-              'Email funcionando! Boas-vindas e notificações serão enviadas automaticamente.' : 
-              'Configure as variáveis de ambiente no Railway para habilitar emails automáticos.'
-            }</small>
+            <small>${status.configurado ?
+          'Email funcionando! Boas-vindas e notificações serão enviadas automaticamente.' :
+          'Configure as variáveis de ambiente no Railway para habilitar emails automáticos.'
+        }</small>
           </div>
         </div>
       `;
@@ -13247,11 +13247,11 @@ function abrirTesteEmail() {
 }
 
 // Auto-verificar status do email quando a aba Sistema for aberta
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   // Observer para detectar quando a aba sistema é ativada
   const tabSistema = document.querySelector('[data-bs-target="#tab-sistema"]');
   if (tabSistema) {
-    tabSistema.addEventListener('shown.bs.tab', function() {
+    tabSistema.addEventListener('shown.bs.tab', function () {
       // Verificar status automaticamente quando a aba for aberta
       setTimeout(verificarStatusEmailSistema, 100);
     });
@@ -13287,7 +13287,7 @@ async function testarSistemaNotificacoes() {
     if (typeof window.debugNotificacoes === 'function') {
       console.log('🧪 Iniciando teste de notificações...');
       await window.debugNotificacoes();
-      
+
       container.innerHTML = `
         <div class="alert alert-success d-flex align-items-center">
           <i class="bi bi-check-circle-fill me-2 fs-5"></i>
@@ -13334,13 +13334,13 @@ async function criarTabelasNotificacoes() {
   `;
 
   try {
-    const response = await fetch('/debug/criar-tabelas-notificacoes', { 
+    const response = await fetch('/debug/criar-tabelas-notificacoes', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       }
     });
-    
+
     const result = await response.json();
 
     if (result.success) {
@@ -13396,17 +13396,17 @@ async function diagnosticarSMTPSistema() {
         'Content-Type': 'application/json'
       }
     });
-    
+
     const data = await response.json();
 
     if (data.success && data.configs) {
       const working = data.configs.filter(c => c.status === 'success');
       const failed = data.configs.filter(c => c.status === 'error');
-      
+
       let alertClass = 'alert-success';
       let icon = 'bi-check-circle-fill';
       let title = '✅ Diagnóstico concluído!';
-      
+
       if (working.length === 0) {
         alertClass = 'alert-danger';
         icon = 'bi-x-circle-fill';

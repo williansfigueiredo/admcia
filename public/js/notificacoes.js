@@ -258,14 +258,14 @@ async function adicionarNotificacao(tipo, titulo, texto, job_id = null) {
 // Renderiza as notificações no dropdown
 async function renderizarNotificacoes() {
   const todasNotificacoes = await obterNotificacoes();
-  
+
   // Filtrar apenas as notificações NÃO LIDAS
   const notificacoes = todasNotificacoes.filter(n => !n.lida);
-  
+
   console.log('📊 Total de notificações:', todasNotificacoes.length);
   console.log('📊 Notificações não lidas:', notificacoes.length);
   console.log('📊 Notificações lidas:', todasNotificacoes.filter(n => n.lida).length);
-  
+
   const lista = document.getElementById('listaNotificacoes');
 
   if (!lista) return;
@@ -391,7 +391,7 @@ async function marcarComoLida(id, event) {
   if (badge) {
     const numAtual = parseInt(badge.textContent) || 0;
     const novoNum = Math.max(0, numAtual - 1);
-    
+
     if (novoNum > 0) {
       badge.textContent = novoNum > 99 ? '99+' : novoNum;
     } else {
@@ -402,10 +402,10 @@ async function marcarComoLida(id, event) {
   // 3. CHAMAR API EM BACKGROUND
   try {
     console.log(`✓ Marcando notificação ${id} como lida...`);
-    
+
     const response = await fetch(`${window.API_URL}/notificacoes/${id}/lida`, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache'
       },
@@ -427,11 +427,11 @@ async function marcarComoLida(id, event) {
           notifElement.style.padding = '0 16px';
           notifElement.style.opacity = '0';
         }, 10);
-        
+
         // Remove do DOM após animação
         setTimeout(() => {
           notifElement.remove();
-          
+
           // Se não houver mais notificações, mostrar mensagem de vazio
           const lista = document.getElementById('listaNotificacoes');
           if (lista && lista.children.length === 0) {
@@ -445,16 +445,16 @@ async function marcarComoLida(id, event) {
         }, 300);
       }
     }, 300);
-    
+
   } catch (error) {
     console.error('❌ Erro ao marcar notificação como lida:', error);
-    
+
     // Reverter mudanças visuais em caso de erro
     if (notifElement) {
       notifElement.classList.add('nao-lida');
       notifElement.classList.remove('marcando-lida');
     }
-    
+
     // Re-atualizar o badge corretamente
     atualizarBadgeNotificacoes();
   }
@@ -468,10 +468,10 @@ async function limparTodasNotificacoes() {
   if (confirm('Deseja marcar todas as notificações como lidas?')) {
     try {
       console.log('🧹 Limpando todas as notificações...');
-      
+
       const response = await fetch(`${window.API_URL}/notificacoes/marcar-todas-lidas`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache'
         },
@@ -483,11 +483,11 @@ async function limparTodasNotificacoes() {
       }
 
       console.log('✅ Notificações marcadas como lidas');
-      
+
       // Recarregar notificações forçadamente
       await renderizarNotificacoes();
       atualizarBadgeNotificacoes();
-      
+
       console.log('✅ Interface atualizada');
     } catch (error) {
       console.error('❌ Erro ao limpar notificações:', error);

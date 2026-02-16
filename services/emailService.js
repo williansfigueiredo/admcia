@@ -228,6 +228,34 @@ function templateSenhaResetada(nome, email, senha, urlSistema) {
 }
 
 /**
+ * Gera email de senha definida (pelo Master)
+ */
+function templateSenhaDefinida(nome, email, senha, urlSistema) {
+  const conteudo = `
+    <h2>Olá, ${nome}! 👋</h2>
+    <p>O administrador do sistema definiu uma senha de acesso para você.</p>
+    
+    <div class="credentials">
+      <h3 style="margin-top: 0; color: #2e7d32;">🔐 Suas Credenciais de Acesso</h3>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Senha:</strong> ${senha}</p>
+    </div>
+    
+    <div class="highlight-box">
+      <p class="warning"><strong>⚠️ Recomendação de Segurança:</strong></p>
+      <p>Por segurança, recomendamos que você altere sua senha no primeiro acesso.</p>
+      <p>Acesse: <strong>Configurações → Segurança → Alterar Senha</strong></p>
+    </div>
+    
+    <p style="text-align: center;">
+      <a href="${urlSistema}" class="btn">Acessar o Sistema</a>
+    </p>
+  `;
+
+  return templateBase(conteudo, 'Senha Definida');
+}
+
+/**
  * Gera email de recuperação de senha (Esqueci minha senha)
  */
 function templateRecuperacaoSenha(nome, codigo, urlRecuperacao, minutosExpiracao = 30) {
@@ -426,6 +454,14 @@ async function enviarEmailSenhaResetada(nome, email, senha, urlSistema = 'http:/
 }
 
 /**
+ * Envia email de senha definida (pelo Master)
+ */
+async function enviarEmailSenhaDefinida(nome, email, senha, urlSistema = 'http://localhost:3000') {
+  const html = templateSenhaDefinida(nome, email, senha, urlSistema);
+  return await enviarEmail(email, '🔑 Senha de Acesso Definida', html);
+}
+
+/**
  * Envia email de recuperação de senha
  */
 async function enviarEmailRecuperacaoSenha(nome, email, codigo, urlRecuperacao) {
@@ -566,6 +602,7 @@ module.exports = {
   enviarEmail,
   enviarEmailNovoAcesso,
   enviarEmailSenhaResetada,
+  enviarEmailSenhaDefinida,
   enviarEmailRecuperacaoSenha,
   testarConfiguracaoEmail
 };

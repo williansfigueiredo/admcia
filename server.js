@@ -1872,13 +1872,13 @@ function limparNotificacoesAntigas() {
     DELETE FROM notificacoes 
     WHERE criado_em < DATE_SUB(NOW(), INTERVAL 15 DAY)
   `;
-  
+
   db.query(sql, (err, result) => {
     if (err) {
       console.error('❌ Erro ao limpar notificações antigas:', err);
       return;
     }
-    
+
     if (result.affectedRows > 0) {
       console.log(`🧹 Limpeza automática: ${result.affectedRows} notificações antigas removidas`);
       console.log(`📅 Data/Hora: ${new Date().toLocaleString('pt-BR')}`);
@@ -1895,12 +1895,12 @@ function limparNotificacoesAntigas() {
 function inicializarLimpezaNotificacoes() {
   console.log('🧹 Sistema de limpeza automática de notificações iniciado');
   console.log('📅 Notificações com mais de 15 dias serão removidas automaticamente');
-  
+
   // Executa a primeira limpeza após 1 minuto (para não sobrecarregar na inicialização)
   setTimeout(() => {
     limparNotificacoesAntigas();
   }, 60 * 1000);
-  
+
   // Depois executa a cada 24 horas (86400000 ms = 24h)
   setInterval(() => {
     limparNotificacoesAntigas();
@@ -3040,11 +3040,11 @@ app.get('/debug/email-status', (req, res) => {
     const emailService = require('./services/emailService');
     const configurado = emailService.emailConfigurado();
     const metodo = emailService.getEmailMethod();
-    
+
     // Configuração específica por método
     let configAtual = {};
     let variaveis = [];
-    
+
     if (metodo === 'resend') {
       configAtual = {
         metodo: 'Resend API ✅',
@@ -3078,17 +3078,17 @@ app.get('/debug/email-status', (req, res) => {
         'OPÇÃO 2: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS'
       ];
     }
-    
+
     res.json({
       success: true,
       configurado: configurado,
       metodo_ativo: metodo,
-      message: configurado 
-        ? `✅ Email configurado via ${metodo.toUpperCase()}` 
+      message: configurado
+        ? `✅ Email configurado via ${metodo.toUpperCase()}`
         : '⚠️ Serviço de email não configurado',
       configuracao_atual: configAtual,
       variaveis_necessarias: variaveis,
-      instrucao: configurado 
+      instrucao: configurado
         ? 'Email funcionando! Use /debug/testar-email para enviar um teste'
         : 'Configure RESEND_API_KEY (recomendado) ou SMTP no Railway'
     });
@@ -3105,7 +3105,7 @@ app.get('/debug/email-status', (req, res) => {
 app.post('/debug/testar-email', (req, res) => {
   try {
     const emailService = require('./services/emailService');
-    
+
     if (!emailService.emailConfigurado()) {
       return res.status(400).json({
         success: false,
@@ -3113,9 +3113,9 @@ app.post('/debug/testar-email', (req, res) => {
         instrucao: 'Configure as variáveis de ambiente primeiro'
       });
     }
-    
+
     const { destinatario, assunto, mensagem } = req.body;
-    
+
     if (!destinatario) {
       return res.status(400).json({
         success: false,
@@ -3127,14 +3127,14 @@ app.post('/debug/testar-email', (req, res) => {
         }
       });
     }
-    
+
     const assuntoFinal = assunto || '🧪 Teste de Email do Sistema';
     const mensagemFinal = mensagem || `
       <h2>✅ Email funcionando!</h2>
       <p>Este é um email de teste enviado em ${new Date().toLocaleString('pt-BR')}.</p>
       <p>Se você recebeu este email, a configuração está correta! 🎉</p>
     `;
-    
+
     emailService.enviarEmail(destinatario, assuntoFinal, mensagemFinal)
       .then(resultado => {
         if (resultado.success) {
@@ -3164,7 +3164,7 @@ app.post('/debug/testar-email', (req, res) => {
           error: error.message
         });
       });
-      
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -3178,7 +3178,7 @@ app.post('/debug/testar-email', (req, res) => {
 app.post('/debug/testar-resend', async (req, res) => {
   try {
     const apiKey = process.env.RESEND_API_KEY;
-    
+
     if (!apiKey) {
       return res.status(400).json({
         success: false,
@@ -3189,15 +3189,15 @@ app.post('/debug/testar-resend', async (req, res) => {
 
     const { Resend } = require('resend');
     const resendClient = new Resend(apiKey);
-    
+
     const emailPara = req.body.email || 'williansfigueiredo@gmail.com';
     const emailDe = process.env.RESEND_FROM || 'onboarding@resend.dev';
-    
+
     console.log('🧪 TESTE DIRETO RESEND');
     console.log(`  API Key: ${apiKey.substring(0, 10)}...`);
     console.log(`  From: ${emailDe}`);
     console.log(`  To: ${emailPara}`);
-    
+
     try {
       const result = await resendClient.emails.send({
         from: emailDe,
@@ -3210,9 +3210,9 @@ app.post('/debug/testar-resend', async (req, res) => {
           <p>Se você recebeu, está funcionando! 🎉</p>
         `
       });
-      
+
       console.log('📧 RESPOSTA DO RESEND:', JSON.stringify(result, null, 2));
-      
+
       // Verificar se tem erro
       if (result?.error) {
         return res.status(400).json({
@@ -3222,7 +3222,7 @@ app.post('/debug/testar-resend', async (req, res) => {
           detalhes: result
         });
       }
-      
+
       res.json({
         success: true,
         message: '✅ Email enviado via Resend!',
@@ -3231,10 +3231,10 @@ app.post('/debug/testar-resend', async (req, res) => {
         de: emailDe,
         resposta_completa: result
       });
-      
+
     } catch (sendError) {
       console.error('❌ ERRO AO ENVIAR:', sendError);
-      
+
       res.status(500).json({
         success: false,
         error: sendError.message,
@@ -3243,7 +3243,7 @@ app.post('/debug/testar-resend', async (req, res) => {
         message: 'Falha ao enviar via Resend'
       });
     }
-    
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -3257,20 +3257,20 @@ app.post('/debug/testar-resend', async (req, res) => {
 app.post('/debug/testar-smtp-configs', async (req, res) => {
   try {
     const emailService = require('./services/emailService');
-    
+
     console.log('🧪 Iniciando teste de configurações SMTP...');
     const resultado = await emailService.testarConfiguracaoEmail();
-    
+
     res.json({
       success: true,
       message: 'Teste de configurações concluído',
       ...resultado,
       timestamp: new Date().toISOString(),
-      dica: resultado.success 
-        ? `Use a configuração: ${resultado.recommendation.name}` 
+      dica: resultado.success
+        ? `Use a configuração: ${resultado.recommendation.name}`
         : 'Nenhuma configuração funcionou. Verifique credenciais e conectividade.'
     });
-    
+
   } catch (error) {
     console.error('Erro ao testar configurações SMTP:', error);
     res.status(500).json({
@@ -3285,25 +3285,25 @@ app.post('/debug/testar-smtp-configs', async (req, res) => {
 app.post('/email/novo-acesso', (req, res) => {
   try {
     const emailService = require('./services/emailService');
-    
+
     if (!emailService.emailConfigurado()) {
       return res.status(400).json({
         success: false,
         message: '⚠️ Serviço de email não configurado'
       });
     }
-    
+
     const { nome, email, senha, urlSistema } = req.body;
-    
+
     if (!nome || !email || !senha) {
       return res.status(400).json({
         success: false,
         message: 'Nome, email e senha são obrigatórios'
       });
     }
-    
+
     const url = urlSistema || process.env.APP_URL || 'https://admcia-production.up.railway.app';
-    
+
     emailService.enviarEmailNovoAcesso(nome, email, senha, url)
       .then(resultado => {
         if (resultado.success) {
@@ -3327,7 +3327,7 @@ app.post('/email/novo-acesso', (req, res) => {
           error: error.message
         });
       });
-      
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -3341,25 +3341,25 @@ app.post('/email/novo-acesso', (req, res) => {
 app.post('/email/senha-resetada', (req, res) => {
   try {
     const emailService = require('./services/emailService');
-    
+
     if (!emailService.emailConfigurado()) {
       return res.status(400).json({
         success: false,
         message: '⚠️ Serviço de email não configurado'
       });
     }
-    
+
     const { nome, email, senha, urlSistema } = req.body;
-    
+
     if (!nome || !email || !senha) {
       return res.status(400).json({
         success: false,
         message: 'Nome, email e senha são obrigatórios'
       });
     }
-    
+
     const url = urlSistema || process.env.APP_URL || 'https://admcia-production.up.railway.app';
-    
+
     emailService.enviarEmailSenhaResetada(nome, email, senha, url)
       .then(resultado => {
         if (resultado.success) {
@@ -3383,7 +3383,7 @@ app.post('/email/senha-resetada', (req, res) => {
           error: error.message
         });
       });
-      
+
   } catch (error) {
     res.status(500).json({
       success: false,

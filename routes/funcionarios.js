@@ -349,25 +349,80 @@ router.post('/:id/definir-senha', requireMaster, async (req, res) => {
   const db = req.app.get('db');
   const { id } = req.params;
   const { senha } = req.body;
+  const enviarEmail = req.body?.enviarEmail ?? true; // Opção de enviar email
 
   if (!senha || senha.length < 6) {
     return res.status(400).json({ success: false, error: 'A senha deve ter pelo menos 6 caracteres' });
   }
 
-  try {
-    const senhaHash = await bcrypt.hash(senha, 10);
+  // Busca dados do funcionário primeiro
+  db.query('SELECT nome, email FROM funcionarios WHERE id = ?', [id], async (errBusca, funcionarios) => {
+    if (errBusca || funcionarios.length === 0) {
+      console.error('❌ Funcionário não encontrado:', id);
+      return res.status(404).json({ success: false, error: 'Funcionário não encontrado' });
+    }
 
-    db.query('UPDATE funcionarios SET senha_hash = ? WHERE id = ?', [senhaHash, id], (err, result) => {
-      if (err) {
-        console.error('Erro ao definir senha:', err);
-        return res.status(500).json({ success: false, error: 'Erro ao definir senha' });
-      }
+    const funcionario = funcionarios[0];
+    console.log(`🔐 Definindo senha para: ${funcionario.nome} (${funcionario.email})`);
 
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ success: false, error: 'Funcionário não encontrado' });
-      }
+    try {
+      const senhaHash = await bcrypt.hash(senha, 10);
 
-      return res.json({ success: true, message: 'Senha definida com sucesso!' });
+      db.query('UPDATE funcionarios SET senha_hash = ? WHERE id = ?', [senhaHash, id], async (err, result) => {
+        if (err) {
+          console.error('❌ Erro ao definir senha:', err);
+          return res.status(500).json({ success: false, error: 'Erro ao definir senha' });
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ success: false, error: 'Funcionário não encontrado' });
+        }
+
+        console.log('✅ Senha definida no banco de dados');
+        let emailEnviado = false;
+
+        // Tenta enviar email se configurado e solicitado
+        if (enviarEmail && funcionario.email) {
+          try {
+            const emailService = require('../services/emailService');
+            console.log(`📧 Verificando serviço de email...`);
+            console.log(`📧 Email configurado: ${emailService.emailConfigurado()}`);
+            
+            if (emailService.emailConfigurado()) {
+              console.log(`📧 Enviando email de senha definida para ${funcionario.email}...`);
+              
+              const resultado = await emailService.enviarEmailSenhaDefinida(
+                funcionario.nome,
+                funcionario.email,
+                senha,
+                `${req.protocol}://${req.get('host')}`
+              );
+              
+              console.log(`📧 Resultado do envio:`, resultado);
+              emailEnviado = resultado.success;
+              
+              if (emailEnviado) {
+                console.log(`✅ Email de senha definida enviado para ${funcionario.email}`);
+              } else {
+                console.error(`❌ Falha ao enviar email:`, resultado.error);
+              }
+            } else {
+              console.warn('⚠️ Serviço de email não configurado');
+            }
+          } catch (emailError) {
+            console.error('❌ Erro ao enviar email:', emailError);
+          }
+        } else {
+          console.log('📧 Email não será enviado (desabilitado ou sem email)');
+        }
+
+        return res.json({
+          success: true,
+          message: emailEnviado
+            ? 'Senha definida e email enviado ao funcionário!'
+            : 'Senha definida com sucesso!',
+          email_enviado: emailEnviado
+        });
     });
   } catch (error) {
     console.error('Erro ao gerar hash:', error);
@@ -404,25 +459,42 @@ router.post('/:id/reset-senha', requireMaster, async (req, res) => {
           return res.status(500).json({ success: false, error: 'Erro ao resetar senha' });
         }
 
+        console.log('✅ Senha resetada no banco de dados');
         let emailEnviado = false;
 
         // Tenta enviar email se configurado e solicitado
         if (enviarEmail && funcionario.email) {
           try {
             const emailService = require('../services/emailService');
+            console.log(`📧 Verificando serviço de email...`);
+            console.log(`📧 Email configurado: ${emailService.emailConfigurado()}`);
+            
             if (emailService.emailConfigurado()) {
-              await emailService.enviarEmailSenhaResetada(
+              console.log(`📧 Enviando email de senha resetada para ${funcionario.email}...`);
+              
+              const resultado = await emailService.enviarEmailSenhaResetada(
                 funcionario.nome,
                 funcionario.email,
                 senhaTemp,
                 `${req.protocol}://${req.get('host')}`
               );
-              emailEnviado = true;
-              console.log(`📧 Email de senha resetada enviado para ${funcionario.email}`);
+              
+              console.log(`📧 Resultado do envio:`, resultado);
+              emailEnviado = resultado.success;
+              
+              if (emailEnviado) {
+                console.log(`✅ Email de senha resetada enviado para ${funcionario.email}`);
+              } else {
+                console.error(`❌ Falha ao enviar email:`, resultado.error);
+              }
+            } else {
+              console.warn('⚠️ Serviço de email não configurado');
             }
           } catch (emailError) {
-            console.error('Erro ao enviar email:', emailError);
+            console.error('❌ Erro ao enviar email:', emailError);
           }
+        } else {
+          console.log('📧 Email não será enviado (desabilitado ou sem email)');
         }
 
         return res.json({
