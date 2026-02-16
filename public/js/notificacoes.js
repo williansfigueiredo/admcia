@@ -4,7 +4,7 @@
 /**
  * Testa todo o sistema de notificações step-by-step
  */
-window.debugNotificacoes = async function() {
+window.debugNotificacoes = async function () {
   console.log('\n🧪 =================================');
   console.log('🧪 TESTE COMPLETO DE NOTIFICAÇÕES');
   console.log('🧪 =================================\n');
@@ -13,10 +13,10 @@ window.debugNotificacoes = async function() {
   console.log('1️⃣ Verificando autenticação...');
   const token = sessionStorage.getItem('auth_token');
   const usuario = sessionStorage.getItem('usuario');
-  
+
   console.log('   Token:', token ? '✅ Presente' : '❌ Ausente');
   console.log('   Dados usuário:', usuario ? '✅ Presente' : '❌ Ausente');
-  
+
   if (!token || !usuario) {
     console.error('❌ FALHA: Usuário não está logado corretamente');
     return;
@@ -41,7 +41,7 @@ window.debugNotificacoes = async function() {
   try {
     const funcionarioId = obterFuncionarioId();
     console.log('   Funcionário ID obtido:', funcionarioId);
-    
+
     if (!funcionarioId) {
       console.error('❌ FALHA: Não conseguiu obter ID do funcionário');
       return;
@@ -49,12 +49,12 @@ window.debugNotificacoes = async function() {
 
     const notificacoes = await obterNotificacoes();
     console.log('   Notificações recebidas:', notificacoes.length);
-    
+
     if (notificacoes.length > 0) {
       console.log('✅ SUCESSO: Sistema funcionando!');
       console.log('   Últimas notificações:');
       notificacoes.slice(0, 3).forEach((notif, i) => {
-        console.log(`     ${i+1}. ${notif.titulo} (${notif.tipo})`);
+        console.log(`     ${i + 1}. ${notif.titulo} (${notif.tipo})`);
       });
     } else {
       console.warn('⚠️ AVISO: Nenhuma notificação encontrada (pode ser normal)');
@@ -69,17 +69,17 @@ window.debugNotificacoes = async function() {
   try {
     const response = await fetch('/debug/testar-notificacoes');
     const result = await response.json();
-    
+
     if (result.success) {
       console.log('✅ Backend funcionando:', result.message);
     } else {
       console.warn('⚠️ Problema no backend:', result.message);
-      
+
       // Tentar criar tabelas
       console.log('\n🔧 Tentando criar tabelas...');
       const createResponse = await fetch('/debug/criar-tabelas-notificacoes', { method: 'POST' });
       const createResult = await createResponse.json();
-      
+
       if (createResult.success) {
         console.log('✅ Tabelas criadas:', createResult.message);
       } else {
@@ -96,7 +96,7 @@ window.debugNotificacoes = async function() {
 /**
  * Força atualização das notificações (para debug)
  */
-window.forcarAtualizacaoNotificacoes = async function() {
+window.forcarAtualizacaoNotificacoes = async function () {
   console.log('🔄 Forçando atualização das notificações...');
   try {
     await carregarNotificacoes();
@@ -109,7 +109,7 @@ window.forcarAtualizacaoNotificacoes = async function() {
 /**
  * Mostra informações da sessão atual
  */
-window.infoSessao = function() {
+window.infoSessao = function () {
   console.log('\n📋 INFORMAÇÕES DA SESSÃO:');
   console.log('Token:', sessionStorage.getItem('auth_token') ? 'Presente' : 'Ausente');
   console.log('Usuario:', sessionStorage.getItem('usuario'));
@@ -123,7 +123,7 @@ window.infoSessao = function() {
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
   console.log('\n🛠️  MODO DESENVOLVIMENTO - Comandos disponíveis:');
   console.log('   • debugNotificacoes() - Teste completo do sistema');
-  console.log('   • forcarAtualizacaoNotificacoes() - Força update');  
+  console.log('   • forcarAtualizacaoNotificacoes() - Força update');
   console.log('   • infoSessao() - Info da sessão atual');
   console.log('   • testarNotificacoes() - Teste básico\n');
 }
@@ -153,7 +153,7 @@ function obterFuncionarioId() {
       sessionStorage.removeItem('usuario');
     }
   }
-  
+
   console.warn('⚠️ Dados do usuário não encontrados - sessão inválida');
   // Se não tem dados do usuário mas tem token, limpa a sessão
   if (token) {
@@ -161,7 +161,7 @@ function obterFuncionarioId() {
     sessionStorage.clear();
     window.location.reload();
   }
-  
+
   return null;
 }
 
@@ -191,7 +191,7 @@ async function obterNotificacoes() {
         'Content-Type': 'application/json'
       }
     });
-    
+
     console.log('📡 Resposta do servidor:', response.status, response.statusText);
 
     if (!response.ok) {
@@ -201,7 +201,7 @@ async function obterNotificacoes() {
 
     const notificacoes = await response.json();
     console.log('🔔 Notificações recebidas:', notificacoes.length);
-    
+
     if (notificacoes.length > 0) {
       console.log('🔔 Primeiras 3 notificações:', notificacoes.slice(0, 3));
     } else {
@@ -211,14 +211,14 @@ async function obterNotificacoes() {
     return notificacoes;
   } catch (error) {
     console.error('❌ Erro ao buscar notificações:', error.message);
-    
+
     // Se erro 401, limpar sessão
     if (error.message.includes('401')) {
       console.log('🔧 Erro de autenticação - limpando sessão...');
       sessionStorage.clear();
       window.location.reload();
     }
-    
+
     return [];
   }
 }
@@ -257,7 +257,15 @@ async function adicionarNotificacao(tipo, titulo, texto, job_id = null) {
 
 // Renderiza as notificações no dropdown
 async function renderizarNotificacoes() {
-  const notificacoes = await obterNotificacoes();
+  const todasNotificacoes = await obterNotificacoes();
+  
+  // Filtrar apenas as notificações NÃO LIDAS
+  const notificacoes = todasNotificacoes.filter(n => !n.lida);
+  
+  console.log('📊 Total de notificações:', todasNotificacoes.length);
+  console.log('📊 Notificações não lidas:', notificacoes.length);
+  console.log('📊 Notificações lidas:', todasNotificacoes.filter(n => n.lida).length);
+  
   const lista = document.getElementById('listaNotificacoes');
 
   if (!lista) return;
@@ -367,16 +375,28 @@ async function marcarComoLida(id) {
   if (!funcionarioId) return;
 
   try {
-    await fetch(`${window.API_URL}/notificacoes/${id}/lida`, {
+    console.log(`✓ Marcando notificação ${notificacaoId} como lida...`);
+    
+    const response = await fetch(`${window.API_URL}/notificacoes/${notificacaoId}/lida`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache'
+      },
       body: JSON.stringify({ funcionario_id: funcionarioId })
     });
 
+    if (!response.ok) {
+      throw new Error(`Erro ${response.status}`);
+    }
+
+    console.log(`✅ Notificação ${notificacaoId} marcada como lida`);
+
+    // Atualiza a interface
     await renderizarNotificacoes();
     atualizarBadgeNotificacoes();
   } catch (error) {
-    console.error('Erro ao marcar notificação como lida:', error);
+    console.error('❌ Erro ao marcar notificação como lida:', error);
   }
 }
 
@@ -387,16 +407,31 @@ async function limparTodasNotificacoes() {
 
   if (confirm('Deseja marcar todas as notificações como lidas?')) {
     try {
-      await fetch(`${window.API_URL}/notificacoes/marcar-todas-lidas`, {
+      console.log('🧹 Limpando todas as notificações...');
+      
+      const response = await fetch(`${window.API_URL}/notificacoes/marcar-todas-lidas`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
         body: JSON.stringify({ funcionario_id: funcionarioId })
       });
 
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}`);
+      }
+
+      console.log('✅ Notificações marcadas como lidas');
+      
+      // Recarregar notificações forçadamente
       await renderizarNotificacoes();
       atualizarBadgeNotificacoes();
+      
+      console.log('✅ Interface atualizada');
     } catch (error) {
-      console.error('Erro ao limpar notificações:', error);
+      console.error('❌ Erro ao limpar notificações:', error);
+      alert('Erro ao limpar notificações. Tente novamente.');
     }
   }
 }
