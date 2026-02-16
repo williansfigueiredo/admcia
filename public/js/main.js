@@ -12410,7 +12410,19 @@ async function carregarGraficoFluxoCaixa() {
             ticks: {
               callback: function(value) {
                 if (value === 0) return 'R$ 0';
-                return 'R$ ' + (value / 1000).toFixed(0) + 'K';
+                
+                // Se for 1 milhão ou mais, mostra em milhões
+                if (value >= 1000000) {
+                  return 'R$ ' + (value / 1000000).toFixed(1) + 'M';
+                }
+                
+                // Se for 1 mil ou mais, mostra em milhares
+                if (value >= 1000) {
+                  return 'R$ ' + (value / 1000).toFixed(1) + 'K';
+                }
+                
+                // Se for menos de 1 mil, mostra o valor inteiro
+                return 'R$ ' + value.toFixed(0);
               }
             },
             grid: { color: 'rgba(0,0,0,0.05)' }
