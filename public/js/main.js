@@ -10303,7 +10303,7 @@ function renderizarCalendarioFuncionario(listaJobs) {
     eventClick: function (info) {
       const dados = info.event.extendedProps;
       const status = dados.status || 'Sem status';
-      const funcao = dados.funcao || 'Não informado';
+      const operador = dados.operador || 'Não informado';
       const localizacao = dados.localizacao || 'Não informado';
       
       // Define o tipo baseado no registro
@@ -10355,9 +10355,9 @@ function renderizarCalendarioFuncionario(listaJobs) {
           </tr>
           <tr>
             <td style="vertical-align: top; white-space: nowrap;">
-              <span class="text-muted small">� Função</span>
+              <span class="text-muted small">👤 Operador</span>
             </td>
-            <td>${funcao}</td>
+            <td>${operador}</td>
           </tr>
           <tr>
             <td style="vertical-align: top; white-space: nowrap;">

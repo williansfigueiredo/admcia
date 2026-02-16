@@ -1511,15 +1511,15 @@ app.get('/financeiro/transacoes', (req, res) => {
   // União de Jobs (receitas que NÃO têm transação criada) com Transações manuais/automáticas
   let sql = `
     SELECT 
-      'job' as origem,
+      'job' COLLATE utf8mb4_unicode_ci as origem,
       j.id,
-      j.descricao,
-      'receita' as tipo,
+      j.descricao COLLATE utf8mb4_unicode_ci as descricao,
+      'receita' COLLATE utf8mb4_unicode_ci as tipo,
       CASE 
         WHEN j.forma_pagamento LIKE '%Locação%' THEN 'Locação'
         WHEN j.forma_pagamento LIKE '%Serviço%' THEN 'Serviço'
         ELSE 'Locação + Serviço'
-      END as categoria,
+      END COLLATE utf8mb4_unicode_ci as categoria,
       j.valor,
       j.data_job as data_vencimento,
       NULL as data_pagamento,
@@ -1528,8 +1528,8 @@ app.get('/financeiro/transacoes', (req, res) => {
         WHEN j.pagamento = 'Cancelado' THEN 'cancelado'
         WHEN j.data_job < CURRENT_DATE() AND j.pagamento != 'Pago' THEN 'atrasado'
         ELSE 'pendente'
-      END as status_calc,
-      c.nome as cliente_nome,
+      END COLLATE utf8mb4_unicode_ci as status_calc,
+      c.nome COLLATE utf8mb4_unicode_ci as cliente_nome,
       j.cliente_id
     FROM jobs j
     LEFT JOIN clientes c ON j.cliente_id = c.id
@@ -1539,16 +1539,16 @@ app.get('/financeiro/transacoes', (req, res) => {
     UNION ALL
     
     SELECT 
-      'transacao' as origem,
+      'transacao' COLLATE utf8mb4_unicode_ci as origem,
       t.id,
-      t.descricao,
-      t.tipo,
-      t.categoria,
+      t.descricao COLLATE utf8mb4_unicode_ci as descricao,
+      t.tipo COLLATE utf8mb4_unicode_ci as tipo,
+      t.categoria COLLATE utf8mb4_unicode_ci as categoria,
       t.valor,
       t.data_vencimento,
       t.data_pagamento,
-      t.status as status_calc,
-      c.nome as cliente_nome,
+      t.status COLLATE utf8mb4_unicode_ci as status_calc,
+      c.nome COLLATE utf8mb4_unicode_ci as cliente_nome,
       t.cliente_id
     FROM transacoes t
     LEFT JOIN clientes c ON t.cliente_id = c.id
