@@ -5657,31 +5657,108 @@ window.salvarClienteFull = function () {
 
 
 // 3. Busca de CEP Genérica (Funciona na tela de cliente e na de jobs)
-window.buscarCepGenerico = function (cep, prefixo) {
+/**
+ * =============================================================
+ * BUSCA AUTOMÁTICA DE CEP (ViaCEP) - VERSÃO UNIVERSAL
+ * =============================================================
+ * Função genérica que funciona com qualquer campo de CEP
+ * 
+ * @param {string} cep - CEP a ser buscado
+ * @param {string} prefixo - Prefixo dos IDs dos campos (ex: 'cadCli', 'job', 'config')
+ * @param {HTMLElement} inputElement - Elemento do input CEP (para feedback visual)
+ * 
+ * Exemplo de uso:
+ * buscarCepGenerico('01310100', 'cadCli', document.getElementById('cadCliCep'))
+ * 
+ * IDs esperados: {prefixo}Logradouro, {prefixo}Bairro, {prefixo}Cidade, {prefixo}Uf, {prefixo}Numero
+ */
+window.buscarCepGenerico = async function (cep, prefixo, inputElement = null) {
   cep = cep.replace(/\D/g, "");
-  if (cep.length !== 8) return;
+  
+  if (cep.length !== 8) {
+    if (inputElement) {
+      inputElement.style.borderColor = '';
+      inputElement.style.boxShadow = '';
+    }
+    return;
+  }
 
-  fetch(`https://viacep.com.br/ws/${cep}/json/`)
-    .then(res => res.json())
-    .then(data => {
-      if (!data.erro) {
-        // Preenche os campos baseado no prefixo (ex: 'cadCliLogradouro')
-        const setVal = (suffix, val) => {
-          const el = document.getElementById(`${prefixo}${suffix}`);
-          if (el) el.value = val;
-        };
+  try {
+    // ⚠️ Feedback visual: Buscando...
+    if (inputElement) {
+      inputElement.style.borderColor = '#ffc107';
+      inputElement.style.boxShadow = '0 0 0 0.2rem rgba(255, 193, 7, 0.25)';
+    }
 
-        setVal('Logradouro', data.logradouro);
-        setVal('Bairro', data.bairro);
-        setVal('Cidade', data.localidade);
-        setVal('Uf', data.uf);
+    console.log(`🔍 Buscando CEP: ${cep} com prefixo: ${prefixo}`);
 
-        // Foca no número
-        const numEl = document.getElementById(`${prefixo}Numero`);
-        if (numEl) numEl.focus();
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const data = await response.json();
+
+    if (data.erro) {
+      // ❌ CEP inválido
+      if (inputElement) {
+        inputElement.style.borderColor = '#dc3545';
+        inputElement.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+        setTimeout(() => {
+          inputElement.style.borderColor = '';
+          inputElement.style.boxShadow = '';
+        }, 3000);
       }
-    });
-}
+      alert('❌ CEP não encontrado!');
+      console.error('❌ CEP não encontrado:', cep);
+      return;
+    }
+
+    // ✅ CEP encontrado - Preenche os campos
+    const setVal = (suffix, val) => {
+      const el = document.getElementById(`${prefixo}${suffix}`);
+      if (el) {
+        el.value = val || '';
+        console.log(`✅ Preenchido ${prefixo}${suffix}:`, val);
+      } else {
+        console.warn(`⚠️ Campo não encontrado: ${prefixo}${suffix}`);
+      }
+    };
+
+    setVal('Logradouro', data.logradouro);
+    setVal('Bairro', data.bairro);
+    setVal('Cidade', data.localidade);
+    setVal('Uf', data.uf);
+    setVal('Estado', data.uf); // Alternativa para 'Estado' ao invés de 'Uf'
+
+    // ✅ Feedback visual: Sucesso!
+    if (inputElement) {
+      inputElement.style.borderColor = '#28a745';
+      inputElement.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+      setTimeout(() => {
+        inputElement.style.borderColor = '';
+        inputElement.style.boxShadow = '';
+      }, 2000);
+    }
+
+    // Foca no campo número
+    const numEl = document.getElementById(`${prefixo}Numero`);
+    if (numEl) {
+      setTimeout(() => numEl.focus(), 100);
+    }
+
+    console.log('✅ Endereço preenchido com sucesso!', data);
+  } catch (error) {
+    console.error('❌ Erro ao buscar CEP:', error);
+    alert('⚠️ Erro ao buscar CEP. Verifique sua conexão.');
+    
+    if (inputElement) {
+      inputElement.style.borderColor = '#dc3545';
+      inputElement.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+      setTimeout(() => {
+        inputElement.style.borderColor = '';
+        inputElement.style.boxShadow = '';
+      }, 3000);
+    }
+  }
+};
+
 
 
 
@@ -11895,9 +11972,17 @@ window.logoEmpresa = null;
 
 // CARREGAR DADOS DA EMPRESA
 async function carregarDadosEmpresa() {
+  console.log('📥 ========================================');
+  console.log('📥 CARREGANDO DADOS DA EMPRESA');
+  console.log('📥 ========================================');
+  
   try {
+    console.log('📡 Buscando dados de:', `${API_URL}/empresa`);
     const res = await fetch(`${API_URL}/empresa`);
+    console.log('📨 Status da resposta:', res.status);
+    
     const empresa = await res.json();
+    console.log('📦 Dados recebidos:', empresa);
 
     if (empresa) {
       // Preenche os campos do formulário
@@ -11925,10 +12010,16 @@ async function carregarDadosEmpresa() {
         preview.innerHTML = `<img src="${empresa.logo}" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
       }
 
-      console.log('✅ Dados da empresa carregados!');
+      console.log('✅ Dados da empresa carregados e preenchidos no formulário!');
+      console.log('✅ ========================================');
+    } else {
+      console.warn('⚠️ Nenhum dado de empresa encontrado no servidor');
     }
   } catch (err) {
-    console.error('Erro ao carregar dados da empresa:', err);
+    console.error('❌ ========================================');
+    console.error('❌ ERRO AO CARREGAR DADOS DA EMPRESA!');
+    console.error('❌ Erro:', err);
+    console.error('❌ ========================================');
   }
 }
 
@@ -11936,7 +12027,9 @@ async function carregarDadosEmpresa() {
 async function salvarDadosEmpresa(e) {
   if (e) e.preventDefault();
 
-  console.log('💾 Iniciando salvamento dos dados da empresa...');
+  console.log('💾 ========================================');
+  console.log('💾 INICIANDO SALVAMENTO DOS DADOS DA EMPRESA');
+  console.log('💾 ========================================');
 
   const dados = {
     razao_social: document.getElementById('configRazaoSocial').value,
@@ -11958,29 +12051,57 @@ async function salvarDadosEmpresa(e) {
     logo: window.logoEmpresa
   };
 
-  console.log('📤 Dados que serão enviados:', dados);
+  console.log('📤 Dados coletados do formulário:');
+  console.table(dados);
+  console.log('🌐 API_URL:', API_URL);
+  console.log('🔗 URL completa:', `${API_URL}/empresa`);
 
   try {
+    console.log('📡 Enviando requisição POST para /empresa...');
+    
     const res = await fetch(`${API_URL}/empresa`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(dados)
     });
 
-    console.log('📨 Status da resposta:', res.status);
+    console.log('📨 Resposta recebida!');
+    console.log('📨 Status HTTP:', res.status);
+    console.log('📨 Status Text:', res.statusText);
+    console.log('📨 Headers:', Object.fromEntries(res.headers.entries()));
 
     const result = await res.json();
-    console.log('📦 Resultado:', result);
+    console.log('📦 Resultado parseado:', result);
 
     if (result.success) {
       alert('✅ Dados da empresa salvos com sucesso!');
-      console.log('✅ Salvamento concluído com sucesso!');
+      console.log('✅ ========================================');
+      console.log('✅ SALVAMENTO CONCLUÍDO COM SUCESSO!');
+      console.log('✅ ========================================');
+      
+      // Recarrega os dados para confirmar
+      setTimeout(() => {
+        console.log('🔄 Recarregando dados da empresa para confirmar...');
+        carregarDadosEmpresa();
+      }, 500);
     } else {
-      alert('❌ Erro ao salvar: ' + (result.error || 'Erro desconhecido'));
-      console.error('❌ Erro retornado:', result);
+      const errorMsg = result.error || 'Erro desconhecido';
+      alert('❌ Erro ao salvar: ' + errorMsg);
+      console.error('❌ ========================================');
+      console.error('❌ ERRO NO SALVAMENTO!');
+      console.error('❌ Mensagem:', errorMsg);
+      console.error('❌ Resposta completa:', result);
+      console.error('❌ ========================================');
     }
   } catch (err) {
-    console.error('❌ Erro no catch ao salvar empresa:', err);
+    console.error('❌ ========================================');
+    console.error('❌ ERRO CRÍTICO NO CATCH!');
+    console.error('❌ Tipo do erro:', err.name);
+    console.error('❌ Mensagem:', err.message);
+    console.error('❌ Stack:', err.stack);
+    console.error('❌ ========================================');
     alert('❌ Erro ao salvar dados da empresa: ' + err.message);
   }
 }
@@ -12108,8 +12229,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // Setup do upload de logo
   setupLogoUpload();
 
-  // Setup da busca automática de CEP
-  setupBuscaCEP();
+  // Setup da busca automática de CEP em TODOS os campos
+  setupTodosCamposCEP();
 
   // Setup das máscaras de formatação
   setupMascarasEmpresa();
@@ -12126,59 +12247,52 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // =============================================================
-// BUSCA AUTOMÁTICA DE CEP (ViaCEP)
+// CONFIGURAÇÃO UNIVERSAL DE BUSCA DE CEP
+// Aplica busca automática em TODOS os campos de CEP do sistema
 // =============================================================
 
-function setupBuscaCEP() {
-  const inputCEP = document.getElementById('configCEP');
-  if (!inputCEP) return;
+function setupTodosCamposCEP() {
+  console.log('🔧 Configurando busca automática de CEP em todos os campos...');
 
-  inputCEP.addEventListener('blur', async function () {
-    let cep = this.value.replace(/\D/g, ''); // Remove tudo exceto números
+  // Lista de TODOS os campos de CEP do sistema
+  const camposCEP = [
+    { id: 'configCEP', prefixo: 'config' },        // Empresa (Configurações)
+    { id: 'configCep', prefixo: 'config' },        // Perfil (Configurações)
+    { id: 'cadCliCep', prefixo: 'cadCli' },        // Cliente
+    { id: 'jobCep', prefixo: 'job' },              // Job/Pedido
+    { id: 'jobPagadorCep', prefixo: 'jobPagador' } // Pagador
+  ];
 
-    if (cep.length !== 8) return;
+  camposCEP.forEach(campo => {
+    const input = document.getElementById(campo.id);
+    if (!input) {
+      console.warn(`⚠️ Campo ${campo.id} não encontrado`);
+      return;
+    }
 
-    try {
-      // Mostra loading
-      inputCEP.style.borderColor = '#ffc107';
-      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-      const dados = await response.json();
+    console.log(`✅ Configurado: ${campo.id} com prefixo ${campo.prefixo}`);
 
-      if (dados.erro) {
-        alert('❌ CEP não encontrado!');
-        inputCEP.style.borderColor = '#dc3545';
-        return;
+    // Máscara de CEP (00000-000)
+    input.addEventListener('input', function () {
+      let valor = this.value.replace(/\D/g, '');
+      if (valor.length > 8) valor = valor.substring(0, 8);
+      if (valor.length > 5) {
+        valor = valor.substring(0, 5) + '-' + valor.substring(5);
       }
+      this.value = valor;
+    });
 
-      // Preenche os campos automaticamente
-      document.getElementById('configLogradouro').value = dados.logradouro || '';
-      document.getElementById('configBairro').value = dados.bairro || '';
-      document.getElementById('configCidade').value = dados.localidade || '';
-      document.getElementById('configEstado').value = dados.uf || '';
-      document.getElementById('configComplemento').value = dados.complemento || '';
-
-      inputCEP.style.borderColor = '#28a745';
-      setTimeout(() => { inputCEP.style.borderColor = ''; }, 2000);
-
-      // Foco no campo número
-      document.getElementById('configNumero').focus();
-
-      console.log('✅ Endereço preenchido automaticamente pelo CEP:', cep);
-    } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
-      alert('⚠️ Erro ao buscar CEP. Verifique sua conexão.');
-      inputCEP.style.borderColor = '';
-    }
+    // Busca automática ao sair do campo
+    input.addEventListener('blur', function () {
+      const cep = this.value.replace(/\D/g, '');
+      if (cep.length === 8) {
+        console.log(`🔍 Disparando busca de CEP para: ${campo.id}`);
+        buscarCepGenerico(cep, campo.prefixo, this);
+      }
+    });
   });
 
-  // Máscara de CEP enquanto digita
-  inputCEP.addEventListener('input', function () {
-    let valor = this.value.replace(/\D/g, '');
-    if (valor.length > 5) {
-      valor = valor.substring(0, 5) + '-' + valor.substring(5, 8);
-    }
-    this.value = valor;
-  });
+  console.log('✅ Busca automática de CEP configurada em todos os campos!');
 }
 
 
