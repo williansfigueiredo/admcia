@@ -2290,7 +2290,14 @@ window.salvarJobTelaCheia = async function () {
         if (!baixaOk) sucessoEstoque = false;
       }
 
-      if (sucessoEstoque) alert(isEdit ? "✅ Pedido atualizado com sucesso!" : "✅ Pedido criado com sucesso!");
+      if (sucessoEstoque) {
+        alert(isEdit ? "✅ Pedido atualizado com sucesso!" : "✅ Pedido criado com sucesso!");
+        
+        // Adiciona notificação se for um novo pedido
+        if (!isEdit && typeof window.notificarNovoPedido === 'function') {
+          window.notificarNovoPedido(descricao);
+        }
+      }
       else alert("⚠️ Pedido salvo, mas houve erro no estoque.");
     }
 
@@ -2566,6 +2573,11 @@ window.salvarNovoJob = async function () {
         });
       }
       alert(isEdit ? "✅ Pedido atualizado!" : "✅ Pedido criado e estoque baixado!");
+      
+      // Adiciona notificação se for um novo pedido
+      if (!isEdit && typeof window.notificarNovoPedido === 'function') {
+        window.notificarNovoPedido(job.descricao || 'Novo pedido');
+      }
 
       // 2. ATUALIZAÇÃO DO CALENDÁRIO (Gatilho para mudar cor e posição)
       if (typeof recarregarCalendario === 'function') {

@@ -8649,6 +8649,128 @@ button:hover #iconTheme {
 }
 
 /* ============================================
+   NOTIFICAÇÕES
+   ============================================ */
+
+#dropdownNotificacoes {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  margin-top: 8px;
+}
+
+.notificacao-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: start;
+  gap: 12px;
+}
+
+.notificacao-item:hover {
+  background-color: #f8fafc;
+}
+
+.notificacao-item:last-child {
+  border-bottom: none;
+}
+
+.notificacao-item.nao-lida {
+  background-color: #eff6ff;
+}
+
+.notificacao-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.notificacao-icon.tipo-sucesso {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.notificacao-icon.tipo-alerta {
+  background-color: #fef3c7;
+  color: #f59e0b;
+}
+
+.notificacao-icon.tipo-erro {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.notificacao-icon.tipo-info {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.notificacao-conteudo {
+  flex: 1;
+  min-width: 0;
+}
+
+.notificacao-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.notificacao-texto {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notificacao-tempo {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+#badgeNotificacoes {
+  padding: 2px 6px;
+  min-width: 18px;
+  height: 18px;
+  line-height: 14px;
+}
+
+[data-bs-theme="dark"] #dropdownNotificacoes {
+  background: #1a2332;
+  border-color: #2d3748;
+}
+
+[data-bs-theme="dark"] .notificacao-item {
+  border-bottom-color: #2d3748;
+}
+
+[data-bs-theme="dark"] .notificacao-item:hover {
+  background-color: #232f46;
+}
+
+[data-bs-theme="dark"] .notificacao-item.nao-lida {
+  background-color: #1e3a5f;
+}
+
+[data-bs-theme="dark"] .notificacao-titulo {
+  color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .notificacao-texto {
+  color: #94a3b8;
+}
+
+/* ============================================
    PÁGINA DE CONFIGURAÇÕES
    ============================================ */
 
