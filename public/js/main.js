@@ -1261,6 +1261,23 @@ function iniciarMonitoramentoConexao() {
   }
 })();
 
+// Função para restaurar a view/aba anterior após atualizar a página
+function restaurarViewAnterior() {
+  const viewSalva = sessionStorage.getItem('currentView');
+  
+  // Se não houver view salva ou for a view principal, não faz nada
+  // (a view principal já é carregada por padrão)
+  if (!viewSalva || viewSalva === 'principal') {
+    return;
+  }
+
+  // Aguarda um pequeno delay para garantir que tudo foi carregado
+  setTimeout(() => {
+    console.log(`🔄 Restaurando view anterior: ${viewSalva}`);
+    switchView(viewSalva);
+  }, 100);
+}
+
 
 // GARANTIA: Assim que a tela abrir, roda tudo com skeleton loader
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1308,6 +1325,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Atualiza indicadores de status
     updateStatusIndicators();
+
+    // Restaura a view anterior se houver (mantém aba ativa após atualizar página)
+    restaurarViewAnterior();
 
     // Inicia monitoramento de conexão (verifica a cada 30 segundos)
     setInterval(updateStatusIndicators, 30000);
@@ -3050,6 +3070,9 @@ function iniciarMapa() {
 }
 
 window.switchView = async function (viewId) {
+  // Salva a view atual no sessionStorage para manter após atualizar página
+  sessionStorage.setItem('currentView', viewId);
+
   // Mapeia views para skeletons específicos
   const skeletonMap = {
     'principal': 'dashboard',
@@ -3080,6 +3103,10 @@ window.switchView = async function (viewId) {
     // 3. Ativa a tela desejada
     const viewAlvo = document.getElementById("view-" + viewId);
     if (viewAlvo) viewAlvo.classList.add("active");
+
+    // 4. Ativa o link correspondente no menu lateral
+    const linkMenu = document.getElementById("link-" + viewId);
+    if (linkMenu) linkMenu.classList.add("active");
 
     // --- LÓGICA DE CARREGAMENTO ESPECÍFICA ---
 
