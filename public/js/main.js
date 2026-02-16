@@ -11905,7 +11905,7 @@ function renderizarTransacoesPaginadas() {
     switch (status) {
       case 'pago': return '<span class="pill-green">Pago</span>';
       case 'pendente': return '<span class="pill-yellow">Pendente</span>';
-      case 'atrasado': return '<span class="pill-red">Atrasado</span>';
+      case 'atrasado': return '<span class="pill-red">Vencido</span>';
       case 'cancelado': return '<span class="pill-secondary">Cancelado</span>';
       default: return '<span class="badge bg-secondary">' + status + '</span>';
     }
