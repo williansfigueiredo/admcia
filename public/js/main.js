@@ -12012,6 +12012,7 @@ function renderizarTransacoesPaginadas() {
       </tr>
     `;
     atualizarInfoPaginacao(0);
+    atualizarResumoTransacoesFiltradas(); // Esconde o resumo
     return;
   }
 
@@ -12092,6 +12093,62 @@ function renderizarTransacoesPaginadas() {
 
   tbody.innerHTML = html;
   renderizarBotoesPaginacaoTransacoes(transacoesFiltradas.length);
+  atualizarResumoTransacoesFiltradas();
+}
+
+// Atualiza o resumo das transações filtradas
+function atualizarResumoTransacoesFiltradas() {
+  const resumoContainer = document.getElementById('resumoTransacoesFiltradas');
+  
+  if (!Array.isArray(transacoesFiltradas) || transacoesFiltradas.length === 0) {
+    if (resumoContainer) resumoContainer.style.display = 'none';
+    return;
+  }
+
+  // Mostra o container de resumo
+  if (resumoContainer) resumoContainer.style.display = 'flex';
+
+  let totalAReceber = 0;
+  let totalAPagar = 0;
+  let totalPagoRecebido = 0;
+
+  transacoesFiltradas.forEach(t => {
+    const valor = parseFloat(t.valor) || 0;
+    
+    if (t.tipo === 'receita') {
+      if (t.status === 'pendente' || t.status === 'atrasado') {
+        totalAReceber += valor;
+      } else if (t.status === 'pago') {
+        totalPagoRecebido += valor;
+      }
+    } else if (t.tipo === 'despesa') {
+      if (t.status === 'pendente' || t.status === 'atrasado') {
+        totalAPagar += valor;
+      } else if (t.status === 'pago') {
+        totalPagoRecebido -= valor;
+      }
+    }
+  });
+
+  const balancoFiltrado = totalAReceber - totalAPagar;
+
+  // Formata valores
+  const formatarValor = (v) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // Atualiza os elementos
+  const elemAReceber = document.getElementById('totalAReceber');
+  const elemAPagar = document.getElementById('totalAPagar');
+  const elemPagoRecebido = document.getElementById('totalPagoRecebido');
+  const elemBalanco = document.getElementById('balancoFiltrado');
+
+  if (elemAReceber) elemAReceber.textContent = formatarValor(totalAReceber);
+  if (elemAPagar) elemAPagar.textContent = formatarValor(totalAPagar);
+  if (elemPagoRecebido) elemPagoRecebido.textContent = formatarValor(totalPagoRecebido);
+  
+  if (elemBalanco) {
+    elemBalanco.textContent = formatarValor(balancoFiltrado);
+    elemBalanco.className = 'h5 mb-0 fw-bold ' + (balancoFiltrado >= 0 ? 'text-success' : 'text-danger');
+  }
 }
 
 // Renderiza tabela de transações (mantido para compatibilidade)
