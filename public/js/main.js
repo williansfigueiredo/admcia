@@ -9276,7 +9276,8 @@ window.initCalendar = function () {
               tipo: e.tipo_evento,
               operador_id: e.operador_id,
               data_inicio_real: e.data_inicio_real,
-              data_fim_real: e.data_fim_real
+              data_fim_real: e.data_fim_real,
+              is_manual: e.is_manual  // Adiciona flag manual/automático
             }
           }));
 
@@ -9294,7 +9295,19 @@ window.initCalendar = function () {
       const status = dados.status || 'Sem status';
       const operador = dados.operador || 'Não informado';
       const localizacao = dados.localizacao || 'Não informado';
-      const tipo = dados.tipo === 'job' ? '📋 PEDIDO DE SERVIÇO' : '📅 ESCALA MANUAL';
+      
+      // Define o tipo baseado em tipo_evento E is_manual:
+      // - Jobs (tipo='job') sempre são PEDIDO DE SERVIÇO
+      // - Escalas (tipo='escala') com is_manual=0 são PEDIDO DE SERVIÇO (criadas automaticamente pela equipe)
+      // - Escalas (tipo='escala') com is_manual=1 são ESCALA MANUAL (criadas manualmente pelo usuário)
+      let tipo;
+      if (dados.tipo === 'job') {
+        tipo = '📋 PEDIDO DE SERVIÇO';
+      } else if (dados.is_manual === 1) {
+        tipo = '✋ ESCALA MANUAL';
+      } else {
+        tipo = '📋 PEDIDO DE SERVIÇO';  // Escala automática (da equipe)
+      }
 
       // 📅 Usa datas reais do job (se for pedido) ou datas do evento (se for escala)
       let dataInicio, dataFim;

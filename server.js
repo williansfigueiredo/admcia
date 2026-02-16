@@ -3394,7 +3394,11 @@ app.get('/agenda', (req, res) => {
       if (e.job_descricao) {
         titulo += ` - ${e.job_descricao}`;
       }
-      // NÃO adiciona tipo_escala (removia "Trabalho")
+      
+      // Adiciona tipo_escala apenas se for ESCALA MANUAL (✋)
+      if (isManual && e.tipo_escala) {
+        titulo += ` - ${e.tipo_escala}`;
+      }
 
       // Define cor: se tem job vinculado, usa cor do status do job; senão, azul padrão
       let cor = '#3b82f6'; // azul padrão para escalas avulsas
