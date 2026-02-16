@@ -2295,7 +2295,7 @@ window.salvarJobTelaCheia = async function () {
         
         // Adiciona notificação se for um novo pedido
         if (!isEdit && typeof window.notificarNovoPedido === 'function') {
-          window.notificarNovoPedido(descricao);
+          window.notificarNovoPedido(jobData.descricao);
         }
       }
       else alert("⚠️ Pedido salvo, mas houve erro no estoque.");
