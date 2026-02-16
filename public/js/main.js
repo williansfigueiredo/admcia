@@ -4106,17 +4106,92 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
   console.log(`🔄 Analisando mudança do Job ${id}: Tipo=${tipo}, Novo=${novoValor}`);
 
   try {
+    // ✅ OTIMIZAÇÃO: Salva IMEDIATAMENTE mudanças simples (sem validação de estoque)
+    // Só faz validação complexa se mudar entre ativo/inativo
+    let statusAntigo = null;
+    let pularValidacaoEstoque = false;
+
     if (tipo === 'status') {
-      // A) PRECISAR SABER QUAL É O STATUS ATUAL NO BANCO (Antes de mudar)
-      // Vamos buscar o pedido inteiro para saber como ele está AGORA
-      const resJob = await fetch(`${API_URL}/jobs`); // Busca todos (ideal seria ter rota /jobs/:id, mas usamos o que tem)
-      const todosJobs = await resJob.json();
-      const jobAtual = todosJobs.find(j => j.id == id);
+      // LISTAS DE DEFINIÇÃO
+      const ativos = ['Agendado', 'Confirmado', 'Em Andamento'];
+      const inativos = ['Cancelado', 'Finalizado'];
 
-      if (!jobAtual) throw new Error("Pedido não encontrado no banco.");
+      // Busca status atual do CACHE (mais rápido que servidor)
+      if (window.todosOsJobsCache && Array.isArray(window.todosOsJobsCache)) {
+        const jobNoCache = window.todosOsJobsCache.find(j => j.id == id);
+        if (jobNoCache) {
+          statusAntigo = jobNoCache.status;
+        }
+      }
 
-      const statusAntigo = jobAtual.status;
+      // Se não achou no cache, busca do servidor
+      if (!statusAntigo) {
+        const resJob = await fetch(`${API_URL}/jobs`);
+        const todosJobs = await resJob.json();
+        const jobAtual = todosJobs.find(j => j.id == id);
+        if (jobAtual) statusAntigo = jobAtual.status;
+      }
+
       console.log(`📊 Status: De [${statusAntigo}] para [${novoValor}]`);
+
+      // ✅ DETECTA SE É MUDANÇA NEUTRA (não mexe com estoque)
+      const ambosAtivos = ativos.includes(statusAntigo) && ativos.includes(novoValor);
+      const ambosInativos = inativos.includes(statusAntigo) && inativos.includes(novoValor);
+      
+      if (ambosAtivos || ambosInativos) {
+        console.log("⚡ Mudança neutra detectada - pulando validação de estoque");
+        pularValidacaoEstoque = true;
+      }
+    }
+
+    // ⚡ SE FOR MUDANÇA SIMPLES, SALVA DIRETO (RÁPIDO!)
+    if (tipo === 'pagamento' || pularValidacaoEstoque) {
+      console.log("⚡ Salvando mudança rápida...");
+      
+      await fetch(`${API_URL}/jobs/update/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campo: tipo, valor: novoValor })
+      });
+
+      // Automação: Se Cancelou status, cancela pagamento
+      if (tipo === 'status' && novoValor === 'Cancelado') {
+        await fetch(`${API_URL}/jobs/update/${id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ campo: 'pagamento', valor: 'Cancelado' })
+        });
+      }
+
+      // Notificações de mudança de status
+      if (tipo === 'status') {
+        let descricaoPedido = 'Pedido';
+        if (window.todosOsJobsCache && Array.isArray(window.todosOsJobsCache)) {
+          const jobNoCache = window.todosOsJobsCache.find(j => j.id == id);
+          if (jobNoCache && jobNoCache.descricao) {
+            descricaoPedido = jobNoCache.descricao;
+          }
+        }
+
+        if (window.notificarMudancaStatus && statusAntigo !== novoValor) {
+          window.notificarMudancaStatus(descricaoPedido, statusAntigo, novoValor);
+        }
+
+        if (novoValor === 'Cancelado' && window.notificarPedidoCancelado) {
+          window.notificarPedidoCancelado(descricaoPedido);
+        }
+      }
+
+      console.log("✅ Atualização rápida concluída!");
+
+      // Atualiza cache e interface
+      atualizarCacheEInterface(id, tipo, novoValor);
+      
+      return; // ⚡ SAI AQUI - NÃO EXECUTA O RESTO
+    }
+
+    // 🔄 APENAS PARA MUDANÇAS COMPLEXAS (Ativo ↔ Inativo)
+    if (tipo === 'status') {
 
       // LISTAS DE DEFINIÇÃO
       const ativos = ['Agendado', 'Confirmado', 'Em Andamento'];
@@ -4248,54 +4323,8 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
 
     console.log("✅ Atualização concluída!");
 
-    // ✅ ATUALIZAR O CACHE LOCAL PRIMEIRO (antes de recarregar)
-    // Isso garante que quando recarregarmos a tabela, os dados já estão corretos
-    if (window.todosOsJobsCache && Array.isArray(window.todosOsJobsCache)) {
-      const jobNoCache = window.todosOsJobsCache.find(j => j.id == id);
-      if (jobNoCache) {
-        if (tipo === 'status') {
-          jobNoCache.status = novoValor;
-        } else if (tipo === 'pagamento') {
-          jobNoCache.pagamento = novoValor;
-        }
-        console.log(`✅ Cache local atualizado: ${tipo} = ${novoValor}`);
-      }
-      
-      // Atualiza também jobsFiltrados se existir
-      if (window.jobsFiltrados && Array.isArray(window.jobsFiltrados)) {
-        const jobNoFiltro = window.jobsFiltrados.find(j => j.id == id);
-        if (jobNoFiltro) {
-          if (tipo === 'status') {
-            jobNoFiltro.status = novoValor;
-          } else if (tipo === 'pagamento') {
-            jobNoFiltro.pagamento = novoValor;
-          }
-        }
-      }
-    }
-
-    // Força atualização imediata das notificações
-    if (typeof window.forcarAtualizacaoNotificacoes === 'function') {
-      setTimeout(() => {
-        window.forcarAtualizacaoNotificacoes();
-      }, 300);
-    }
-
-    // 🎨 RECARREGA AS TELAS COM OS DADOS JÁ ATUALIZADOS NO CACHE
-    setTimeout(() => {
-      if (typeof recarregarCalendario === 'function') {
-        window.recarregarCalendario();
-      }
-
-      if (typeof carregarEstoque === 'function') carregarEstoque();
-      if (typeof atualizarDashboard === 'function') atualizarDashboard();
-      if (typeof renderizarTabelaContratos === 'function') {
-        // Renderiza a tabela com o cache atualizado (não busca do servidor)
-        renderizarTabelaContratos(window.paginaAtual || 1);
-      }
-
-      alert(`✅ Pedido atualizado para: ${novoValor}`);
-    }, 200);
+    // Atualiza cache e interface
+    atualizarCacheEInterface(id, tipo, novoValor);
 
   } catch (err) {
     console.error("❌ Erro:", err);
@@ -4413,7 +4442,52 @@ async function salvarEdicao(selectElem, id, tipo, valorOriginal) {
 
 
 
-// --- SE CLICAR FORA SEM MUDAR, VOLTA AO NORMAL ---
+// ========================================================
+// FUNÇÃO AUXILIAR: Atualiza Cache e Interface
+// ========================================================
+function atualizarCacheEInterface(id, tipo, novoValor) {
+  // Atualiza cache local
+  if (window.todosOsJobsCache && Array.isArray(window.todosOsJobsCache)) {
+    const jobNoCache = window.todosOsJobsCache.find(j => j.id == id);
+    if (jobNoCache) {
+      if (tipo === 'status') {
+        jobNoCache.status = novoValor;
+      } else if (tipo === 'pagamento') {
+        jobNoCache.pagamento = novoValor;
+      }
+      console.log(`✅ Cache local atualizado: ${tipo} = ${novoValor}`);
+    }
+    
+    // Atualiza também jobsFiltrados
+    if (window.jobsFiltrados && Array.isArray(window.jobsFiltrados)) {
+      const jobNoFiltro = window.jobsFiltrados.find(j => j.id == id);
+      if (jobNoFiltro) {
+        if (tipo === 'status') {
+          jobNoFiltro.status = novoValor;
+        } else if (tipo === 'pagamento') {
+          jobNoFiltro.pagamento = novoValor;
+        }
+      }
+    }
+  }
+
+  // Força notificações
+  if (typeof window.forcarAtualizacaoNotificacoes === 'function') {
+    setTimeout(() => window.forcarAtualizacaoNotificacoes(), 300);
+  }
+
+  // Renderiza tabela com dados atualizados
+  setTimeout(() => {
+    if (typeof recarregarCalendario === 'function') recarregarCalendario();
+    if (typeof atualizarDashboard === 'function') atualizarDashboard();
+    if (typeof renderizarTabelaContratos === 'function') {
+      renderizarTabelaContratos(window.paginaAtual || 1);
+    }
+    if (typeof carregarEstoque === 'function') carregarEstoque();
+    alert(`✅ Pedido atualizado para: ${novoValor}`);
+  }, 200);
+}
+
 function cancelarEdicao(selectElem, valorOriginal, tipo) {
   // Dá um tempinho curto caso o usuário tenha clicado em uma opção
   setTimeout(() => {
