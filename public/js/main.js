@@ -12067,6 +12067,9 @@ function renderizarTransacoesPaginadas() {
               </button>
             ` : ''}
           ` : `
+            <button class="btn btn-sm btn-outline-info me-1" onclick="visualizarTransacao(${t.id})" title="Visualizar">
+              <i class="bi bi-eye"></i>
+            </button>
             <button class="btn btn-sm btn-outline-primary me-1" onclick="editarTransacao(${t.id})" title="Editar">
               <i class="bi bi-pencil"></i>
             </button>
@@ -12221,6 +12224,39 @@ function abrirModalNovaTransacao() {
   // Carrega clientes no dropdown
   carregarClientesDropdownTransacao();
   
+  // Habilita todos os campos
+  const campos = [
+    'transacaoTipo',
+    'transacaoCategoria',
+    'transacaoDescricao',
+    'transacaoValor',
+    'transacaoVencimento',
+    'transacaoStatus',
+    'transacaoFormaPgto',
+    'transacaoCliente',
+    'transacaoObs'
+  ];
+  
+  campos.forEach(campo => {
+    const elemento = document.getElementById(campo);
+    if (elemento) {
+      elemento.disabled = false;
+      elemento.style.backgroundColor = '';
+    }
+  });
+  
+  // Mostra botão Salvar e esconde botão Editar
+  const btnSalvar = document.querySelector('#modalNovaTransacao .btn-primary:not(#btnEditarTransacao)');
+  const btnEditar = document.getElementById('btnEditarTransacao');
+  
+  if (btnSalvar) {
+    btnSalvar.style.display = 'inline-block';
+  }
+  
+  if (btnEditar) {
+    btnEditar.style.display = 'none';
+  }
+  
   const modal = new bootstrap.Modal(document.getElementById('modalNovaTransacao'));
   modal.show();
 }
@@ -12311,6 +12347,117 @@ async function salvarTransacao() {
   }
 }
 
+// Função para visualizar transação em modo somente leitura
+function visualizarTransacao(id) {
+  const transacao = transacoesCache.find(t => t.id === id && t.origem === 'transacao');
+  if (!transacao) return;
+
+  // Preenche os campos
+  document.getElementById('transacaoId').value = id;
+  document.getElementById('modalTransacaoTitulo').textContent = 'Detalhes da Transação';
+  document.getElementById('transacaoTipo').value = transacao.tipo;
+  document.getElementById('transacaoCategoria').value = transacao.categoria || 'Outros';
+  document.getElementById('transacaoDescricao').value = transacao.descricao || '';
+  document.getElementById('transacaoValor').value = transacao.valor;
+  document.getElementById('transacaoVencimento').value = transacao.data_vencimento?.split('T')[0] || '';
+  document.getElementById('transacaoStatus').value = transacao.status;
+  document.getElementById('transacaoFormaPgto').value = transacao.forma_pagamento || '';
+  document.getElementById('transacaoObs').value = transacao.observacoes || '';
+  
+  // Carrega clientes e seleciona o correto
+  carregarClientesDropdownTransacao();
+  setTimeout(() => {
+    if (transacao.cliente_id) {
+      document.getElementById('transacaoCliente').value = transacao.cliente_id;
+    }
+  }, 100);
+  
+  // Desabilita todos os campos (modo somente leitura)
+  const campos = [
+    'transacaoTipo',
+    'transacaoCategoria',
+    'transacaoDescricao',
+    'transacaoValor',
+    'transacaoVencimento',
+    'transacaoStatus',
+    'transacaoFormaPgto',
+    'transacaoCliente',
+    'transacaoObs'
+  ];
+  
+  campos.forEach(campo => {
+    const elemento = document.getElementById(campo);
+    if (elemento) {
+      elemento.disabled = true;
+      elemento.style.backgroundColor = '#f8f9fa';
+    }
+  });
+  
+  // Esconde botão Salvar e mostra botão Editar
+  const btnSalvar = document.querySelector('#modalNovaTransacao .btn-primary:not(#btnEditarTransacao)');
+  const btnCancelar = document.querySelector('#modalNovaTransacao .btn-light');
+  
+  if (btnSalvar) {
+    btnSalvar.style.display = 'none';
+  }
+  
+  // Adiciona botão de Editar se não existir
+  let btnEditar = document.getElementById('btnEditarTransacao');
+  if (!btnEditar) {
+    btnEditar = document.createElement('button');
+    btnEditar.id = 'btnEditarTransacao';
+    btnEditar.type = 'button';
+    btnEditar.className = 'btn btn-primary';
+    btnEditar.innerHTML = '<i class="bi bi-pencil me-2"></i>Editar';
+    btnEditar.onclick = () => habilitarEdicaoTransacao(id);
+    btnCancelar.parentNode.appendChild(btnEditar);
+  } else {
+    btnEditar.style.display = 'inline-block';
+    btnEditar.onclick = () => habilitarEdicaoTransacao(id);
+  }
+  
+  const modal = new bootstrap.Modal(document.getElementById('modalNovaTransacao'));
+  modal.show();
+}
+
+// Função para habilitar edição a partir do modo visualização
+function habilitarEdicaoTransacao(id) {
+  // Habilita todos os campos
+  const campos = [
+    'transacaoTipo',
+    'transacaoCategoria',
+    'transacaoDescricao',
+    'transacaoValor',
+    'transacaoVencimento',
+    'transacaoStatus',
+    'transacaoFormaPgto',
+    'transacaoCliente',
+    'transacaoObs'
+  ];
+  
+  campos.forEach(campo => {
+    const elemento = document.getElementById(campo);
+    if (elemento) {
+      elemento.disabled = false;
+      elemento.style.backgroundColor = '';
+    }
+  });
+  
+  // Mostra botão Salvar e esconde botão Editar
+  const btnSalvar = document.querySelector('#modalNovaTransacao .btn-primary:not(#btnEditarTransacao)');
+  const btnEditar = document.getElementById('btnEditarTransacao');
+  
+  document.getElementById('modalTransacaoTitulo').textContent = 'Editar Transação';
+  
+  if (btnSalvar) {
+    btnSalvar.style.display = 'inline-block';
+  }
+  
+  if (btnEditar) {
+    btnEditar.style.display = 'none';
+  }
+}
+
 // Editar transação
 function editarTransacao(id) {
   const transacao = transacoesCache.find(t => t.id === id && t.origem === 'transacao');
@@ -12324,8 +12471,48 @@ function editarTransacao(id) {
   document.getElementById('transacaoValor').value = transacao.valor;
   document.getElementById('transacaoVencimento').value = transacao.data_vencimento?.split('T')[0] || '';
   document.getElementById('transacaoStatus').value = transacao.status;
+  document.getElementById('transacaoFormaPgto').value = transacao.forma_pagamento || '';
+  document.getElementById('transacaoObs').value = transacao.observacoes || '';
   
   carregarClientesDropdownTransacao();
+  setTimeout(() => {
+    if (transacao.cliente_id) {
+      document.getElementById('transacaoCliente').value = transacao.cliente_id;
+    }
+  }, 100);
+  
+  // Garante que todos os campos estão habilitados
+  const campos = [
+    'transacaoTipo',
+    'transacaoCategoria',
+    'transacaoDescricao',
+    'transacaoValor',
+    'transacaoVencimento',
+    'transacaoStatus',
+    'transacaoFormaPgto',
+    'transacaoCliente',
+    'transacaoObs'
+  ];
+  
+  campos.forEach(campo => {
+    const elemento = document.getElementById(campo);
+    if (elemento) {
+      elemento.disabled = false;
+      elemento.style.backgroundColor = '';
+    }
+  });
+  
+  // Garante que botão Salvar está visível e botão Editar escondido
+  const btnSalvar = document.querySelector('#modalNovaTransacao .btn-primary:not(#btnEditarTransacao)');
+  const btnEditar = document.getElementById('btnEditarTransacao');
+  
+  if (btnSalvar) {
+    btnSalvar.style.display = 'inline-block';
+  }
+  
+  if (btnEditar) {
+    btnEditar.style.display = 'none';
+  }
   
   const modal = new bootstrap.Modal(document.getElementById('modalNovaTransacao'));
   modal.show();
