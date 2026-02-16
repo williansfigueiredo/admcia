@@ -9359,38 +9359,54 @@ window.initCalendar = function () {
       }
 
       nomeServico = (nomeServico || '').trim() || 'Não informado';
+      
+      // Formata localização para não mostrar valores vazios
+      let localFormatado = localizacao || '';
+      localFormatado = localFormatado.replace(/^[,\s-]+|[,\s-]+$/g, '').replace(/,\s*,/g, ',').trim();
+      if (!localFormatado || localFormatado === ',' || localFormatado === '-') {
+        localFormatado = 'Não informado';
+      }
 
-      // Monta o conteúdo HTML do modal
+      // Monta o conteúdo HTML do modal com layout melhorado
       const conteudo = `
-        <div class="mb-3 p-3 rounded" style="background: rgba(99, 102, 241, 0.1); border-left: 4px solid #6366f1;">
-          <h6 class="mb-0 fw-bold text-primary">${tipo}</h6>
+        <div class="mb-3 p-3 rounded" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-left: 4px solid #6366f1;">
+          <h5 class="mb-0 fw-bold" style="color: #4f46e5;">${tipo}</h5>
         </div>
-        <div class="mb-2">
-          <small class="text-muted d-block mb-1">📝 Serviço</small>
-          <div class="fw-semibold">${nomeServico}</div>
-        </div>
-        <div class="mb-2">
-          <small class="text-muted d-block mb-1">🎯 Status</small>
-          <div>${status}</div>
-        </div>
-        <div class="mb-2">
-          <small class="text-muted d-block mb-1">👤 Operador</small>
-          <div>${operador}</div>
-        </div>
-        <div class="mb-2">
-          <small class="text-muted d-block mb-1">📍 Local</small>
-          <div>${localizacao}</div>
-        </div>
-        <div class="row">
-          <div class="col-6 mb-2">
-            <small class="text-muted d-block mb-1">📅 Início</small>
-            <div class="small">${dataInicio}</div>
-          </div>
-          <div class="col-6 mb-2">
-            <small class="text-muted d-block mb-1">📅 Fim</small>
-            <div class="small">${dataFim}</div>
-          </div>
-        </div>
+        <table class="w-100" style="border-collapse: separate; border-spacing: 0 8px;">
+          <tr>
+            <td style="width: 100px; vertical-align: top; white-space: nowrap;">
+              <span class="text-muted small">📝 Serviço</span>
+            </td>
+            <td><strong>${nomeServico}</strong></td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; white-space: nowrap;">
+              <span class="text-muted small">🎯 Status</span>
+            </td>
+            <td>${status}</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; white-space: nowrap;">
+              <span class="text-muted small">👤 Operador</span>
+            </td>
+            <td>${operador}</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; white-space: nowrap;">
+              <span class="text-muted small">📍 Local</span>
+            </td>
+            <td style="word-break: break-word;">${localFormatado}</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; white-space: nowrap;">
+              <span class="text-muted small">📅 Período</span>
+            </td>
+            <td>
+              <div><strong>Início:</strong> ${dataInicio}</div>
+              <div><strong>Fim:</strong> ${dataFim}</div>
+            </td>
+          </tr>
+        </table>
       `;
 
       // Preenche e exibe o modal
@@ -10251,7 +10267,12 @@ function renderizarCalendarioFuncionario(listaJobs) {
       extendedProps: {
         status: job.status,
         funcao: job.funcao,
-        tipo_registro: job.tipo_registro || 'job'
+        tipo_registro: job.tipo_registro || 'job',
+        is_manual: job.is_manual,
+        job_id: job.job_id,
+        descricao: job.descricao,
+        data_inicio: dataInicioStr,
+        data_fim: dataFimStr
       }
     };
   });
@@ -10279,16 +10300,153 @@ function renderizarCalendarioFuncionario(listaJobs) {
     dayMaxEvents: 3,
     events: eventos,
 
-    // AÇÃO AO CLICAR NO CALENDÁRIO
+    // AÇÃO AO CLICAR NO CALENDÁRIO DO FUNCIONÁRIO
     eventClick: function (info) {
-      const jobId = info.event.id;
-      // Chama sua função existente de visualização
-      abrirJobVisualizacaoPeloHistorico(jobId);
+      const dados = info.event.extendedProps;
+      const status = dados.status || 'Sem status';
+      const funcao = dados.funcao || 'Não informado';
+      
+      // Define o tipo baseado no registro
+      let tipo;
+      if (dados.tipo_registro === 'escala') {
+        tipo = dados.is_manual === 1 ? '✋ ESCALA MANUAL' : '📋 PEDIDO DE SERVIÇO';
+      } else {
+        tipo = '📋 PEDIDO DE SERVIÇO';
+      }
+      
+      // Nome do serviço
+      const nomeServico = dados.descricao || info.event.title.replace(/^[📋✋📅]\s*/, '').split(' - ')[0] || 'Não informado';
+      
+      // Datas
+      const formatarData = (dataStr) => {
+        if (!dataStr) return 'Não informado';
+        const [ano, mes, dia] = dataStr.split('-').map(Number);
+        const d = new Date(ano, mes - 1, dia);
+        return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      };
+      
+      const dataInicio = formatarData(dados.data_inicio);
+      const dataFim = formatarData(dados.data_fim);
+      
+      // Monta o conteúdo HTML do modal
+      const conteudo = `
+        <div class="mb-3 p-3 rounded" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-left: 4px solid #6366f1;">
+          <h5 class="mb-0 fw-bold" style="color: #4f46e5;">${tipo}</h5>
+        </div>
+        <table class="w-100" style="border-collapse: separate; border-spacing: 0 8px;">
+          <tr>
+            <td style="width: 100px; vertical-align: top; white-space: nowrap;">
+              <span class="text-muted small">📝 Serviço</span>
+            </td>
+            <td><strong>${nomeServico}</strong></td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; white-space: nowrap;">
+              <span class="text-muted small">🎯 Status</span>
+            </td>
+            <td>${status}</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; white-space: nowrap;">
+              <span class="text-muted small">👷 Função</span>
+            </td>
+            <td>${funcao}</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; white-space: nowrap;">
+              <span class="text-muted small">📅 Período</span>
+            </td>
+            <td>
+              <div><strong>Início:</strong> ${dataInicio}</div>
+              <div><strong>Fim:</strong> ${dataFim}</div>
+            </td>
+          </tr>
+        </table>
+      `;
+      
+      // Preenche e exibe o modal
+      const modalElemento = document.getElementById('modalEventoConteudo');
+      const modalContainer = document.getElementById('modalDetalhesEvento');
+      const modalFooter = document.getElementById('modalEventoFooter');
+      
+      if (modalElemento && modalContainer) {
+        modalElemento.innerHTML = conteudo;
+        
+        // Monta o footer com botões
+        let footerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>';
+        
+        // Se for escala manual, adiciona botão de deletar
+        if (dados.is_manual === 1 && dados.tipo_registro === 'escala') {
+          const eventoId = info.event.id;
+          let escalaId = null;
+          
+          if (eventoId.startsWith('escala-')) {
+            const partes = eventoId.replace('escala-', '').split('-');
+            escalaId = partes[0];
+          } else {
+            const partes = eventoId.split('-');
+            escalaId = partes[0];
+          }
+          
+          if (escalaId && !isNaN(escalaId)) {
+            footerHTML = `<button type="button" class="btn btn-danger" onclick="deletarEscalaManualFuncionario(${escalaId})">
+              🗑️ Apagar Escala
+            </button>` + footerHTML;
+          }
+        }
+        
+        if (modalFooter) {
+          modalFooter.innerHTML = footerHTML;
+        }
+        
+        const modal = new bootstrap.Modal(modalContainer);
+        modal.show();
+      } else {
+        // Fallback para comportamento antigo
+        abrirJobVisualizacaoPeloHistorico(info.event.id);
+      }
     }
   });
 
   calendarFuncionarioInstance.render();
 }
+
+// Função para deletar escala manual do calendário do funcionário
+window.deletarEscalaManualFuncionario = function(escalaId) {
+  if (!confirm('Tem certeza que deseja apagar esta escala manual?\n\nO funcionário também será removido da equipe do evento.')) {
+    return;
+  }
+  
+  fetch(`${API_URL}/escalas/${escalaId}`, {
+    method: 'DELETE'
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      alert('Erro ao deletar escala: ' + data.error);
+      return;
+    }
+    
+    // Fecha o modal
+    const modalContainer = document.getElementById('modalDetalhesEvento');
+    if (modalContainer) {
+      const modal = bootstrap.Modal.getInstance(modalContainer);
+      if (modal) modal.hide();
+    }
+    
+    // Recarrega o histórico do funcionário
+    const idFuncionario = window.idClienteEdicao || window.idFuncionarioAtual;
+    if (idFuncionario && typeof carregarHistoricoJobs === 'function') {
+      carregarHistoricoJobs(idFuncionario);
+    }
+    
+    alert('✅ Escala deletada com sucesso!');
+  })
+  .catch(err => {
+    console.error('Erro ao deletar escala:', err);
+    alert('Erro ao deletar escala: ' + err.message);
+  });
+};
 
 window.abrirJobVisualizacaoPeloHistorico = function (eventoId) {
   // Converte para string caso seja número
