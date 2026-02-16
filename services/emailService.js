@@ -76,7 +76,7 @@ function inicializarEmail() {
       timeouts: '60s connection, 30s greeting, 60s socket'
     });
 
-    transporter = nodemailer.createTransporter(transporterConfig);
+    transporter = nodemailer.createTransport(transporterConfig);
     
     // Teste de conectividade assíncrono (não bloqueia startup)
     setTimeout(() => {
@@ -417,7 +417,7 @@ async function testarConfiguracaoEmail() {
     try {
       console.log(`🧪 Testando ${config.name}...`);
       
-      const testTransporter = nodemailer.createTransporter({
+      const testTransporter = nodemailer.createTransport({
         host: config.host,
         port: config.port,
         secure: config.secure,
