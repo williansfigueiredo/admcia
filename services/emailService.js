@@ -37,6 +37,20 @@ function inicializarEmail() {
   console.log(`📧 Tentando configurar email: host=${smtpHost}, port=${smtpPort}, secure=${useSecure}, user=${smtpUser ? smtpUser.substring(0, 5) + '...' : 'NÃO DEFINIDO'}`);
 
   if (smtpUser && smtpPass) {
+    // DNS lookup customizado que FORÇA IPv4
+    const dns = require('dns');
+    const customLookup = (hostname, options, callback) => {
+      console.log(`🔍 Forçando lookup IPv4 para: ${hostname}`);
+      dns.resolve4(hostname, (err, addresses) => {
+        if (err) {
+          console.error(`❌ Erro no DNS lookup: ${err.message}`);
+          return callback(err);
+        }
+        console.log(`✅ Resolvido para IPv4: ${addresses[0]}`);
+        callback(null, addresses[0], 4);
+      });
+    };
+
     // Configuração otimizada para Railway e outras plataformas
     const transporterConfig = {
       host: smtpHost,
@@ -58,8 +72,9 @@ function inicializarEmail() {
         // Permite conexões menos seguras
         ciphers: 'SSLv3'
       },
-      // Força IPv4 para evitar problemas ENETUNREACH
+      // FORÇA IPv4 - múltiplas estratégias
       family: 4,
+      lookup: customLookup, // DNS lookup que só retorna IPv4
       // Pool de conexões para melhor performance
       pool: true,
       maxConnections: 5,
