@@ -11682,14 +11682,21 @@ async function carregarTransacoes() {
 
   try {
     const response = await fetch(`${API_URL}/financeiro/transacoes?${params}`);
-    transacoesCache = await response.json();
-    console.log('💰 Transações recebidas:', transacoesCache);
-    console.log('💰 Tipo:', typeof transacoesCache);
-    console.log('💰 É array?', Array.isArray(transacoesCache));
-    console.log('💰 Estrutura:', JSON.stringify(transacoesCache, null, 2));
+    const data = await response.json();
+    
+    // Verifica se há erro na resposta
+    if (data && data.error) {
+      console.error('❌ Erro da API:', data.error);
+      transacoesCache = [];
+    } else {
+      transacoesCache = Array.isArray(data) ? data : [];
+    }
+    
+    console.log('💰 Transações recebidas:', transacoesCache.length);
     renderizarTransacoes(transacoesCache);
   } catch (error) {
     console.error('❌ Erro ao carregar transações:', error);
+    renderizarTransacoes([]);
   }
 }
 
@@ -11697,6 +11704,12 @@ async function carregarTransacoes() {
 function renderizarTransacoes(transacoes) {
   const tbody = document.getElementById('tabelaTransacoesBody');
   if (!tbody) return;
+
+  // Garante que transacoes é um array
+  if (!Array.isArray(transacoes)) {
+    console.error('❌ Transações não é array:', transacoes);
+    transacoes = [];
+  }
 
   if (!transacoes || transacoes.length === 0) {
     tbody.innerHTML = `

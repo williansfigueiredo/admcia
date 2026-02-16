@@ -1528,7 +1528,7 @@ app.get('/financeiro/transacoes', (req, res) => {
         WHEN j.pagamento = 'Cancelado' THEN 'cancelado'
         WHEN j.data_job < CURRENT_DATE() AND j.pagamento != 'Pago' THEN 'atrasado'
         ELSE 'pendente'
-      END as status,
+      END as status_calc,
       c.nome as cliente_nome,
       j.cliente_id
     FROM jobs j
@@ -1547,18 +1547,17 @@ app.get('/financeiro/transacoes', (req, res) => {
       t.valor,
       t.data_vencimento,
       t.data_pagamento,
-      t.status,
+      t.status as status_calc,
       c.nome as cliente_nome,
       t.cliente_id
     FROM transacoes t
     LEFT JOIN clientes c ON t.cliente_id = c.id
   `;
 
-  let conditions = [];
   let params = [];
 
   // Filtros aplicados via subquery
-  let sqlFinal = `SELECT * FROM (${sql}) AS uniao WHERE 1=1`;
+  let sqlFinal = `SELECT *, status_calc as status FROM (${sql}) AS uniao WHERE 1=1`;
 
   if (tipo && tipo !== 'todos') {
     sqlFinal += ` AND tipo = ?`;
@@ -1566,7 +1565,7 @@ app.get('/financeiro/transacoes', (req, res) => {
   }
 
   if (status && status !== 'todos') {
-    sqlFinal += ` AND status = ?`;
+    sqlFinal += ` AND status_calc = ?`;
     params.push(status);
   }
 
@@ -1592,7 +1591,7 @@ app.get('/financeiro/transacoes', (req, res) => {
       console.error('❌ Erro ao buscar transações:', err);
       return res.status(500).json({ error: err.message });
     }
-    res.json(results);
+    res.json(results || []);
   });
 });
 
