@@ -4226,7 +4226,14 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
 
     // Notificações de mudança de status
     if (tipo === 'status') {
-      const descricaoPedido = jobAtual ? jobAtual.descricao : 'Pedido';
+      // Busca a descrição do pedido do cache local
+      let descricaoPedido = 'Pedido';
+      if (window.todosOsJobsCache && Array.isArray(window.todosOsJobsCache)) {
+        const jobNoCache = window.todosOsJobsCache.find(j => j.id == id);
+        if (jobNoCache && jobNoCache.descricao) {
+          descricaoPedido = jobNoCache.descricao;
+        }
+      }
 
       // Notifica mudança de status (exceto se já vamos notificar cancelamento)
       if (window.notificarMudancaStatus && statusAntigo !== novoValor) {
