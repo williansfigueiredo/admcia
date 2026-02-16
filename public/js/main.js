@@ -9309,13 +9309,13 @@ window.initCalendar = function () {
         tipo = '📋 PEDIDO DE SERVIÇO';  // Escala automática (da equipe)
       }
 
-      // 📅 Usa datas reais do job (se for pedido) ou datas do evento (se for escala)
+      // 📅 Usa datas reais do job (se houver) ou datas do evento (se for escala sem job)
       let dataInicio, dataFim;
 
-      if (dados.tipo === 'job' && dados.data_inicio_real) {
-        // Para jobs, usa o período completo original
+      // Se tem data_inicio_real (jobs e escalas vinculadas a jobs), usa ela
+      if (dados.data_inicio_real) {
         const dtInicio = new Date(dados.data_inicio_real + ' 00:00:00');
-        const dtFim = new Date(dados.data_fim_real + ' 00:00:00');
+        const dtFim = new Date((dados.data_fim_real || dados.data_inicio_real) + ' 00:00:00');
 
         dataInicio = dtInicio.toLocaleDateString('pt-BR', {
           weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -9324,7 +9324,7 @@ window.initCalendar = function () {
           weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
       } else {
-        // Para escalas, usa a data do evento clicado
+        // Para escalas sem job (avulsas), usa a data do evento clicado
         dataInicio = info.event.start ? new Date(info.event.start).toLocaleDateString('pt-BR', {
           weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         }) : 'Não informado';

@@ -3248,6 +3248,8 @@ app.get('/agenda', (req, res) => {
       j.status as job_status,
       j.hora_chegada_prevista as job_hora_chegada,
       j.hora_fim_evento as job_hora_fim,
+      j.data_inicio as job_data_inicio,
+      j.data_fim as job_data_fim,
       e.tipo as description,
       e.funcionario_id as funcionario_id,
       f.nome as funcionario_nome,
@@ -3415,6 +3417,14 @@ app.get('/agenda', (req, res) => {
         const horaInicio = e.job_hora_chegada || '08:00:00';
         const horaFim = e.job_hora_fim || horaInicio; // Se não tem fim, usa o mesmo horário de início
 
+        // Prepara datas reais do job (para exibir no modal)
+        let dataInicioReal = null;
+        let dataFimReal = null;
+        if (e.job_id && e.job_data_inicio) {
+          dataInicioReal = extrairDataStr(e.job_data_inicio);
+          dataFimReal = e.job_data_fim ? extrairDataStr(e.job_data_fim) : dataInicioReal;
+        }
+
         eventosEscalas.push({
           id: `${e.id}-${dataStr}`,
           start: `${dataStr} ${horaInicio}`,
@@ -3427,7 +3437,9 @@ app.get('/agenda', (req, res) => {
           backgroundColor: cor,
           borderColor: cor,
           tipo_evento: e.tipo_evento,
-          is_manual: isManual ? 1 : 0
+          is_manual: isManual ? 1 : 0,
+          data_inicio_real: dataInicioReal,
+          data_fim_real: dataFimReal
         });
       });
     });
