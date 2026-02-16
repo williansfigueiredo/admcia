@@ -10073,8 +10073,7 @@ function renderizarTabelaHistorico(lista) {
             <tr>
                 <td class="ps-3 fw-bold">${fmtData(item.data_inicio)}</td>
                 <td>
-                    <div class="small text-muted">#${item.id}</div>
-                    <div class="fw-bold text-dark text-truncate" style="max-width: 200px;">${item.descricao}</div>
+                    <span class="fw-bold text-dark">#${item.id} - ${item.descricao || 'Sem descrição'}</span>
                 </td>
                 <td><span class="badge bg-light text-dark border">${item.funcao || 'Técnico'}</span></td>
                 <td><span class="badge ${badgeClass}">${item.status}</span></td>
@@ -10304,7 +10303,7 @@ function renderizarCalendarioFuncionario(listaJobs) {
     eventClick: function (info) {
       const dados = info.event.extendedProps;
       const status = dados.status || 'Sem status';
-      const operador = dados.operador || 'Não informado';
+      const funcao = dados.funcao || 'Não informado';
       const localizacao = dados.localizacao || 'Não informado';
       
       // Define o tipo baseado no registro
@@ -10356,9 +10355,9 @@ function renderizarCalendarioFuncionario(listaJobs) {
           </tr>
           <tr>
             <td style="vertical-align: top; white-space: nowrap;">
-              <span class="text-muted small">👤 Operador</span>
+              <span class="text-muted small">� Função</span>
             </td>
-            <td>${operador}</td>
+            <td>${funcao}</td>
           </tr>
           <tr>
             <td style="vertical-align: top; white-space: nowrap;">
