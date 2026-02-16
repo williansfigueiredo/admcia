@@ -1094,11 +1094,14 @@ document.addEventListener('DOMContentLoaded', function () {
 console.log('🔥 MAIN.JS VERSÃO 2.0 CARREGADO - COM PAGINAÇÃO FUNCIONÁRIOS');
 
 // Detecta automaticamente se está rodando local ou no Railway
-const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+// Tornar disponível globalmente para outros módulos (notificacoes.js)
+window.API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
 
-console.log('🌐 API_URL:', API_URL);
+const API_URL = window.API_URL; // Alias local para compatibilidade
+
+console.log('🌐 API_URL:', window.API_URL);
 
 /* =============================================================
    SISTEMA DE AUTENTICAÇÃO E GESTÃO DE SESSÃO
@@ -3072,6 +3075,35 @@ function renderizarGraficoStatusJobs() {
 /* =============================================================
    3. HELPERS E INTERFACE (SIDEBAR, MAPA)
    ============================================================= */
+
+// Funções auxiliares para controle do sidebar em mobile
+function toggleSidebarMobile() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  
+  if (!sidebar) return;
+  
+  const isOpen = sidebar.classList.contains('show');
+  
+  if (isOpen) {
+    sidebar.classList.remove('show');
+    if (overlay) overlay.classList.remove('show');
+    document.body.style.overflow = '';
+  } else {
+    sidebar.classList.add('show');
+    if (overlay) overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeSidebarMobile() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  
+  if (sidebar) sidebar.classList.remove('show');
+  if (overlay) overlay.classList.remove('show');
+  document.body.style.overflow = '';
+}
 
 function iniciarSidebar() {
   const sidebar = document.getElementById('sidebar');
