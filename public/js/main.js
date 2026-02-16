@@ -4185,6 +4185,21 @@ window.salvarEdicaoPremium = async function (id, tipo, novoValor) {
       });
     }
 
+    // Notificações de mudança de status
+    if (tipo === 'status') {
+      const descricaoPedido = jobAtual ? jobAtual.descricao : 'Pedido';
+      
+      // Notifica mudança de status (exceto se já vamos notificar cancelamento)
+      if (window.notificarMudancaStatus && statusAntigo !== novoValor) {
+        window.notificarMudancaStatus(descricaoPedido, statusAntigo, novoValor);
+      }
+      
+      // Notificação específica para cancelamento
+      if (novoValor === 'Cancelado' && window.notificarPedidoCancelado) {
+        window.notificarPedidoCancelado(descricaoPedido);
+      }
+    }
+
     console.log("✅ Atualização concluída!");
 
     // 🎨 RECARREGA O CALENDÁRIO PARA MOSTRAR AS CORES NOVAS
@@ -4241,6 +4256,30 @@ async function salvarEdicao(selectElem, id, tipo, valorOriginal) {
 
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || "Erro ao atualizar");
+
+    // Notificações de mudança de status
+    if (tipo === 'status') {
+      // Busca o job para obter a descrição
+      try {
+        const resJobs = await fetch(`${API_URL}/jobs`);
+        const todosJobs = await resJobs.json();
+        const jobAtual = todosJobs.find(j => j.id == id);
+        
+        if (jobAtual && jobAtual.descricao) {
+          // Notifica mudança de status
+          if (window.notificarMudancaStatus && valorOriginal !== novoValor) {
+            window.notificarMudancaStatus(jobAtual.descricao, valorOriginal, novoValor);
+          }
+          
+          // Notificação específica para cancelamento
+          if (novoValor === 'Cancelado' && window.notificarPedidoCancelado) {
+            window.notificarPedidoCancelado(jobAtual.descricao);
+          }
+        }
+      } catch (errNotif) {
+        console.warn('Erro ao criar notificação:', errNotif);
+      }
+    }
 
     // 3) Atualiza telas + recarrega estoque (pra você ver na hora)
     if (typeof atualizarDashboard === 'function') atualizarDashboard();

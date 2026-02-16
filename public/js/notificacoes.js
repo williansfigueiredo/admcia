@@ -266,6 +266,42 @@ function notificarNovoPedido(descricao) {
   );
 }
 
+// Notificação quando mudar status do pedido
+function notificarMudancaStatus(descricao, statusAntigo, statusNovo) {
+  // Define o tipo de notificação baseado no novo status
+  let tipo = 'info';
+  let icone = '🔄';
+  
+  if (statusNovo === 'Cancelado') {
+    tipo = 'erro';
+    icone = '❌';
+  } else if (statusNovo === 'Finalizado') {
+    tipo = 'sucesso';
+    icone = '✅';
+  } else if (statusNovo === 'Em Andamento') {
+    tipo = 'alerta';
+    icone = '🎬';
+  } else if (statusNovo === 'Confirmado') {
+    tipo = 'sucesso';
+    icone = '✓';
+  }
+  
+  adicionarNotificacao(
+    tipo,
+    `${icone} Status Alterado`,
+    `O pedido "${descricao}" mudou de "${statusAntigo}" para "${statusNovo}"`
+  );
+}
+
+// Notificação quando cancelar pedido
+function notificarPedidoCancelado(descricao) {
+  adicionarNotificacao(
+    'erro',
+    '❌ Pedido Cancelado',
+    `O pedido "${descricao}" foi cancelado`
+  );
+}
+
 // Inicializa sistema de notificações
 function inicializarNotificacoes() {
   atualizarBadgeNotificacoes();
@@ -282,6 +318,8 @@ window.marcarComoLida = marcarComoLida;
 window.adicionarNotificacao = adicionarNotificacao;
 window.inicializarNotificacoes = inicializarNotificacoes;
 window.notificarNovoPedido = notificarNovoPedido;
+window.notificarMudancaStatus = notificarMudancaStatus;
+window.notificarPedidoCancelado = notificarPedidoCancelado;
 window.verificarVencimentosPedidos = verificarVencimentosPedidos;
 
 // Inicializa notificações quando o DOM carregar
