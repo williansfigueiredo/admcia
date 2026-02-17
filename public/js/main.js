@@ -12119,12 +12119,13 @@ async function carregarDadosEmpresa() {
       document.getElementById('configWebsite').value = empresa.website || '';
       document.getElementById('configLinkedIn').value = empresa.linkedin || '';
       document.getElementById('configCEP').value = empresa.cep || '';
-      document.getElementById('configLogradouro').value = empresa.logradouro || '';
-      document.getElementById('configNumero').value = empresa.numero || '';
+      // IDs corrigidos para corresponder ao HTML
+      document.getElementById('configLogradouroEmpresa').value = empresa.logradouro || '';
+      document.getElementById('configNumeroEmpresa').value = empresa.numero || '';
       document.getElementById('configComplemento').value = empresa.complemento || '';
-      document.getElementById('configBairro').value = empresa.bairro || '';
-      document.getElementById('configCidade').value = empresa.cidade || '';
-      document.getElementById('configEstado').value = empresa.estado || '';
+      document.getElementById('configBairroEmpresa').value = empresa.bairro || '';
+      document.getElementById('configCidadeEmpresa').value = empresa.cidade || '';
+      document.getElementById('configEstadoEmpresa').value = empresa.estado || '';
 
       // Carrega o logo
       if (empresa.logo) {
