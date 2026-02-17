@@ -1577,6 +1577,9 @@ async function atualizarDashboard() {
     // Cada job pode ter múltiplos dias (ex: 18/02 a 19/02 = 2 dias)
     let totalDiasTrabalho = 0;
 
+    console.log('🔍 ANALISANDO JOBS:');
+    console.log('Total de jobs recebidos:', jobs.length);
+
     jobs.forEach(job => {
       // Só conta jobs com status "Em Andamento" ou "Finalizado"
       const statusCorreto = job.status === "Em Andamento" || job.status === "Finalizado";
@@ -1586,9 +1589,15 @@ async function atualizarDashboard() {
       }
 
       // Pega data_inicio e data_fim do job
+      console.log(`Job #${job.id} dados brutos:`, JSON.stringify({
+        data_inicio: job.data_inicio,
+        data_fim: job.data_fim,
+        data_job: job.data_job
+      }));
+
       const dataInicio = new Date(job.data_inicio || job.data_job);
       dataInicio.setHours(0, 0, 0, 0);
-      
+
       // Se não tem data_fim, considera apenas 1 dia (data_inicio)
       const dataFim = job.data_fim ? new Date(job.data_fim) : new Date(dataInicio);
       dataFim.setHours(0, 0, 0, 0);
@@ -1599,7 +1608,7 @@ async function atualizarDashboard() {
       // Conta cada dia do job que cai dentro da semana
       let diasDoJob = 0;
       const diaAtual = new Date(dataInicio);
-      
+
       while (diaAtual <= dataFim) {
         // Verifica se esse dia está dentro da semana atual
         if (diaAtual >= dataSegunda && diaAtual <= dataDomingo) {
@@ -1614,7 +1623,7 @@ async function atualizarDashboard() {
 
       console.log(`  Total de dias na semana: ${diasDoJob}`);
       console.log('---');
-      
+
       totalDiasTrabalho += diasDoJob;
     });
 
@@ -2176,7 +2185,7 @@ window.salvarJobTelaCheia = async function () {
   // 2. CÁLCULOS DOS ITENS
   const itensArray = window.extrairItensComEquipamento();
   const isEdit = Number.isInteger(window.__jobEditandoId);
-  
+
   // Verifica se é um job que JÁ ESTÁ finalizado ou cancelado
   const isJobInativo = isEdit && (window.__statusJobAtual === 'Finalizado' || window.__statusJobAtual === 'Cancelado');
 
@@ -2187,7 +2196,7 @@ window.salvarJobTelaCheia = async function () {
   // 1. Os itens originais já foram baixados do estoque quando o pedido foi criado
   // 2. O sistema devolve/baixa o estoque automaticamente durante a edição
   // 3. Validar novamente causaria erro de "estoque insuficiente" mesmo sem mudanças
-  
+
   if (!isEdit) {
     // Apenas valida estoque em NOVOS pedidos
     console.log("🆕 Novo pedido: Validando estoque antes de salvar...");
@@ -2711,11 +2720,11 @@ function atualizarMiniGraficoSemana(todosJobs, dataSegundaAtual) {
         d.getMonth() === dataBarra.getMonth() &&
         d.getFullYear() === dataBarra.getFullYear() &&
         (j.status === "Em Andamento" || j.status === "Finalizado");
-      
+
       if (match) {
         console.log(`  ✓ Job #${j.id} no dia ${diasSemana[i]}: ${j.descricao} (${j.status})`);
       }
-      
+
       return match;
     }).length;
 
@@ -6398,7 +6407,7 @@ window.editarCliente = function (id) {
 
       // 3. Abre a tela de cadastro
       switchView('cadastro-cliente');
-      
+
       // Inicializa máscaras nos campos do formulário
       setTimeout(inicializarTodasAsMascaras, 100);
 
@@ -6464,7 +6473,7 @@ window.abrirTelaNovoCliente = function () {
   adicionarNovoContato();
 
   switchView('cadastro-cliente');
-  
+
   // Inicializa máscaras nos campos do formulário
   setTimeout(inicializarTodasAsMascaras, 100);
 }
@@ -6522,17 +6531,17 @@ window.adicionarNovoContato = function () {
   `;
 
   listaContatos.insertAdjacentHTML('beforeend', contatoHTML);
-  
+
   // Aplica máscara de telefone no campo recém-criado
   const novoContato = document.getElementById(`contato-${idContato}`);
   if (novoContato) {
     const campoTelefone = novoContato.querySelector('.contato-telefone');
     if (campoTelefone) {
-      campoTelefone.addEventListener('input', function() {
+      campoTelefone.addEventListener('input', function () {
         let valor = this.value.replace(/\D/g, '');
-        
+
         if (valor.length > 11) valor = valor.substring(0, 11);
-        
+
         if (valor.length > 10) {
           // Celular: (00) 00000-0000
           valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2, 7) + '-' + valor.substring(7);
@@ -6544,7 +6553,7 @@ window.adicionarNovoContato = function () {
         } else if (valor.length > 0) {
           valor = '(' + valor;
         }
-        
+
         this.value = valor;
       });
     }
@@ -9478,7 +9487,7 @@ window.abrirTelaNovoFuncionario = function () {
   if (btn) { btn.style.display = 'inline-block'; btn.innerHTML = 'Salvar Ficha'; }
 
   switchView('cadastro-funcionario');
-  
+
   // Inicializa máscaras nos campos do formulário
   setTimeout(inicializarTodasAsMascaras, 100);
 };
@@ -9659,7 +9668,7 @@ window.editarFuncionario = async function (id) {
     if (btn) { btn.style.display = 'inline-block'; btn.innerHTML = 'Atualizar Dados'; }
 
     switchView('cadastro-funcionario');
-    
+
     // Inicializa máscaras nos campos do formulário
     setTimeout(inicializarTodasAsMascaras, 100);
   }
@@ -9867,7 +9876,7 @@ window.editarFuncionario = async function (id) {
 
     // 6. Troca a tela para o formulário
     switchView('cadastro-funcionario');
-    
+
     // Inicializa máscaras nos campos do formulário
     setTimeout(inicializarTodasAsMascaras, 100);
   }
@@ -13936,7 +13945,7 @@ function aplicarMascaraCEP(valor) {
  */
 function aplicarMascaraCPFouCNPJ(valor) {
   valor = valor.replace(/\D/g, "");
-  
+
   if (valor.length <= 11) {
     // CPF: 000.000.000-00
     valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
@@ -13950,7 +13959,7 @@ function aplicarMascaraCPFouCNPJ(valor) {
     valor = valor.replace(/\.(\d{3})(\d)/, ".$1/$2");
     valor = valor.replace(/(\d{4})(\d)/, "$1-$2");
   }
-  
+
   return valor;
 }
 
@@ -13959,7 +13968,7 @@ function aplicarMascaraCPFouCNPJ(valor) {
  */
 function aplicarMascaraTelefoneJob(valor) {
   valor = valor.replace(/\D/g, "");
-  
+
   if (valor.length <= 10) {
     // Telefone fixo: (00) 0000-0000
     valor = valor.replace(/^(\d{2})(\d)/, "($1) $2");
@@ -13969,7 +13978,7 @@ function aplicarMascaraTelefoneJob(valor) {
     valor = valor.replace(/^(\d{2})(\d)/, "($1) $2");
     valor = valor.replace(/(\d{5})(\d)/, "$1-$2");
   }
-  
+
   return valor;
 }
 
@@ -13978,52 +13987,52 @@ function aplicarMascaraTelefoneJob(valor) {
  */
 function inicializarMascarasFormularioJob() {
   console.log('🎭 Inicializando máscaras no formulário de pedido...');
-  
+
   // CEP
   const cepInput = document.getElementById('jobCep');
   if (cepInput) {
-    cepInput.addEventListener('input', function() {
+    cepInput.addEventListener('input', function () {
       this.value = aplicarMascaraCEP(this.value);
     });
     console.log('  ✓ Máscara CEP aplicada');
   }
-  
+
   // CNPJ/CPF do Pagador
   const cnpjCpfInput = document.getElementById('jobPagadorCNPJ');
   if (cnpjCpfInput) {
-    cnpjCpfInput.addEventListener('input', function() {
+    cnpjCpfInput.addEventListener('input', function () {
       this.value = aplicarMascaraCPFouCNPJ(this.value);
     });
     console.log('  ✓ Máscara CPF/CNPJ aplicada');
   }
-  
+
   // Telefone do Solicitante
   const telSolicitante = document.getElementById('jobSolicitanteTelefone');
   if (telSolicitante) {
-    telSolicitante.addEventListener('input', function() {
+    telSolicitante.addEventListener('input', function () {
       this.value = aplicarMascaraTelefoneJob(this.value);
     });
     console.log('  ✓ Máscara Telefone Solicitante aplicada');
   }
-  
+
   // Telefone da Produção Local
   const telProducao = document.getElementById('jobProducaoContato');
   if (telProducao) {
-    telProducao.addEventListener('input', function() {
+    telProducao.addEventListener('input', function () {
       this.value = aplicarMascaraTelefoneJob(this.value);
     });
     console.log('  ✓ Máscara Telefone Produção aplicada');
   }
-  
+
   // CEP do Pagador (se existir)
   const cepPagador = document.getElementById('jobPagadorCep');
   if (cepPagador) {
-    cepPagador.addEventListener('input', function() {
+    cepPagador.addEventListener('input', function () {
       this.value = aplicarMascaraCEP(this.value);
     });
     console.log('  ✓ Máscara CEP Pagador aplicada');
   }
-  
+
   console.log('✅ Máscaras do formulário de pedido inicializadas');
 }
 
@@ -14033,7 +14042,7 @@ function inicializarMascarasFormularioJob() {
  */
 function inicializarTodasAsMascaras() {
   console.log('🎭 Inicializando TODAS as máscaras do sistema...');
-  
+
   // 1. Máscaras de CEP
   const camposCep = [
     'cadCliCep',      // Cadastro de cliente
@@ -14041,18 +14050,18 @@ function inicializarTodasAsMascaras() {
     'configCEP',      // Empresa (Configurações)
     'configCep'       // Funcionário (Configurações)
   ];
-  
+
   camposCep.forEach(id => {
     const campo = document.getElementById(id);
     if (campo && !campo.dataset.mascaraAplicada) {
-      campo.addEventListener('input', function() {
+      campo.addEventListener('input', function () {
         this.value = aplicarMascaraCEP(this.value);
       });
       campo.dataset.mascaraAplicada = 'true';
       console.log(`  ✓ Máscara CEP aplicada em ${id}`);
     }
   });
-  
+
   // 2. Máscaras de CPF/CNPJ
   const camposCpfCnpj = [
     'cadCliDoc',           // Cadastro de cliente
@@ -14060,67 +14069,67 @@ function inicializarTodasAsMascaras() {
     'modalFuncCpf',        // Modal novo funcionário
     'rhCpf'                // RH
   ];
-  
+
   camposCpfCnpj.forEach(id => {
     const campo = document.getElementById(id);
     if (campo && !campo.dataset.mascaraAplicada) {
-      campo.addEventListener('input', function() {
+      campo.addEventListener('input', function () {
         this.value = aplicarMascaraCPFouCNPJ(this.value);
       });
       campo.dataset.mascaraAplicada = 'true';
       console.log(`  ✓ Máscara CPF/CNPJ aplicada em ${id}`);
     }
   });
-  
+
   // 3. Máscaras de Telefone
   const camposTelefone = [
     'modalClienteTelefone', // Modal novo cliente
     'modalFuncTelefone',    // Modal novo funcionário
     'rhTelefone'            // RH
   ];
-  
+
   camposTelefone.forEach(id => {
     const campo = document.getElementById(id);
     if (campo && !campo.dataset.mascaraAplicada) {
-      campo.addEventListener('input', function() {
+      campo.addEventListener('input', function () {
         this.value = aplicarMascaraTelefoneJob(this.value);
       });
       campo.dataset.mascaraAplicada = 'true';
       console.log(`  ✓ Máscara Telefone aplicada em ${id}`);
     }
   });
-  
+
   // 4. Reinicializa máscaras do formulário de pedido
   inicializarMascarasFormularioJob();
-  
+
   console.log('✅ Todas as máscaras foram inicializadas');
 }
 
 // Inicializa as máscaras quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   inicializarMascarasFormularioJob();
   inicializarTodasAsMascaras();
-  
+
   // Também reinicializa quando o modal de pedido é aberto
   const modalElement = document.getElementById('modalNovoJob');
   if (modalElement) {
-    modalElement.addEventListener('shown.bs.modal', function() {
+    modalElement.addEventListener('shown.bs.modal', function () {
       setTimeout(inicializarMascarasFormularioJob, 100);
     });
   }
-  
+
   // Reinicializa quando modal de novo cliente é aberto
   const modalCliente = document.getElementById('modalNovoCliente');
   if (modalCliente) {
-    modalCliente.addEventListener('shown.bs.modal', function() {
+    modalCliente.addEventListener('shown.bs.modal', function () {
       setTimeout(inicializarTodasAsMascaras, 100);
     });
   }
-  
+
   // Reinicializa quando modal de novo funcionário é aberto
   const modalFunc = document.getElementById('modalNovoFuncionario');
   if (modalFunc) {
-    modalFunc.addEventListener('shown.bs.modal', function() {
+    modalFunc.addEventListener('shown.bs.modal', function () {
       setTimeout(inicializarTodasAsMascaras, 100);
     });
   }
