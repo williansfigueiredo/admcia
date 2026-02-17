@@ -1556,20 +1556,22 @@ async function atualizarDashboard() {
     const jobs = await resJobs.json();
 
     // --- LÓGICA DA SEMANA (SEGUNDA A DOMINGO) ---
-    const hoje = new Date();
-    const diaSemana = hoje.getDay(); // 0 (Dom) a 6 (Sab)
+    // CORREÇÃO: Não modificar a variável 'hoje' diretamente
+    const agora = new Date();
+    const diaSemana = agora.getDay(); // 0 (Dom) a 6 (Sáb)
 
     // Calcula a data da Segunda-Feira desta semana
-    const diffSegunda = hoje.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1);
-
-    const dataSegunda = new Date(hoje.setDate(diffSegunda));
+    const dataSegunda = new Date(agora);
+    const diffSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
+    dataSegunda.setDate(agora.getDate() + diffSegunda);
     dataSegunda.setHours(0, 0, 0, 0); // Começo do dia
 
     const dataDomingo = new Date(dataSegunda);
-    dataDomingo.setDate(dataDomingo.getDate() + 6);
+    dataDomingo.setDate(dataSegunda.getDate() + 6);
     dataDomingo.setHours(23, 59, 59, 999); // Fim do dia
 
     console.log('📅 SEMANA ATUAL:', dataSegunda.toLocaleDateString('pt-BR'), 'a', dataDomingo.toLocaleDateString('pt-BR'));
+    console.log('📆 HOJE:', agora.toLocaleDateString('pt-BR'), '- Dia da semana:', diaSemana);
 
     // Filtra: Jobs desta semana que estão "Em Andamento" OU "Finalizado"
     // (mantém histórico da semana, não diminui quando finaliza)
@@ -12131,23 +12133,24 @@ async function salvarDadosEmpresa(e) {
   console.log('💾 INICIANDO SALVAMENTO DOS DADOS DA EMPRESA');
   console.log('💾 ========================================');
 
+  // IDs corrigidos para corresponder ao HTML
   const dados = {
-    razao_social: document.getElementById('configRazaoSocial').value,
-    nome_fantasia: document.getElementById('configNomeFantasia').value,
-    cnpj: document.getElementById('configCNPJ').value,
-    ie: document.getElementById('configIE').value,
-    im: document.getElementById('configIM').value,
-    email: document.getElementById('configEmailEmpresa').value,
-    telefone: document.getElementById('configTelefoneEmpresa').value,
-    website: document.getElementById('configWebsite').value,
-    linkedin: document.getElementById('configLinkedIn').value,
-    cep: document.getElementById('configCEP').value,
-    logradouro: document.getElementById('configLogradouro').value,
-    numero: document.getElementById('configNumero').value,
-    complemento: document.getElementById('configComplemento').value,
-    bairro: document.getElementById('configBairro').value,
-    cidade: document.getElementById('configCidade').value,
-    estado: document.getElementById('configEstado').value,
+    razao_social: document.getElementById('configRazaoSocial')?.value || '',
+    nome_fantasia: document.getElementById('configNomeFantasia')?.value || '',
+    cnpj: document.getElementById('configCNPJ')?.value || '',
+    ie: document.getElementById('configIE')?.value || '',
+    im: document.getElementById('configIM')?.value || '',
+    email: document.getElementById('configEmailEmpresa')?.value || '',
+    telefone: document.getElementById('configTelefoneEmpresa')?.value || '',
+    website: document.getElementById('configWebsite')?.value || '',
+    linkedin: document.getElementById('configLinkedIn')?.value || '',
+    cep: document.getElementById('configCEP')?.value || '',
+    logradouro: document.getElementById('configLogradouroEmpresa')?.value || '',
+    numero: document.getElementById('configNumeroEmpresa')?.value || '',
+    complemento: document.getElementById('configComplemento')?.value || '',
+    bairro: document.getElementById('configBairroEmpresa')?.value || '',
+    cidade: document.getElementById('configCidadeEmpresa')?.value || '',
+    estado: document.getElementById('configEstadoEmpresa')?.value || '',
     logo: window.logoEmpresa
   };
 
