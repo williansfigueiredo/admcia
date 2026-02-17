@@ -784,7 +784,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
           if (tabConfiguracoes.classList.contains('active')) {
             carregarDadosPerfil();
-            inicializarListenersConfiguracao(); // Inicializa listeners quando a aba é aberta
+            // Aguarda um pouco para garantir que o DOM está pronto
+            setTimeout(() => {
+              inicializarListenersConfiguracao();
+            }, 200);
           }
         }
       });
@@ -793,10 +796,26 @@ document.addEventListener('DOMContentLoaded', function () {
     observer.observe(tabConfiguracoes, { attributes: true });
   }
 
+  // Adiciona listeners para as abas de Bootstrap dentro de Configurações
+  const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+  tabButtons.forEach(button => {
+    button.addEventListener('shown.bs.tab', function (e) {
+      // Quando qualquer aba é mostrada, reinicializa os listeners
+      if (e.target.getAttribute('data-bs-target')?.includes('tab-perfil') || 
+          e.target.getAttribute('data-bs-target')?.includes('tab-empresa')) {
+        setTimeout(() => {
+          inicializarListenersConfiguracao();
+        }, 100);
+      }
+    });
+  });
+
   // Se já estiver na página de configurações, carrega
   if (document.getElementById('view-configuracoes')?.classList.contains('active')) {
     carregarDadosPerfil();
-    inicializarListenersConfiguracao(); // Inicializa listeners se já estiver aberto
+    setTimeout(() => {
+      inicializarListenersConfiguracao();
+    }, 200);
   }
 
   // Também tenta carregar após pequeno delay (fallback)
@@ -1030,68 +1049,83 @@ function aplicarMascaraTelefone(valor) {
  * Inicializa os listeners para os campos de configuração
  */
 function inicializarListenersConfiguracao() {
+  console.log('🔧 Inicializando listeners de configuração...');
+  
   // CEP - Perfil do funcionário
   const cepPerfil = document.getElementById('configCep');
   if (cepPerfil) {
-    cepPerfil.addEventListener('blur', function() {
+    // Remove listeners anteriores antes de adicionar novos (evita duplicação)
+    cepPerfil.replaceWith(cepPerfil.cloneNode(true));
+    const novoCepPerfil = document.getElementById('configCep');
+    novoCepPerfil.addEventListener('blur', function() {
       buscarEnderecoPorCEP(this.value, 'perfil');
     });
+    console.log('  ✓ CEP Perfil listener adicionado');
   }
   
   // CEP - Empresa
   const cepEmpresa = document.getElementById('configCEP');
   if (cepEmpresa) {
-    cepEmpresa.addEventListener('blur', function() {
+    cepEmpresa.replaceWith(cepEmpresa.cloneNode(true));
+    const novoCepEmpresa = document.getElementById('configCEP');
+    novoCepEmpresa.addEventListener('blur', function() {
       buscarEnderecoPorCEP(this.value, 'empresa');
     });
+    console.log('  ✓ CEP Empresa listener adicionado');
   }
   
   // CPF - Perfil do funcionário
   const cpfInput = document.getElementById('configCpf');
   if (cpfInput) {
-    cpfInput.addEventListener('input', function(e) {
+    cpfInput.replaceWith(cpfInput.cloneNode(true));
+    const novoCpfInput = document.getElementById('configCpf');
+    novoCpfInput.addEventListener('input', function(e) {
       this.value = aplicarMascaraCPF(this.value);
     });
-    cpfInput.addEventListener('blur', function() {
+    novoCpfInput.addEventListener('blur', function() {
       validarEVisualizarDocumento(this, 'cpf');
     });
+    console.log('  ✓ CPF listener adicionado');
   }
   
   // CNPJ - Empresa
   const cnpjInput = document.getElementById('configCNPJ');
   if (cnpjInput) {
-    cnpjInput.addEventListener('input', function(e) {
+    cnpjInput.replaceWith(cnpjInput.cloneNode(true));
+    const novoCnpjInput = document.getElementById('configCNPJ');
+    novoCnpjInput.addEventListener('input', function(e) {
       this.value = aplicarMascaraCNPJ(this.value);
     });
-    cnpjInput.addEventListener('blur', function() {
+    novoCnpjInput.addEventListener('blur', function() {
       validarEVisualizarDocumento(this, 'cnpj');
     });
+    console.log('  ✓ CNPJ listener adicionado');
   }
   
   // Telefone - Perfil do funcionário
   const telefonePerfil = document.getElementById('configTelefone');
   if (telefonePerfil) {
-    telefonePerfil.addEventListener('input', function(e) {
+    telefonePerfil.replaceWith(telefonePerfil.cloneNode(true));
+    const novoTelefonePerfil = document.getElementById('configTelefone');
+    novoTelefonePerfil.addEventListener('input', function(e) {
       this.value = aplicarMascaraTelefone(this.value);
     });
+    console.log('  ✓ Telefone Perfil listener adicionado');
   }
   
   // Telefone - Empresa
   const telefoneEmpresa = document.getElementById('configTelefoneEmpresa');
   if (telefoneEmpresa) {
-    telefoneEmpresa.addEventListener('input', function(e) {
+    telefoneEmpresa.replaceWith(telefoneEmpresa.cloneNode(true));
+    const novoTelefoneEmpresa = document.getElementById('configTelefoneEmpresa');
+    novoTelefoneEmpresa.addEventListener('input', function(e) {
       this.value = aplicarMascaraTelefone(this.value);
     });
+    console.log('  ✓ Telefone Empresa listener adicionado');
   }
   
   console.log('✅ Listeners de configuração inicializados');
 }
-
-// Inicializa os listeners quando a configuração é aberta
-document.addEventListener('DOMContentLoaded', function() {
-  // Aguarda um pouco para garantir que os elementos estão no DOM
-  setTimeout(inicializarListenersConfiguracao, 100);
-});
 
 // Expõe funções globalmente
 window.carregarDadosPerfil = carregarDadosPerfil;

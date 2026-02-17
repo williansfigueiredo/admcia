@@ -12656,6 +12656,7 @@ function atualizarResumoTransacoesFiltradas() {
 
   // Novo cálculo: (Total Recebido - Total Pago) + (Total a Receber - Total a Pagar)
   const balancoFiltrado = (totalRecebido - totalPago) + (totalAReceber - totalAPagar);
+  const jaEfetivado = totalRecebido - totalPago; // Saldo já pago/recebido (receitas pagas - despesas pagas)
 
   // Formata valores
   const formatarValor = (v) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -12668,7 +12669,11 @@ function atualizarResumoTransacoesFiltradas() {
 
   if (elemAReceber) elemAReceber.textContent = formatarValor(totalAReceber);
   if (elemAPagar) elemAPagar.textContent = formatarValor(totalAPagar);
-  if (elemRecebido) elemRecebido.textContent = formatarValor(totalRecebido);
+  // CORREÇÃO: Mostra Receitas Pagas - Despesas Pagas
+  if (elemRecebido) {
+    elemRecebido.textContent = formatarValor(jaEfetivado);
+    elemRecebido.className = 'h5 mb-0 fw-bold ' + (jaEfetivado >= 0 ? 'text-primary' : 'text-danger');
+  }
 
   if (elemBalanco) {
     elemBalanco.textContent = formatarValor(balancoFiltrado);
