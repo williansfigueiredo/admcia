@@ -630,10 +630,10 @@ async function atualizarGraficoJobsSemana() {
       }
     }
 
-    // Cria mini-barras (igual ao gráfico de faturamento)
+    // Cria mini-barras (semana começa na segunda)
     miniChart.innerHTML = '';
     const maxValor = Math.max(...dados.dias);
-    const labels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
     dados.dias.forEach((valor, index) => {
       let altura = 0;
@@ -644,11 +644,12 @@ async function atualizarGraficoJobsSemana() {
       barra.className = 'mini-bar bg-bar-green';
       barra.style.height = `${altura}%`;
       barra.style.cursor = "pointer";
-      barra.title = `${labels[index]}: ${valor} job${valor !== 1 ? 's' : ''}`;
+      barra.title = `${labels[index]}: ${valor} dia${valor !== 1 ? 's' : ''}`;
 
-      // Destaca o dia atual
-      const hoje = new Date().getDay(); // 0 = Dom, 1 = Seg, ...
-      if (index === hoje) {
+      // Destaca o dia atual (converte de 0=Dom para índice onde 0=Seg)
+      const diaJS = new Date().getDay(); // 0 = Dom, 1 = Seg, ...
+      const diaIndex = diaJS === 0 ? 6 : diaJS - 1; // Converte: Dom=6, Seg=0, Ter=1, ...
+      if (index === diaIndex) {
         barra.style.opacity = "1";
       } else {
         barra.style.opacity = "0.4";

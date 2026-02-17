@@ -679,11 +679,11 @@ app.get('/jobs/semana', (req, res) => {
       const hoje = new Date();
       const diaSemana = hoje.getDay(); // 0=Dom, 1=Seg, ..., 6=Sab
       const diffSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
-      
+
       const segundaAtual = new Date(hoje);
       segundaAtual.setDate(hoje.getDate() + diffSegunda);
       segundaAtual.setHours(0, 0, 0, 0);
-      
+
       const domingoAtual = new Date(segundaAtual);
       domingoAtual.setDate(segundaAtual.getDate() + 6);
       domingoAtual.setHours(23, 59, 59, 999);
@@ -697,14 +697,14 @@ app.get('/jobs/semana', (req, res) => {
       // Função para contar dias de trabalho em uma semana
       function contarDiasNaSemana(jobs, segundaSemana, domingoSemana) {
         const diasSemana = Array(7).fill(0); // [seg, ter, qua, qui, sex, sab, dom]
-        
+
         jobs.forEach(job => {
           const dataInicio = new Date(job.data_inicio);
           dataInicio.setHours(0, 0, 0, 0);
-          
+
           const dataFim = job.data_fim ? new Date(job.data_fim) : new Date(dataInicio);
           dataFim.setHours(0, 0, 0, 0);
-          
+
           // Percorre cada dia do job
           const diaAtual = new Date(dataInicio);
           while (diaAtual <= dataFim) {
@@ -718,7 +718,7 @@ app.get('/jobs/semana', (req, res) => {
             diaAtual.setDate(diaAtual.getDate() + 1);
           }
         });
-        
+
         return diasSemana;
       }
 
@@ -738,15 +738,15 @@ app.get('/jobs/semana', (req, res) => {
         variacao = 100;
       }
 
-      // Reorganiza para formato [dom, seg, ter, qua, qui, sex, sab]
+      // Formato [seg, ter, qua, qui, sex, sab, dom] - semana começa na segunda
       const diasParaFrontend = [
-        diasSemanaAtual[6], // Dom
         diasSemanaAtual[0], // Seg
         diasSemanaAtual[1], // Ter
         diasSemanaAtual[2], // Qua
         diasSemanaAtual[3], // Qui
         diasSemanaAtual[4], // Sex
-        diasSemanaAtual[5]  // Sab
+        diasSemanaAtual[5], // Sab
+        diasSemanaAtual[6]  // Dom
       ];
 
       res.json({
