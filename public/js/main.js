@@ -3700,7 +3700,10 @@ function renderizarTabelaContratos(pagina) {
       tr.innerHTML = `
                 <td>
                     <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">${job.descricao}</div>
-                    <div class="small text-muted text-truncate" style="max-width: 250px;">${job.nome_cliente || 'Cliente'} <span class="badge bg-secondary ms-1" style="font-size:10px;">${numeroPedidoDisplay}</span></div>
+                    <div class="small text-muted d-flex align-items-center" style="max-width: 250px;">
+                        <span class="text-truncate">${job.nome_cliente || 'Cliente'}</span>
+                        <span class="badge bg-secondary ms-1 flex-shrink-0" style="font-size:10px;">${numeroPedidoDisplay}</span>
+                    </div>
                 </td>
                 <td>
                     <div class="text-dark small fw-bold">${textoData}</div>
@@ -3749,7 +3752,10 @@ function renderizarTabelaContratos(pagina) {
           </div>
           <div class="contrato-header">
             <div class="contrato-title">${job.descricao}</div>
-            <div class="contrato-client">${job.nome_cliente || 'Cliente'} <span class="badge bg-secondary ms-1" style="font-size:10px;">${numeroPedidoDisplay}</span></div>
+            <div class="contrato-client d-flex align-items-center">
+                <span class="text-truncate">${job.nome_cliente || 'Cliente'}</span>
+                <span class="badge bg-secondary ms-1 flex-shrink-0" style="font-size:10px;">${numeroPedidoDisplay}</span>
+            </div>
           </div>
           <div class="contrato-meta">
             <span class="contrato-date">${textoData}</span>
