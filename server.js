@@ -25,6 +25,19 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
+// --- MIDDLEWARE PARA DESABILITAR CACHE EM ARQUIVOS JS/CSS/HTML ---
+// Força o navegador a sempre buscar a versão mais recente
+app.use('/public', (req, res, next) => {
+  // Verifica se é arquivo JS, CSS ou HTML
+  if (req.url.match(/\.(js|css|html)$/)) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+  }
+  next();
+});
+
 // --- LIBERAR PASTA PUBLIC (CSS, JS) ---
 app.use('/public', express.static('public'));
 
