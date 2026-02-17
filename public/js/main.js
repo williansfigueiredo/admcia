@@ -1843,6 +1843,11 @@ function preencherTabela(listaJobs) {
 
             <td class="fw-bold text-dark">${formatarMoeda(job.valor)}</td>
             
+            <td>
+                <div class="text-dark small fw-bold">${job.data_vencimento ? window.formatarDataLocal(job.data_vencimento, { day: '2-digit', month: 'short' }) : '-'}</div>
+                <div class="text-muted small" style="font-size: 11px;">Prazo pgto</div>
+            </td>
+            
             <td>${getStatusPill(job.status)}</td>
             
             <td>${getPagamentoPill(job.pagamento)}</td>
@@ -1863,6 +1868,7 @@ function preencherTabela(listaJobs) {
         </div>
         <div class="diaria-footer">
           <div class="diaria-valor">${formatarMoeda(job.valor)}</div>
+          ${job.data_vencimento ? `<div class="small text-muted"><i class="bi bi-calendar-check"></i> Venc: ${window.formatarDataLocal(job.data_vencimento, { day: '2-digit', month: 'short' })}</div>` : ''}
           <div class="diaria-pills">
             ${getStatusPill(job.status)}
             ${getPagamentoPill(job.pagamento)}
