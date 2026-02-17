@@ -1087,6 +1087,29 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /* =============================================================
+   FUNÇÃO UTILITÁRIA DE FORMATAÇÃO DE DATA
+   ============================================================= */
+
+/**
+ * Formata uma data corrigindo problemas de timezone
+ * @param {string} dataStr - Data no formato YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SS
+ * @param {object} options - Opções de formatação para toLocaleDateString
+ * @returns {string} Data formatada ou '-'
+ */
+window.formatarDataLocal = function(dataStr, options = { day: '2-digit', month: 'short', year: 'numeric' }) {
+  if (!dataStr) return '-';
+  
+  // Pega apenas a parte da data (YYYY-MM-DD)
+  const dataPura = dataStr.split('T')[0];
+  const [ano, mes, dia] = dataPura.split('-').map(Number);
+  
+  // Cria data local (mês é 0-indexed no JavaScript)
+  const data = new Date(ano, mes - 1, dia);
+  
+  return data.toLocaleDateString('pt-BR', options);
+};
+
+/* =============================================================
    CONFIGURAÇÕES GERAIS E INICIALIZAÇÃO
    ============================================================= */
 
@@ -9196,7 +9219,7 @@ window.renderizarFuncionariosCards = function (lista) {
                             <i class="bi bi-telephone"></i> ${func.telefone || '-'}
                         </div>
                         <div class="contact-info">
-                            <i class="bi bi-calendar"></i> Adm: ${func.data_admissao ? new Date(func.data_admissao).toLocaleDateString('pt-BR') : '-'}
+                            <i class="bi bi-calendar"></i> Adm: ${func.data_admissao ? window.formatarDataLocal(func.data_admissao, { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
                         </div>
                     </div>
 
@@ -9272,7 +9295,7 @@ window.renderizarFuncionariosLista = function (lista) {
                 <div>${func.email || '-'}</div>
                 <div class="text-muted">${func.telefone || '-'}</div>
             </td>
-            <td class="small">${func.data_admissao ? new Date(func.data_admissao).toLocaleDateString('pt-BR') : '-'}</td>
+            <td class="small">${func.data_admissao ? window.formatarDataLocal(func.data_admissao, { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</td>
             <td><span class="status-pill ${statusClass}">${func.status}</span></td>
             <td class="text-end pe-4" onclick="event.stopPropagation();">
                 <div class="dropdown">
@@ -12859,11 +12882,7 @@ function renderizarTransacoesPaginadas() {
   const transacoesPagina = transacoesFiltradas.slice(inicio, fim);
 
   const formatarData = (d) => {
-    if (!d) return '-';
-    // Corrige problema de timezone: adiciona 'T00:00:00' para forçar interpretação como data local
-    const dataStr = d.includes('T') ? d : d + 'T00:00:00';
-    const data = new Date(dataStr);
-    return data.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+    return window.formatarDataLocal(d, { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   const formatarValor = (v, tipo) => {
