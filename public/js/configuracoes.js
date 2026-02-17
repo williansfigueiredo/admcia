@@ -784,6 +784,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
           if (tabConfiguracoes.classList.contains('active')) {
             carregarDadosPerfil();
+            inicializarListenersConfiguracao(); // Inicializa listeners quando a aba é aberta
           }
         }
       });
@@ -795,6 +796,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Se já estiver na página de configurações, carrega
   if (document.getElementById('view-configuracoes')?.classList.contains('active')) {
     carregarDadosPerfil();
+    inicializarListenersConfiguracao(); // Inicializa listeners se já estiver aberto
   }
 
   // Também tenta carregar após pequeno delay (fallback)
@@ -803,6 +805,292 @@ document.addEventListener('DOMContentLoaded', function () {
       carregarDadosPerfil();
     }
   }, 500);
+});
+
+/**
+ * ============================================
+ * BUSCA DE ENDEREÇO POR CEP
+ * ============================================
+ */
+
+/**
+ * Busca endereço pelo CEP usando ViaCEP (para perfil de funcionário)
+ */
+async function buscarEnderecoPorCEP(cep, tipo = 'perfil') {
+  const cepLimpo = cep.replace(/\D/g, "");
+  
+  if (cepLimpo.length !== 8) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+    const data = await response.json();
+    
+    if (data.erro) {
+      console.warn('CEP não encontrado');
+      return;
+    }
+
+    // Preenche os campos de acordo com o tipo (perfil ou empresa)
+    if (tipo === 'perfil') {
+      document.getElementById('configLogradouro').value = data.logradouro || "";
+      document.getElementById('configBairro').value = data.bairro || "";
+      document.getElementById('configCidade').value = data.localidade || "";
+      document.getElementById('configUf').value = data.uf || "";
+    } else if (tipo === 'empresa') {
+      // Para empresa, os IDs são únicos
+      const logradouroEmpresa = document.getElementById('configLogradouroEmpresa');
+      const bairroEmpresa = document.getElementById('configBairroEmpresa');
+      const cidadeEmpresa = document.getElementById('configCidadeEmpresa');
+      const estadoEmpresa = document.getElementById('configEstadoEmpresa');
+      
+      if (logradouroEmpresa) logradouroEmpresa.value = data.logradouro || "";
+      if (bairroEmpresa) bairroEmpresa.value = data.bairro || "";
+      if (cidadeEmpresa) cidadeEmpresa.value = data.localidade || "";
+      if (estadoEmpresa) estadoEmpresa.value = data.uf || "";
+    }
+    
+    console.log('✅ Endereço preenchido via CEP');
+  } catch (error) {
+    console.error('Erro ao buscar CEP:', error);
+  }
+}
+
+/**
+ * ============================================
+ * MÁSCARAS E VALIDAÇÃO - CPF/CNPJ
+ * ============================================
+ */
+
+/**
+ * Aplica máscara de CPF: 000.000.000-00
+ */
+function aplicarMascaraCPF(valor) {
+  valor = valor.replace(/\D/g, "");
+  if (valor.length <= 11) {
+    valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
+    valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
+    valor = valor.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+  return valor;
+}
+
+/**
+ * Aplica máscara de CNPJ: 00.000.000/0000-00
+ */
+function aplicarMascaraCNPJ(valor) {
+  valor = valor.replace(/\D/g, "");
+  if (valor.length <= 14) {
+    valor = valor.replace(/^(\d{2})(\d)/, "$1.$2");
+    valor = valor.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+    valor = valor.replace(/\.(\d{3})(\d)/, ".$1/$2");
+    valor = valor.replace(/(\d{4})(\d)/, "$1-$2");
+  }
+  return valor;
+}
+
+/**
+ * Valida CPF
+ */
+function validarCPF(cpf) {
+  cpf = cpf.replace(/\D/g, "");
+  
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
+    return false;
+  }
+  
+  let soma = 0;
+  let resto;
+  
+  for (let i = 1; i <= 9; i++) {
+    soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+  }
+  
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf.substring(9, 10))) return false;
+  
+  soma = 0;
+  for (let i = 1; i <= 10; i++) {
+    soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+  }
+  
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf.substring(10, 11))) return false;
+  
+  return true;
+}
+
+/**
+ * Valida CNPJ
+ */
+function validarCNPJ(cnpj) {
+  cnpj = cnpj.replace(/\D/g, "");
+  
+  if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) {
+    return false;
+  }
+  
+  let tamanho = cnpj.length - 2;
+  let numeros = cnpj.substring(0, tamanho);
+  let digitos = cnpj.substring(tamanho);
+  let soma = 0;
+  let pos = tamanho - 7;
+  
+  for (let i = tamanho; i >= 1; i--) {
+    soma += numeros.charAt(tamanho - i) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  
+  let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+  if (resultado != digitos.charAt(0)) return false;
+  
+  tamanho = tamanho + 1;
+  numeros = cnpj.substring(0, tamanho);
+  soma = 0;
+  pos = tamanho - 7;
+  
+  for (let i = tamanho; i >= 1; i--) {
+    soma += numeros.charAt(tamanho - i) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  
+  resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+  if (resultado != digitos.charAt(1)) return false;
+  
+  return true;
+}
+
+/**
+ * Aplica validação visual ao campo CPF/CNPJ
+ */
+function validarEVisualizarDocumento(input, tipo) {
+  const valor = input.value.replace(/\D/g, "");
+  
+  // Remove classes anteriores
+  input.classList.remove('is-valid', 'is-invalid', 'border-warning');
+  
+  if (valor.length === 0) {
+    return; // Campo vazio, sem validação
+  }
+  
+  let valido = false;
+  
+  if (tipo === 'cpf') {
+    if (valor.length < 11) {
+      input.classList.add('border-warning');
+    } else {
+      valido = validarCPF(valor);
+      input.classList.add(valido ? 'is-valid' : 'is-invalid');
+    }
+  } else if (tipo === 'cnpj') {
+    if (valor.length < 14) {
+      input.classList.add('border-warning');
+    } else {
+      valido = validarCNPJ(valor);
+      input.classList.add(valido ? 'is-valid' : 'is-invalid');
+    }
+  }
+}
+
+/**
+ * ============================================
+ * MÁSCARAS - TELEFONE
+ * ============================================
+ */
+
+/**
+ * Aplica máscara de telefone: (00) 00000-0000 ou (00) 0000-0000
+ */
+function aplicarMascaraTelefone(valor) {
+  valor = valor.replace(/\D/g, "");
+  
+  if (valor.length <= 10) {
+    // Telefone fixo: (00) 0000-0000
+    valor = valor.replace(/^(\d{2})(\d)/, "($1) $2");
+    valor = valor.replace(/(\d{4})(\d)/, "$1-$2");
+  } else {
+    // Celular: (00) 00000-0000
+    valor = valor.replace(/^(\d{2})(\d)/, "($1) $2");
+    valor = valor.replace(/(\d{5})(\d)/, "$1-$2");
+  }
+  
+  return valor;
+}
+
+/**
+ * ============================================
+ * INICIALIZAÇÃO DOS LISTENERS
+ * ============================================
+ */
+
+/**
+ * Inicializa os listeners para os campos de configuração
+ */
+function inicializarListenersConfiguracao() {
+  // CEP - Perfil do funcionário
+  const cepPerfil = document.getElementById('configCep');
+  if (cepPerfil) {
+    cepPerfil.addEventListener('blur', function() {
+      buscarEnderecoPorCEP(this.value, 'perfil');
+    });
+  }
+  
+  // CEP - Empresa
+  const cepEmpresa = document.getElementById('configCEP');
+  if (cepEmpresa) {
+    cepEmpresa.addEventListener('blur', function() {
+      buscarEnderecoPorCEP(this.value, 'empresa');
+    });
+  }
+  
+  // CPF - Perfil do funcionário
+  const cpfInput = document.getElementById('configCpf');
+  if (cpfInput) {
+    cpfInput.addEventListener('input', function(e) {
+      this.value = aplicarMascaraCPF(this.value);
+    });
+    cpfInput.addEventListener('blur', function() {
+      validarEVisualizarDocumento(this, 'cpf');
+    });
+  }
+  
+  // CNPJ - Empresa
+  const cnpjInput = document.getElementById('configCNPJ');
+  if (cnpjInput) {
+    cnpjInput.addEventListener('input', function(e) {
+      this.value = aplicarMascaraCNPJ(this.value);
+    });
+    cnpjInput.addEventListener('blur', function() {
+      validarEVisualizarDocumento(this, 'cnpj');
+    });
+  }
+  
+  // Telefone - Perfil do funcionário
+  const telefonePerfil = document.getElementById('configTelefone');
+  if (telefonePerfil) {
+    telefonePerfil.addEventListener('input', function(e) {
+      this.value = aplicarMascaraTelefone(this.value);
+    });
+  }
+  
+  // Telefone - Empresa
+  const telefoneEmpresa = document.getElementById('configTelefoneEmpresa');
+  if (telefoneEmpresa) {
+    telefoneEmpresa.addEventListener('input', function(e) {
+      this.value = aplicarMascaraTelefone(this.value);
+    });
+  }
+  
+  console.log('✅ Listeners de configuração inicializados');
+}
+
+// Inicializa os listeners quando a configuração é aberta
+document.addEventListener('DOMContentLoaded', function() {
+  // Aguarda um pouco para garantir que os elementos estão no DOM
+  setTimeout(inicializarListenersConfiguracao, 100);
 });
 
 // Expõe funções globalmente
@@ -817,4 +1105,6 @@ window.toggleMaster = toggleMaster;
 window.abrirModalDefinirSenha = abrirModalDefinirSenha;
 window.definirSenhaFuncionario = definirSenhaFuncionario;
 window.resetarSenha = resetarSenha;
+window.buscarEnderecoPorCEP = buscarEnderecoPorCEP;
+window.inicializarListenersConfiguracao = inicializarListenersConfiguracao;
 

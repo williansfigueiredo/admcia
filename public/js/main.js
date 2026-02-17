@@ -3324,17 +3324,7 @@ window.switchView = async function (viewId) {
 // Formatadores
 // Formatador Inteligente (Milhares e Milhões)
 function formatarMoedaK(valor) {
-  // Se for maior ou igual a 1 Milhão
-  if (valor >= 1000000) {
-    return "R$ " + (valor / 1000000).toFixed(1) + "M";
-  }
-
-  // Se for maior ou igual a 1 Mil (e menor que 1 Milhão)
-  if (valor >= 1000) {
-    return "R$ " + (valor / 1000).toFixed(1) + "K";
-  }
-
-  // Valores menores (ex: R$ 500)
+  // Sempre mostra o valor real sem arredondamento (sem K ou M)
   return parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 function formatarMoeda(valor) { return parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
@@ -12388,13 +12378,10 @@ async function carregarResumoFinanceiro() {
     const response = await fetch(`${API_URL}/financeiro/resumo`);
     const dados = await response.json();
 
-    // Formata valores
+    // Formata valores - Sempre mostra o valor real sem arredondamento
     const formatarValor = (v) => {
       const num = parseFloat(v) || 0;
-      if (num >= 1000) {
-        return 'R$ ' + (num / 1000).toFixed(1).replace('.', ',') + 'K';
-      }
-      return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
     // Formata variação percentual
