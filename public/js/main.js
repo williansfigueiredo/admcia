@@ -2129,6 +2129,9 @@ window.salvarJobTelaCheia = async function () {
   // 2. CÁLCULOS DOS ITENS
   const itensArray = window.extrairItensComEquipamento();
   const isEdit = Number.isInteger(window.__jobEditandoId);
+  
+  // Verifica se é um job que JÁ ESTÁ finalizado ou cancelado
+  const isJobInativo = isEdit && (window.__statusJobAtual === 'Finalizado' || window.__statusJobAtual === 'Cancelado');
 
   // =================================================================
   // 🔒 VALIDAÇÃO DE ESTOQUE: APENAS EM NOVOS PEDIDOS
@@ -6901,6 +6904,22 @@ window.editarJob = async function (jobId) {
   if (badgeModoView) {
     badgeModoView.remove();
     console.log('✏️ [EDITARJOB] Badge de visualização removido');
+  }
+
+  // ====================================================================
+  // 9. PREENCHER NÚMERO DO PEDIDO E CARREGAR LOGO/NOME DA EMPRESA
+  // ====================================================================
+  // Preenche o número do pedido
+  const campoNumeroPedido = document.getElementById('jobNumber');
+  if (campoNumeroPedido) {
+    const numeroPedido = job.numero_pedido || `PED-${String(job.id).padStart(4, '0')}`;
+    campoNumeroPedido.value = numeroPedido;
+    console.log('📋 Número do pedido carregado:', numeroPedido);
+  }
+
+  // Carrega logo e nome da empresa no cabeçalho do pedido
+  if (typeof carregarLogoNoPedido === 'function') {
+    await carregarLogoNoPedido();
   }
 
   console.log('✏️ [EDITARJOB] Modo edição ativado - inputs habilitados');
@@ -13717,3 +13736,134 @@ async function diagnosticarSMTPSistema() {
 window.testarSistemaNotificacoes = testarSistemaNotificacoes;
 window.criarTabelasNotificacoes = criarTabelasNotificacoes;
 window.diagnosticarSMTPSistema = diagnosticarSMTPSistema;
+
+// ============================================
+// MÁSCARAS DE ENTRADA - FORMULÁRIO DE PEDIDO
+// ============================================
+
+/**
+ * Aplica máscara de CEP: 00000-000
+ */
+function aplicarMascaraCEP(valor) {
+  valor = valor.replace(/\D/g, "");
+  if (valor.length <= 8) {
+    valor = valor.replace(/^(\d{5})(\d)/, "$1-$2");
+  }
+  return valor;
+}
+
+/**
+ * Aplica máscara de CPF ou CNPJ automaticamente
+ * Detecta se é CPF (11 dígitos) ou CNPJ (14 dígitos)
+ */
+function aplicarMascaraCPFouCNPJ(valor) {
+  valor = valor.replace(/\D/g, "");
+  
+  if (valor.length <= 11) {
+    // CPF: 000.000.000-00
+    valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
+    valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
+    valor = valor.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  } else {
+    // CNPJ: 00.000.000/0000-00
+    valor = valor.substring(0, 14); // Limita a 14 dígitos
+    valor = valor.replace(/^(\d{2})(\d)/, "$1.$2");
+    valor = valor.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+    valor = valor.replace(/\.(\d{3})(\d)/, ".$1/$2");
+    valor = valor.replace(/(\d{4})(\d)/, "$1-$2");
+  }
+  
+  return valor;
+}
+
+/**
+ * Aplica máscara de telefone: (00) 00000-0000 ou (00) 0000-0000
+ */
+function aplicarMascaraTelefoneJob(valor) {
+  valor = valor.replace(/\D/g, "");
+  
+  if (valor.length <= 10) {
+    // Telefone fixo: (00) 0000-0000
+    valor = valor.replace(/^(\d{2})(\d)/, "($1) $2");
+    valor = valor.replace(/(\d{4})(\d)/, "$1-$2");
+  } else {
+    // Celular: (00) 00000-0000
+    valor = valor.replace(/^(\d{2})(\d)/, "($1) $2");
+    valor = valor.replace(/(\d{5})(\d)/, "$1-$2");
+  }
+  
+  return valor;
+}
+
+/**
+ * Inicializa as máscaras nos campos do formulário de pedido
+ */
+function inicializarMascarasFormularioJob() {
+  console.log('🎭 Inicializando máscaras no formulário de pedido...');
+  
+  // CEP
+  const cepInput = document.getElementById('jobCep');
+  if (cepInput) {
+    cepInput.addEventListener('input', function() {
+      this.value = aplicarMascaraCEP(this.value);
+    });
+    console.log('  ✓ Máscara CEP aplicada');
+  }
+  
+  // CNPJ/CPF do Pagador
+  const cnpjCpfInput = document.getElementById('jobPagadorCNPJ');
+  if (cnpjCpfInput) {
+    cnpjCpfInput.addEventListener('input', function() {
+      this.value = aplicarMascaraCPFouCNPJ(this.value);
+    });
+    console.log('  ✓ Máscara CPF/CNPJ aplicada');
+  }
+  
+  // Telefone do Solicitante
+  const telSolicitante = document.getElementById('jobSolicitanteTelefone');
+  if (telSolicitante) {
+    telSolicitante.addEventListener('input', function() {
+      this.value = aplicarMascaraTelefoneJob(this.value);
+    });
+    console.log('  ✓ Máscara Telefone Solicitante aplicada');
+  }
+  
+  // Telefone da Produção Local
+  const telProducao = document.getElementById('jobProducaoContato');
+  if (telProducao) {
+    telProducao.addEventListener('input', function() {
+      this.value = aplicarMascaraTelefoneJob(this.value);
+    });
+    console.log('  ✓ Máscara Telefone Produção aplicada');
+  }
+  
+  // CEP do Pagador (se existir)
+  const cepPagador = document.getElementById('jobPagadorCep');
+  if (cepPagador) {
+    cepPagador.addEventListener('input', function() {
+      this.value = aplicarMascaraCEP(this.value);
+    });
+    console.log('  ✓ Máscara CEP Pagador aplicada');
+  }
+  
+  console.log('✅ Máscaras do formulário de pedido inicializadas');
+}
+
+// Inicializa as máscaras quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', function() {
+  inicializarMascarasFormularioJob();
+  
+  // Também reinicializa quando o modal de pedido é aberto
+  const modalElement = document.getElementById('modalNovoJob');
+  if (modalElement) {
+    modalElement.addEventListener('shown.bs.modal', function() {
+      setTimeout(inicializarMascarasFormularioJob, 100);
+    });
+  }
+});
+
+// Expõe as funções globalmente
+window.aplicarMascaraCEP = aplicarMascaraCEP;
+window.aplicarMascaraCPFouCNPJ = aplicarMascaraCPFouCNPJ;
+window.aplicarMascaraTelefoneJob = aplicarMascaraTelefoneJob;
+window.inicializarMascarasFormularioJob = inicializarMascarasFormularioJob;
