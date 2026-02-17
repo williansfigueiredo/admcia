@@ -1,5 +1,35 @@
+/* =============================================================
+   CIA ADM - ESTILOS PRINCIPAIS
+   Sistema ERP para Gestão de Locação de Equipamentos
+   =============================================================
+   
+   ÍNDICE DE SEÇÕES:
+   -----------------
+   1. VARIÁVEIS CSS (Root)
+   2. TIPOGRAFIA E BASE
+   3. SIDEBAR E NAVEGAÇÃO
+   4. CARDS E MÉTRICAS
+   5. HEADER E ELEMENTOS GERAIS
+   6. COMPONENTES GERAIS
+   7. DASHBOARD PRINCIPAL
+   8. ABA FINANCEIRO
+   9. ABA LOGÍSTICA
+   10. CLIENTES (CRM)
+   11. INVENTÁRIO / ESTOQUE
+   12. FUNCIONÁRIOS (RH)
+   13. CALENDÁRIO E ESCALAS
+   14. IMPRESSÃO
+   15. RESPONSIVIDADE MOBILE
+   16. DARK MODE
+   17. UTILITÁRIOS
+   
+   ============================================================= */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* =============================================================
+   1. VARIÁVEIS CSS (ROOT)
+   ============================================================= */
 :root {
   --vz-body-bg: #f3f6fc;
   --vz-sidebar-bg: #0d1321;

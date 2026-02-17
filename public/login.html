@@ -1,4 +1,21 @@
 <!DOCTYPE html>
+<!--
+============================================================
+CIA ADM - PÁGINA DE LOGIN
+============================================================
+Página de autenticação do sistema
+
+SEÇÕES:
+1. HEAD - Meta tags e estilos inline
+2. BODY
+   - Logo / Branding
+   - Formulário de Login
+   - Formulário de Recuperação de Senha
+   - Formulário de Código de Verificação  
+   - Formulário de Nova Senha
+3. SCRIPTS - Lógica de autenticação
+============================================================
+-->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -10,6 +27,11 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   
   <style>
+    /* ============================================
+       ESTILOS DA PÁGINA DE LOGIN
+       ============================================ */
+
+    /* --- VARIÁVEIS DE TEMA --- */
     :root {
       /* Light mode */
       --bg-body: #f0f4f8;
@@ -308,9 +330,14 @@
 </head>
 
 <body>
+  <!-- ============================================
+       CONTAINER PRINCIPAL DO LOGIN
+       ============================================ -->
   <div class="login-container">
     <div class="login-card">
-      <!-- Logo / Branding -->
+      <!-- ============================================
+           LOGO / BRANDING
+           ============================================ -->
       <div class="login-logo">
         <div class="logo-icon">
           <i class="bi bi-building"></i>
@@ -319,13 +346,17 @@
         <p>Sistema de Gestão Empresarial</p>
       </div>
 
-      <!-- Alerta de Erro -->
+      <!-- ============================================
+           ALERTA DE ERRO
+           ============================================ -->
       <div id="alertError" class="alert alert-danger hidden">
         <i class="bi bi-exclamation-circle"></i>
         <span id="alertErrorMessage">Erro ao fazer login</span>
       </div>
 
-      <!-- Formulário de Login -->
+      <!-- ============================================
+           FORMULÁRIO DE LOGIN
+           ============================================ -->
       <form id="loginForm" autocomplete="on">
         <!-- Email -->
         <div class="form-group">
@@ -378,7 +409,9 @@
         </div>
       </form>
 
-      <!-- Formulário Recuperação de Senha (inicialmente oculto) -->
+      <!-- ============================================
+           FORMULÁRIO RECUPERAÇÃO DE SENHA
+           ============================================ -->
       <form id="formRecuperacao" class="hidden">
         <div class="form-group">
           <label class="form-label" for="emailRecuperacao">Email cadastrado</label>
@@ -409,7 +442,9 @@
         </div>
       </form>
 
-      <!-- Formulário Código de Verificação (inicialmente oculto) -->
+      <!-- ============================================
+           FORMULÁRIO CÓDIGO DE VERIFICAÇÃO
+           ============================================ -->
       <form id="formCodigo" class="hidden">
         <div class="form-group">
           <label class="form-label">Código de Verificação</label>
@@ -445,7 +480,9 @@
         </div>
       </form>
 
-      <!-- Formulário Nova Senha (inicialmente oculto) -->
+      <!-- ============================================
+           FORMULÁRIO NOVA SENHA
+           ============================================ -->
       <form id="formNovaSenha" class="hidden">
         <div class="form-group">
           <label class="form-label">Nova Senha</label>
