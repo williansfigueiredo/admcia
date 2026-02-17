@@ -1,3 +1,32 @@
+/* =============================================================
+   CIA ADM - SERVIDOR EXPRESS (API REST)
+   Sistema ERP para Gestão de Locação de Equipamentos
+   =============================================================
+   
+   ÍNDICE DE SEÇÕES:
+   -----------------
+   1. CONFIGURAÇÕES E DEPENDÊNCIAS
+   2. MIDDLEWARES E ARQUIVOS ESTÁTICOS
+   3. ROTAS DE PÁGINAS (HTML)
+   4. CONEXÃO COM BANCO DE DADOS (MySQL)
+   5. API - DASHBOARD (KPIs e Gráficos)
+   6. API - JOBS/CONTRATOS (CRUD)
+   7. API - CLIENTES (CRUD)
+   8. API - FUNCIONÁRIOS (CRUD)
+   9. API - FINANCEIRO (Transações)
+   10. API - NOTIFICAÇÕES
+   11. API - ESTOQUE (Equipamentos)
+   12. API - CONFIGURAÇÕES (Empresa/Usuário)
+   13. API - EMAIL (Envio de documentos)
+   14. ROTAS DE DEBUG/MIGRAÇÃO
+   15. INICIALIZAÇÃO DO SERVIDOR
+   
+   ============================================================= */
+
+// =============================================================
+// 1. CONFIGURAÇÕES E DEPENDÊNCIAS
+// =============================================================
+
 // Carrega variáveis de ambiente do arquivo .env
 require('dotenv').config();
 
@@ -24,6 +53,10 @@ app.use(cors({
   credentials: true
 }));
 app.use(cookieParser());
+
+// =============================================================
+// 2. MIDDLEWARES E ARQUIVOS ESTÁTICOS
+// =============================================================
 
 // --- LIBERAR PASTA PUBLIC (CSS, JS) ---
 // Desabilita cache para JS e CSS para sempre ter versão mais recente
@@ -59,6 +92,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// =============================================================
+// 3. ROTAS DE PÁGINAS (HTML)
+// =============================================================
+
 // --- ROTA DE LOGIN (PÁGINA) ---
 app.get('/login', redirectIfAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
@@ -81,7 +118,11 @@ app.get('/dashboard', requireAuth, (req, res) => {
 app.get('/invoice', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'invoice.html'));
 
-});
+});  
+
+// =============================================================
+// 4. CONEXÃO COM BANCO DE DADOS (MySQL)
+// =============================================================
 
 // --- CONEXÃO COM O BANCO ---
 // Suporta variáveis do Railway (MYSQL*) e variáveis customizadas (DB_*)
@@ -602,6 +643,9 @@ app.use('/api/funcionarios', funcionariosRoutes);
 
 
 
+// =============================================================
+// 5. API - DASHBOARD (KPIs e Gráficos)
+// =============================================================
 
 // 1. Buscar FATURAMENTO (Igual ao anterior)
 app.get('/dashboard/faturamento', (req, res) => {
@@ -805,6 +849,10 @@ app.get('/jobs', (req, res) => {
   });
 });
 
+// =============================================================
+// 7. API - CLIENTES (CRUD)
+// =============================================================
+
 // --- NOVO: BUSCAR 1 CLIENTE PELO ID (Para Edição) ---
 app.get('/clientes/:id', (req, res) => {
   const sql = "SELECT * FROM clientes WHERE id = ?";
@@ -936,6 +984,11 @@ app.get('/clientes/:id/contatos', (req, res) => {
     return res.json(contatos);
   });
 });
+
+// =============================================================
+// 8. API - FUNCIONÁRIOS (CRUD)
+// =============================================================
+
 // 4. ROTA NOVA: Buscar Lista de FUNCIONÁRIOS
 // Rota simplificada para dropdowns (apenas ativos)
 app.get('/funcionarios', (req, res) => {
@@ -3615,10 +3668,7 @@ app.post('/email/senha-resetada', (req, res) => {
 // =============================================================
 // ROTA DE EXCLUSÃO INTELIGENTE (DEVOLVE ESTOQUE ANTES DE APAGAR)
 // =============================================================
-// =============================================================
-// ROTA DE EXCLUSÃO INTELIGENTE (CORRIGIDA)
-// Só devolve estoque se o pedido estiver ATIVO
-// =============================================================
+
 app.delete('/jobs/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -3811,6 +3861,9 @@ app.get('/debug/clientes/:id/pendencias', (req, res) => {
   });
 });
 
+// =============================================================
+// 11. API - ESTOQUE (Equipamentos)
+// =============================================================
 
 // 1. CADASTRAR (POST com upload.single)
 app.post('/equipamentos', upload.single('foto'), (req, res) => {
@@ -5039,7 +5092,7 @@ app.get('/funcionarios/:id/historico', (req, res) => {
 
 
 // =======================================================
-//          SISTEMA DE CONTROLE DE ACESSO
+//          12. SISTEMA DE CONTROLE DE ACESSO
 // =======================================================
 
 // Função para hash de senha (usando crypto nativo)
