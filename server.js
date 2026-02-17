@@ -640,59 +640,117 @@ app.get('/jobs/ativos', (req, res) => {
 
 // ROTA: JOBS POR DIA DA SEMANA ATUAL (para gráfico de memória semanal)
 app.get('/jobs/semana', (req, res) => {
-  // Semana ATUAL
+  // Busca todos os jobs da semana com data_inicio e data_fim
   const sqlAtual = `
-    SELECT 
-      DAYOFWEEK(data_inicio) as dia_semana,
-      COUNT(DISTINCT j.id) as total
+    SELECT j.id, j.data_inicio, j.data_fim, j.status
     FROM jobs j
-    WHERE YEARWEEK(data_inicio, 0) = YEARWEEK(CURDATE(), 0)
-      AND status IN ('Em Andamento', 'Finalizado')
-    GROUP BY DAYOFWEEK(data_inicio)
+    WHERE status IN ('Em Andamento', 'Finalizado')
+      AND (
+        YEARWEEK(data_inicio, 1) = YEARWEEK(CURDATE(), 1)
+        OR YEARWEEK(data_fim, 1) = YEARWEEK(CURDATE(), 1)
+        OR (data_inicio <= CURDATE() AND data_fim >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY))
+      )
   `;
 
-  // Semana ANTERIOR (para comparação)
+  // Semana ANTERIOR (para comparação - também conta dias)
   const sqlAnterior = `
-    SELECT COUNT(DISTINCT j.id) as total
+    SELECT j.id, j.data_inicio, j.data_fim
     FROM jobs j
-    WHERE YEARWEEK(data_inicio, 0) = YEARWEEK(DATE_SUB(CURDATE(), INTERVAL 7 DAY), 0)
-      AND status IN ('Em Andamento', 'Finalizado')
+    WHERE status IN ('Em Andamento', 'Finalizado')
+      AND (
+        YEARWEEK(data_inicio, 1) = YEARWEEK(DATE_SUB(CURDATE(), INTERVAL 7 DAY), 1)
+        OR YEARWEEK(data_fim, 1) = YEARWEEK(DATE_SUB(CURDATE(), INTERVAL 7 DAY), 1)
+      )
   `;
 
-  db.query(sqlAtual, (err, resultsAtual) => {
+  db.query(sqlAtual, (err, jobsAtual) => {
     if (err) {
       console.error("Erro ao buscar jobs da semana:", err);
       return res.status(500).json({ error: err.message });
     }
 
-    db.query(sqlAnterior, (err2, resultsAnterior) => {
+    db.query(sqlAnterior, (err2, jobsAnterior) => {
       if (err2) {
         console.error("Erro ao buscar jobs da semana anterior:", err2);
         return res.status(500).json({ error: err2.message });
       }
 
-      // Monta array de 7 dias (Dom=1, Seg=2, ..., Sáb=7)
-      const diasSemana = Array(7).fill(0);
-      resultsAtual.forEach(r => {
-        diasSemana[r.dia_semana - 1] = r.total;
-      });
+      // Calcula início e fim da semana atual (Segunda a Domingo)
+      const hoje = new Date();
+      const diaSemana = hoje.getDay(); // 0=Dom, 1=Seg, ..., 6=Sab
+      const diffSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
+      
+      const segundaAtual = new Date(hoje);
+      segundaAtual.setDate(hoje.getDate() + diffSegunda);
+      segundaAtual.setHours(0, 0, 0, 0);
+      
+      const domingoAtual = new Date(segundaAtual);
+      domingoAtual.setDate(segundaAtual.getDate() + 6);
+      domingoAtual.setHours(23, 59, 59, 999);
 
-      // Total da semana atual
-      const totalSemana = diasSemana.reduce((acc, val) => acc + val, 0);
+      // Semana anterior
+      const segundaAnterior = new Date(segundaAtual);
+      segundaAnterior.setDate(segundaAnterior.getDate() - 7);
+      const domingoAnterior = new Date(domingoAtual);
+      domingoAnterior.setDate(domingoAnterior.getDate() - 7);
 
-      // Total da semana anterior
-      const totalSemanaAnterior = resultsAnterior[0]?.total || 0;
+      // Função para contar dias de trabalho em uma semana
+      function contarDiasNaSemana(jobs, segundaSemana, domingoSemana) {
+        const diasSemana = Array(7).fill(0); // [seg, ter, qua, qui, sex, sab, dom]
+        
+        jobs.forEach(job => {
+          const dataInicio = new Date(job.data_inicio);
+          dataInicio.setHours(0, 0, 0, 0);
+          
+          const dataFim = job.data_fim ? new Date(job.data_fim) : new Date(dataInicio);
+          dataFim.setHours(0, 0, 0, 0);
+          
+          // Percorre cada dia do job
+          const diaAtual = new Date(dataInicio);
+          while (diaAtual <= dataFim) {
+            // Verifica se cai na semana
+            if (diaAtual >= segundaSemana && diaAtual <= domingoSemana) {
+              // Calcula índice do dia (0=Seg, 1=Ter, ..., 6=Dom)
+              let idx = diaAtual.getDay() - 1;
+              if (idx < 0) idx = 6; // Domingo = 6
+              diasSemana[idx]++;
+            }
+            diaAtual.setDate(diaAtual.getDate() + 1);
+          }
+        });
+        
+        return diasSemana;
+      }
+
+      // Conta dias da semana atual
+      const diasSemanaAtual = contarDiasNaSemana(jobsAtual, segundaAtual, domingoAtual);
+      const totalSemana = diasSemanaAtual.reduce((acc, val) => acc + val, 0);
+
+      // Conta dias da semana anterior
+      const diasSemanaAnterior = contarDiasNaSemana(jobsAnterior, segundaAnterior, domingoAnterior);
+      const totalSemanaAnterior = diasSemanaAnterior.reduce((acc, val) => acc + val, 0);
 
       // Calcula variação percentual
       let variacao = 0;
       if (totalSemanaAnterior > 0) {
         variacao = ((totalSemana - totalSemanaAnterior) / totalSemanaAnterior) * 100;
       } else if (totalSemana > 0) {
-        variacao = 100; // Se não tinha nada antes e agora tem, é +100%
+        variacao = 100;
       }
 
+      // Reorganiza para formato [dom, seg, ter, qua, qui, sex, sab]
+      const diasParaFrontend = [
+        diasSemanaAtual[6], // Dom
+        diasSemanaAtual[0], // Seg
+        diasSemanaAtual[1], // Ter
+        diasSemanaAtual[2], // Qua
+        diasSemanaAtual[3], // Qui
+        diasSemanaAtual[4], // Sex
+        diasSemanaAtual[5]  // Sab
+      ];
+
       res.json({
-        dias: diasSemana, // [dom, seg, ter, qua, qui, sex, sab]
+        dias: diasParaFrontend,
         total: totalSemana,
         totalSemanaAnterior: totalSemanaAnterior,
         variacao: variacao.toFixed(1)

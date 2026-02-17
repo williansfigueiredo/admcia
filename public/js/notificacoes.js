@@ -145,19 +145,14 @@ function obterFuncionarioId() {
   if (usuarioData) {
     try {
       const parsed = JSON.parse(usuarioData);
-      console.log('🔍 Funcionário logado:', parsed.nome || parsed.email, 'ID:', parsed.id);
       return parsed.id || null;
     } catch (e) {
-      console.error('❌ Erro ao parsear dados do usuário:', e);
-      // Limpa dados corrompidos
       sessionStorage.removeItem('usuario');
     }
   }
 
-  console.warn('⚠️ Dados do usuário não encontrados - sessão inválida');
   // Se não tem dados do usuário mas tem token, limpa a sessão
   if (token) {
-    console.log('🔧 Limpando sessão corrompida...');
     sessionStorage.clear();
     window.location.reload();
   }
@@ -182,8 +177,6 @@ async function obterNotificacoes() {
   try {
     const token = sessionStorage.getItem('auth_token');
     const url = `${window.API_URL}/notificacoes?funcionario_id=${funcionarioId}`;
-    console.log('📡 Buscando notificações para funcionário ID:', funcionarioId);
-    console.log('📡 URL:', url);
 
     const response = await fetch(url, {
       headers: {
@@ -192,22 +185,12 @@ async function obterNotificacoes() {
       }
     });
 
-    console.log('📡 Resposta do servidor:', response.status, response.statusText);
-
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Erro ${response.status}: ${errorText}`);
     }
 
     const notificacoes = await response.json();
-    console.log('🔔 Notificações recebidas:', notificacoes.length);
-
-    if (notificacoes.length > 0) {
-      console.log('🔔 Primeiras 3 notificações:', notificacoes.slice(0, 3));
-    } else {
-      console.log('📭 Nenhuma notificação encontrada');
-    }
-
     return notificacoes;
   } catch (error) {
     console.error('❌ Erro ao buscar notificações:', error.message);
@@ -261,10 +244,6 @@ async function renderizarNotificacoes() {
 
   // Filtrar apenas as notificações NÃO LIDAS
   const notificacoes = todasNotificacoes.filter(n => !n.lida);
-
-  console.log('📊 Total de notificações:', todasNotificacoes.length);
-  console.log('📊 Notificações não lidas:', notificacoes.length);
-  console.log('📊 Notificações lidas:', todasNotificacoes.filter(n => n.lida).length);
 
   const lista = document.getElementById('listaNotificacoes');
 
@@ -526,22 +505,20 @@ function notificarPedidoCancelado(descricao) {
 
 // Força atualização imediata das notificações (sem esperar o polling)
 async function forcarAtualizacaoNotificacoes() {
-  console.log('⚡ Forçando atualização imediata de notificações...');
   await renderizarNotificacoes();
   await atualizarBadgeNotificacoes();
 }
 
 // Inicializa sistema de notificações
 function inicializarNotificacoes() {
-  console.log('🔔 Inicializando sistema de notificações...');
   atualizarBadgeNotificacoes();
   verificarVencimentosPedidos();
 
-  // Atualiza notificações a cada 2 segundos para resposta mais rápida
+  // Atualiza notificações a cada 30 segundos
   setInterval(() => {
     renderizarNotificacoes();
     atualizarBadgeNotificacoes();
-  }, 2 * 1000);
+  }, 30 * 1000);
 }
 
 // Função de teste para debug
