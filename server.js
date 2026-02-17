@@ -1756,12 +1756,12 @@ app.get('/financeiro/transacoes', (req, res) => {
         ELSE 'Locação + Serviço'
       END COLLATE utf8mb4_unicode_ci as categoria,
       j.valor,
-      j.data_job as data_vencimento,
+      COALESCE(j.data_vencimento, j.data_inicio, j.data_job) as data_vencimento,
       NULL as data_pagamento,
       CASE 
         WHEN j.pagamento = 'Pago' THEN 'pago'
         WHEN j.pagamento = 'Cancelado' THEN 'cancelado'
-        WHEN j.data_job < CURRENT_DATE() AND j.pagamento != 'Pago' THEN 'atrasado'
+        WHEN COALESCE(j.data_vencimento, j.data_inicio, j.data_job) < CURRENT_DATE() AND j.pagamento != 'Pago' THEN 'atrasado'
         ELSE 'pendente'
       END COLLATE utf8mb4_unicode_ci as status_calc,
       c.nome COLLATE utf8mb4_unicode_ci as cliente_nome,

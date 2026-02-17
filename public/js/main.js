@@ -3537,25 +3537,27 @@ function carregarGestaoContratos() {
 // Alternar Card Jobs (Aberto -> Finalizado -> Cancelado)
 function alternarViewJobs() {
   if (estadoViewJobs === 'ativos') {
-    estadoViewJobs = 'finalizados'; // NOVO ESTADO
+    estadoViewJobs = 'finalizados';
   } else if (estadoViewJobs === 'finalizados') {
     estadoViewJobs = 'cancelados';
   } else {
-    estadoViewJobs = 'ativos'; // Volta ao início
+    estadoViewJobs = 'ativos';
   }
-  carregarGestaoContratos();
+  // Atualiza instantaneamente usando o cache
+  atualizarCardJobsInstantaneo();
 }
 
 // Alternar Card Faturamento (Previsão -> Finalizado -> Perda)
 function alternarViewFaturamento() {
   if (estadoViewFaturamento === 'previsao') {
-    estadoViewFaturamento = 'finalizado'; // NOVO ESTADO
+    estadoViewFaturamento = 'finalizado';
   } else if (estadoViewFaturamento === 'finalizado') {
     estadoViewFaturamento = 'perda';
   } else {
-    estadoViewFaturamento = 'previsao'; // Volta ao início
+    estadoViewFaturamento = 'previsao';
   }
-  carregarGestaoContratos();
+  // Atualiza instantaneamente usando o cache
+  atualizarCardFaturamentoInstantaneo();
 }
 
 // Alternar Card Financeiro (3 Estados: Pendentes -> Vencidas -> Canceladas -> Volta)
@@ -3563,11 +3565,107 @@ function alternarViewFinanceiro() {
   if (estadoViewFinanceiro === 'pendentes') {
     estadoViewFinanceiro = 'vencidas';
   } else if (estadoViewFinanceiro === 'vencidas') {
-    estadoViewFinanceiro = 'canceladas'; // NOVO ESTADO
+    estadoViewFinanceiro = 'canceladas';
   } else {
-    estadoViewFinanceiro = 'pendentes'; // Volta ao início
+    estadoViewFinanceiro = 'pendentes';
   }
-  carregarGestaoContratos();
+  // Atualiza instantaneamente usando o cache
+  atualizarCardFinanceiroInstantaneo();
+}
+
+// === FUNÇÕES DE ATUALIZAÇÃO INSTANTÂNEA DOS CARDS ===
+
+function atualizarCardJobsInstantaneo() {
+  const jobs = window.todosOsJobsCache || [];
+  const elTituloJobs = document.getElementById('titulo-jobs');
+  const elValorJobs = document.getElementById('kpi-contratos-ativos');
+  const elIconBgJobs = document.getElementById('icon-bg-jobs');
+  const elIconJobs = document.getElementById('icon-jobs');
+  let countJobs = 0;
+
+  if (estadoViewJobs === 'ativos') {
+    countJobs = jobs.filter(j => j.status === 'Agendado' || j.status === 'Confirmado' || j.status === 'Em Andamento').length;
+    if (elTituloJobs) elTituloJobs.innerText = "Jobs em Aberto";
+    if (elValorJobs) elValorJobs.className = "fs-3 fw-bold text-dark sensitive-value";
+    if (elIconBgJobs) elIconBgJobs.className = "fin-icon-box bg-green-soft mb-0";
+    if (elIconJobs) elIconJobs.className = "bi bi-camera-reels";
+  } else if (estadoViewJobs === 'finalizados') {
+    countJobs = jobs.filter(j => j.status === 'Finalizado').length;
+    if (elTituloJobs) elTituloJobs.innerText = "Jobs Finalizados";
+    if (elValorJobs) elValorJobs.className = "fs-3 fw-bold text-primary sensitive-value";
+    if (elIconBgJobs) elIconBgJobs.className = "fin-icon-box bg-blue-soft mb-0";
+    if (elIconJobs) elIconJobs.className = "bi bi-check-circle-fill";
+  } else {
+    countJobs = jobs.filter(j => j.status === 'Cancelado').length;
+    if (elTituloJobs) elTituloJobs.innerText = "Jobs Cancelados";
+    if (elValorJobs) elValorJobs.className = "fs-3 fw-bold text-danger sensitive-value";
+    if (elIconBgJobs) elIconBgJobs.className = "fin-icon-box bg-red-soft mb-0";
+    if (elIconJobs) elIconJobs.className = "bi bi-x-circle";
+  }
+  if (elValorJobs) elValorJobs.innerText = countJobs;
+}
+
+function atualizarCardFaturamentoInstantaneo() {
+  const jobs = window.todosOsJobsCache || [];
+  const elTituloFat = document.getElementById('titulo-faturamento');
+  const elValorFat = document.getElementById('kpi-contratos-valor');
+  const elIconBgFat = document.getElementById('icon-bg-fat');
+  const elIconFat = document.getElementById('icon-fat');
+  let valorExibir = 0;
+
+  if (estadoViewFaturamento === 'previsao') {
+    const jobsPrevisao = jobs.filter(j => j.status === 'Agendado' || j.status === 'Confirmado' || j.status === 'Em Andamento');
+    valorExibir = jobsPrevisao.reduce((acc, curr) => acc + Number(curr.valor), 0);
+    if (elTituloFat) elTituloFat.innerText = "Previsão Faturamento";
+    if (elValorFat) elValorFat.className = "fs-3 fw-bold text-green sensitive-value";
+    if (elIconBgFat) elIconBgFat.className = "fin-icon-box bg-green-soft mb-0";
+    if (elIconFat) elIconFat.className = "bi bi-currency-dollar";
+  } else if (estadoViewFaturamento === 'finalizado') {
+    const jobsFinalizados = jobs.filter(j => j.status === 'Finalizado');
+    valorExibir = jobsFinalizados.reduce((acc, curr) => acc + Number(curr.valor), 0);
+    if (elTituloFat) elTituloFat.innerText = "Faturamento Finalizado";
+    if (elValorFat) elValorFat.className = "fs-3 fw-bold text-primary sensitive-value";
+    if (elIconBgFat) elIconBgFat.className = "fin-icon-box bg-blue-soft mb-0";
+    if (elIconFat) elIconFat.className = "bi bi-check-circle-fill";
+  } else {
+    const jobsCancelados = jobs.filter(j => j.status === 'Cancelado');
+    valorExibir = jobsCancelados.reduce((acc, curr) => acc + Number(curr.valor), 0);
+    if (elTituloFat) elTituloFat.innerText = "Valor Perdido (Cancelados)";
+    if (elValorFat) elValorFat.className = "fs-3 fw-bold text-danger sensitive-value";
+    if (elIconBgFat) elIconBgFat.className = "fin-icon-box bg-red-soft mb-0";
+    if (elIconFat) elIconFat.className = "bi bi-graph-down-arrow";
+  }
+  if (elValorFat) elValorFat.innerText = formatarMoedaK(valorExibir);
+}
+
+function atualizarCardFinanceiroInstantaneo() {
+  const jobs = window.todosOsJobsCache || [];
+  const elTituloFin = document.getElementById('titulo-pendentes');
+  const elValorFin = document.getElementById('kpi-contratos-pendentes');
+  const elIconBgFin = document.getElementById('icon-bg-fin');
+  const elIconFin = document.getElementById('icon-fin');
+  let countFin = 0;
+
+  if (estadoViewFinanceiro === 'pendentes') {
+    countFin = jobs.filter(j => j.pagamento === 'Pendente').length;
+    if (elTituloFin) elTituloFin.innerText = "Faturas Pendentes";
+    if (elValorFin) elValorFin.className = "fs-3 fw-bold text-orange sensitive-value";
+    if (elIconBgFin) elIconBgFin.className = "fin-icon-box bg-orange-soft mb-0";
+    if (elIconFin) elIconFin.className = "bi bi-file-earmark-text";
+  } else if (estadoViewFinanceiro === 'vencidas') {
+    countFin = jobs.filter(j => j.pagamento === 'Vencido').length;
+    if (elTituloFin) elTituloFin.innerText = "Faturas Vencidas";
+    if (elValorFin) elValorFin.className = "fs-3 fw-bold text-danger sensitive-value";
+    if (elIconBgFin) elIconBgFin.className = "fin-icon-box bg-red-soft mb-0";
+    if (elIconFin) elIconFin.className = "bi bi-exclamation-triangle-fill";
+  } else {
+    countFin = jobs.filter(j => j.pagamento === 'Cancelado').length;
+    if (elTituloFin) elTituloFin.innerText = "Faturas Canceladas";
+    if (elValorFin) elValorFin.className = "fs-3 fw-bold text-secondary sensitive-value";
+    if (elIconBgFin) elIconBgFin.className = "fin-icon-box bg-gray-200 mb-0";
+    if (elIconFin) elIconFin.className = "bi bi-x-octagon";
+  }
+  if (elValorFin) elValorFin.innerText = countFin;
 }
 
 
