@@ -1458,7 +1458,16 @@ app.get('/financeiro/resumo', (req, res) => {
         AND MONTH(data_job) = MONTH(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
         AND YEAR(data_job) = YEAR(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
     `,
-    // Despesas ESTE MÊS
+    // Despesas PAGAS ESTE MÊS (para cálculo do saldo real já pago/recebido)
+    despesasPagasMesAtual: `
+      SELECT COALESCE(SUM(valor), 0) as total 
+      FROM transacoes 
+      WHERE tipo = 'despesa'
+        AND status = 'pago'
+        AND MONTH(data_vencimento) = MONTH(CURRENT_DATE()) 
+        AND YEAR(data_vencimento) = YEAR(CURRENT_DATE())
+    `,
+    // Despesas TODAS ESTE MÊS (pagas + pendentes, para o card de Despesas)
     despesasMesAtual: `
       SELECT COALESCE(SUM(valor), 0) as total 
       FROM transacoes 
@@ -1489,6 +1498,7 @@ app.get('/financeiro/resumo', (req, res) => {
     aReceber: 0,
     recebidoMes: 0,
     recebidoMesAnterior: 0,
+    despesasPagasMes: 0, // NOVO: Despesas efetivamente pagas do mês
     despesasMes: 0,
     despesasMesAnterior: 0,
     vencidas: 0,
@@ -1516,28 +1526,33 @@ app.get('/financeiro/resumo', (req, res) => {
       db.query(queries.recebidoMesAnterior, (err, r2b) => {
         if (!err && r2b[0]) resultado.recebidoMesAnterior = parseFloat(r2b[0].total) || 0;
 
-        db.query(queries.despesasMesAtual, (err, r3) => {
-          if (!err && r3[0]) resultado.despesasMes = parseFloat(r3[0].total) || 0;
+        db.query(queries.despesasPagasMesAtual, (err, r2c) => {
+          if (!err && r2c[0]) resultado.despesasPagasMes = parseFloat(r2c[0].total) || 0;
 
-          db.query(queries.despesasMesAnterior, (err, r3b) => {
-            if (!err && r3b[0]) resultado.despesasMesAnterior = parseFloat(r3b[0].total) || 0;
+          db.query(queries.despesasMesAtual, (err, r3) => {
+            if (!err && r3[0]) resultado.despesasMes = parseFloat(r3[0].total) || 0;
 
-            db.query(queries.vencidas, (err, r4) => {
-              if (!err && r4[0]) {
-                resultado.vencidas = parseFloat(r4[0].total) || 0;
-                resultado.qtdVencidas = r4[0].qtd || 0;
-              }
+            db.query(queries.despesasMesAnterior, (err, r3b) => {
+              if (!err && r3b[0]) resultado.despesasMesAnterior = parseFloat(r3b[0].total) || 0;
 
-              // Calcula saldos
-              resultado.saldo = resultado.recebidoMes - resultado.despesasMes;
-              resultado.saldoMesAnterior = resultado.recebidoMesAnterior - resultado.despesasMesAnterior;
+              db.query(queries.vencidas, (err, r4) => {
+                if (!err && r4[0]) {
+                  resultado.vencidas = parseFloat(r4[0].total) || 0;
+                  resultado.qtdVencidas = r4[0].qtd || 0;
+                }
 
-              // Calcula variações percentuais
-              resultado.variacaoRecebido = calcularVariacao(resultado.recebidoMes, resultado.recebidoMesAnterior);
-              resultado.variacaoDespesas = calcularVariacao(resultado.despesasMes, resultado.despesasMesAnterior);
-              resultado.variacaoSaldo = calcularVariacao(resultado.saldo, resultado.saldoMesAnterior);
+                // CORREÇÃO: O card "Já Pago/Recebido" deve mostrar: Receitas Pagas - Despesas Pagas
+                // Esse é o saldo REAL já efetivado (não inclui pendentes)
+                resultado.saldo = resultado.recebidoMes - resultado.despesasPagasMes;
+                resultado.saldoMesAnterior = resultado.recebidoMesAnterior - resultado.despesasMesAnterior;
 
-              res.json(resultado);
+                // Calcula variações percentuais
+                resultado.variacaoRecebido = calcularVariacao(resultado.recebidoMes, resultado.recebidoMesAnterior);
+                resultado.variacaoDespesas = calcularVariacao(resultado.despesasMes, resultado.despesasMesAnterior);
+                resultado.variacaoSaldo = calcularVariacao(resultado.saldo, resultado.saldoMesAnterior);
+
+                res.json(resultado);
+              });
             });
           });
         });
