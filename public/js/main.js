@@ -12629,14 +12629,10 @@ function renderizarTransacoesPaginadas() {
         <td>${getBadgeStatus(t.status)}</td>
         <td class="text-end">
           ${isJob ? `
-            <button class="btn btn-sm btn-outline-primary me-1" onclick="window.setJobOrigin('financeiro'); abrirDetalhesJob(${t.id})" title="Ver pedido">
-              <i class="bi bi-eye"></i>
+            <button class="btn btn-sm btn-outline-primary" onclick="window.setJobOrigin('financeiro'); abrirDetalhesJob(${t.id})" title="Ver pedido completo">
+              <i class="bi bi-eye"></i> Ver Pedido
             </button>
-            ${t.status !== 'pago' ? `
-              <button class="btn btn-sm btn-success" onclick="marcarJobPago(${t.id})" title="Marcar como pago">
-                <i class="bi bi-check2"></i>
-              </button>
-            ` : ''}
+            <small class="d-block text-muted mt-1" style="font-size: 10px;">Altere o status em Gestão de Contratos</small>
           ` : `
             <button class="btn btn-sm btn-outline-info me-1" onclick="visualizarTransacao(${t.id})" title="Visualizar">
               <i class="bi bi-eye"></i>

@@ -1137,6 +1137,30 @@ app.post('/jobs', (req, res) => {
             () => { } // Fire and forget
           );
 
+          // === CRIAR TRANSAÇÃO AUTOMATICAMENTE ===
+          // Cria uma transação de receita pendente para este job
+          const descricaoTransacao = `Pedido #${numeroPedido} - ${data.descricao || 'Serviço'}`;
+          const valorJob = parseFloat(data.valor) || 0;
+          const sqlTransacao = `
+            INSERT INTO transacoes (tipo, categoria, descricao, valor, data_vencimento, status, cliente_id, job_id)
+            VALUES ('receita', 'Serviços', ?, ?, ?, 'pendente', ?, ?)
+          `;
+          const valoresTransacao = [
+            descricaoTransacao,
+            valorJob,
+            dataVencimento || formatarDataSQL(data.data_inicio),
+            data.cliente_id || null,
+            novoId
+          ];
+
+          db.query(sqlTransacao, valoresTransacao, (errTrans, tranResult) => {
+            if (errTrans) {
+              console.error('❌ Erro ao criar transação automática:', errTrans);
+            } else {
+              console.log(`✅ Transação #${tranResult.insertId} criada automaticamente para Job #${novoId}`);
+            }
+          });
+
           // Cria notificação de novo pedido para todos os usuários
           db.query(
             'INSERT INTO notificacoes (tipo, titulo, texto, job_id) VALUES (?, ?, ?, ?)',
@@ -1156,6 +1180,30 @@ app.post('/jobs', (req, res) => {
           [String(proximoNumero), String(proximoNumero)],
           () => { } // Fire and forget
         );
+
+        // === CRIAR TRANSAÇÃO AUTOMATICAMENTE (sem itens) ===
+        // Cria uma transação de receita pendente para este job
+        const descricaoTransacao = `Pedido #${numeroPedido} - ${data.descricao || 'Serviço'}`;
+        const valorJob = parseFloat(data.valor) || 0;
+        const sqlTransacao = `
+          INSERT INTO transacoes (tipo, categoria, descricao, valor, data_vencimento, status, cliente_id, job_id)
+          VALUES ('receita', 'Serviços', ?, ?, ?, 'pendente', ?, ?)
+        `;
+        const valoresTransacao = [
+          descricaoTransacao,
+          valorJob,
+          dataVencimento || formatarDataSQL(data.data_inicio),
+          data.cliente_id || null,
+          novoId
+        ];
+
+        db.query(sqlTransacao, valoresTransacao, (errTrans, tranResult) => {
+          if (errTrans) {
+            console.error('❌ Erro ao criar transação automática:', errTrans);
+          } else {
+            console.log(`✅ Transação #${tranResult.insertId} criada automaticamente para Job #${novoId}`);
+          }
+        });
 
         // Cria notificação de novo pedido para todos os usuários
         db.query(
@@ -2828,7 +2876,7 @@ app.post('/jobs/update/:id', (req, res) => {
   }
 
   // Busca o job atual para notificação
-  db.query('SELECT status, descricao, numero_pedido FROM jobs WHERE id = ?', [id], (errSelect, jobResults) => {
+  db.query('SELECT status, descricao, numero_pedido, valor, cliente_id, data_vencimento FROM jobs WHERE id = ?', [id], (errSelect, jobResults) => {
     if (errSelect) {
       console.error("Erro ao buscar job:", errSelect);
       return res.status(500).json(errSelect);
@@ -2842,6 +2890,91 @@ app.post('/jobs/update/:id', (req, res) => {
       if (err) {
         console.error("Erro no SQL:", err);
         return res.status(500).json(err);
+      }
+
+      // === SINCRONIZAÇÃO COM TRANSAÇÕES ===
+      // Se mudou o status de PAGAMENTO, sincroniza com a transação
+      if (campo === 'pagamento' && jobAntigo) {
+        // Verifica se já existe uma transação para esse job
+        db.query('SELECT id FROM transacoes WHERE job_id = ? AND tipo = "receita"', [id], (errTrans, transResults) => {
+          if (errTrans) {
+            console.error('Erro ao verificar transação:', errTrans);
+            return;
+          }
+
+          const dataPagamento = new Date().toISOString().split('T')[0];
+
+          if (transResults && transResults.length > 0) {
+            // Transação JÁ EXISTE - apenas ATUALIZA
+            const transacaoId = transResults[0].id;
+            console.log(`📝 Atualizando transação #${transacaoId} para status: ${valor}`);
+
+            let novoStatusTransacao = 'pendente';
+            let dataFinal = null;
+
+            if (valor === 'Pago' || valor === 'Faturado') {
+              novoStatusTransacao = 'pago';
+              dataFinal = dataPagamento;
+            } else if (valor === 'Cancelado') {
+              novoStatusTransacao = 'cancelado';
+            } else if (valor === 'Pendente') {
+              novoStatusTransacao = 'pendente';
+            } else if (valor === 'Vencido') {
+              novoStatusTransacao = 'atrasado';
+            }
+
+            db.query(
+              'UPDATE transacoes SET status = ?, data_pagamento = ? WHERE id = ?',
+              [novoStatusTransacao, dataFinal, transacaoId],
+              (errUpdate) => {
+                if (errUpdate) {
+                  console.error('❌ Erro ao atualizar transação:', errUpdate);
+                } else {
+                  console.log(`✅ Transação #${transacaoId} atualizada para: ${novoStatusTransacao}`);
+                }
+              }
+            );
+          } else {
+            // Transação NÃO EXISTE - cria uma nova (para pedidos antigos)
+            console.log(`📌 Criando transação para Job #${id} (não existia antes)`);
+
+            const descricaoTransacao = `Pagamento Job #${id} - ${jobAntigo.descricao || 'Serviço'}`;
+            const valorJob = parseFloat(jobAntigo.valor) || 0;
+
+            let statusTransacao = 'pendente';
+            let dataPagamentoFinal = null;
+
+            if (valor === 'Pago' || valor === 'Faturado') {
+              statusTransacao = 'pago';
+              dataPagamentoFinal = dataPagamento;
+            } else if (valor === 'Cancelado') {
+              statusTransacao = 'cancelado';
+            }
+
+            const sqlInsert = `
+              INSERT INTO transacoes (tipo, categoria, descricao, valor, data_vencimento, data_pagamento, status, cliente_id, job_id)
+              VALUES ('receita', 'Serviços', ?, ?, ?, ?, ?, ?, ?)
+            `;
+
+            const valores = [
+              descricaoTransacao,
+              valorJob,
+              jobAntigo.data_vencimento || dataPagamento,
+              dataPagamentoFinal,
+              statusTransacao,
+              jobAntigo.cliente_id,
+              id
+            ];
+
+            db.query(sqlInsert, valores, (errInsert, insertResult) => {
+              if (errInsert) {
+                console.error('❌ Erro ao criar transação:', errInsert);
+              } else {
+                console.log(`✅ Transação #${insertResult.insertId} criada para Job #${id}`);
+              }
+            });
+          }
+        });
       }
 
       // Cria notificação apenas se mudou o status
