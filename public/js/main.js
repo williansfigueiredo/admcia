@@ -3804,7 +3804,7 @@ function renderizarTabelaContratos(pagina) {
   if (jobsDaPagina.length === 0) {
     tabela.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-5">
+                <td colspan="7" class="text-center py-5">
                     <div class="text-muted">
                         <i class="bi bi-search fs-1 d-block mb-2"></i>
                         Nenhum contrato encontrado com esses filtros.
@@ -3851,6 +3851,10 @@ function renderizarTabelaContratos(pagina) {
                     <div class="text-muted small" style="font-size: 11px;">Vigência</div>
                 </td>
                 <td class="fw-bold text-dark">${formatarMoeda(job.valor)}</td>
+                <td>
+                    <div class="text-dark small fw-bold">${job.data_vencimento ? window.formatarDataLocal(job.data_vencimento, { day: '2-digit', month: 'short' }) : '-'}</div>
+                    <div class="text-muted small" style="font-size: 11px;">Prazo pgto</div>
+                </td>
                 <td style="position: relative;"> 
                     <span class="${getStatusPill(job.status, true)} cursor-pointer" 
                           style="display: inline-block; width: 100%; text-align: center;"
@@ -3901,6 +3905,7 @@ function renderizarTabelaContratos(pagina) {
           <div class="contrato-meta">
             <span class="contrato-date">${textoData}</span>
             <span class="contrato-valor">${formatarMoeda(job.valor)}</span>
+            ${job.data_vencimento ? `<span class="small text-muted"><i class="bi bi-calendar-check"></i> Venc: ${window.formatarDataLocal(job.data_vencimento, { day: '2-digit', month: 'short' })}</span>` : ''}
           </div>
           <div class="contrato-pills">
             <span class="${getStatusPill(job.status, true)} cursor-pointer" onclick="abrirMenuStatus(this, ${job.id}, 'status', '${job.status}')">${job.status}</span>
