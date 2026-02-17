@@ -1564,6 +1564,8 @@ async function atualizarDashboard() {
     dataDomingo.setDate(dataDomingo.getDate() + 6);
     dataDomingo.setHours(23, 59, 59, 999); // Fim do dia
 
+    console.log('📅 SEMANA ATUAL:', dataSegunda.toLocaleDateString('pt-BR'), 'a', dataDomingo.toLocaleDateString('pt-BR'));
+
     // Filtra: Jobs desta semana que estão "Em Andamento" OU "Finalizado"
     // (mantém histórico da semana, não diminui quando finaliza)
     // Usa data_inicio (data de execução) ao invés de data_job (data de criação)
@@ -1572,15 +1574,28 @@ async function atualizarDashboard() {
       const dataExecucao = new Date(job.data_inicio || job.data_job);
       dataExecucao.setHours(0, 0, 0, 0);
 
+      const dentroSemana = dataExecucao >= dataSegunda && dataExecucao <= dataDomingo;
+      const statusCorreto = job.status === "Em Andamento" || job.status === "Finalizado";
+      
+      console.log(`Job #${job.id}: ${job.descricao}`);
+      console.log(`  data_inicio: ${job.data_inicio}, data_job: ${job.data_job}`);
+      console.log(`  dataExecucao: ${dataExecucao.toLocaleDateString('pt-BR')}`);
+      console.log(`  status: ${job.status}`);
+      console.log(`  dentroSemana: ${dentroSemana}, statusCorreto: ${statusCorreto}`);
+      console.log(`  INCLUÍDO: ${dentroSemana && statusCorreto}`);
+      console.log('---');
+
       // Verifica se a data de início cai dentro da semana
-      return dataExecucao >= dataSegunda &&
-        dataExecucao <= dataDomingo &&
-        (job.status === "Em Andamento" || job.status === "Finalizado");
+      return dentroSemana && statusCorreto;
     });
 
     // Atualiza o Número Grande do Card
     const elJobs = document.getElementById('kpi-jobs');
-    if (elJobs) elJobs.innerText = jobsDaSemana.length;
+    if (elJobs) {
+      elJobs.innerText = jobsDaSemana.length;
+      console.log(`📊 TOTAL DE JOBS DA SEMANA: ${jobsDaSemana.length}`);
+      console.log('Jobs incluídos:', jobsDaSemana.map(j => `#${j.id} - ${j.descricao}`));
+    }
 
     // Atualiza Tabela (Últimas Diárias)
     preencherTabela(jobs);
@@ -2640,6 +2655,9 @@ function atualizarMiniGraficoSemana(todosJobs, dataSegundaAtual) {
   const container = document.getElementById('mini-chart-jobs');
   if (!container) return;
 
+  console.log('📊 === ATUALIZANDO GRÁFICO DE JOBS DA SEMANA ===');
+  console.log('Total de jobs recebidos:', todosJobs.length);
+
   container.innerHTML = "";
   const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
@@ -2661,11 +2679,19 @@ function atualizarMiniGraficoSemana(todosJobs, dataSegundaAtual) {
       // Usa data_inicio (data de execução) ao invés de data_job
       const d = new Date(j.data_inicio || j.data_job);
       d.setHours(0, 0, 0, 0);
-      return d.getDate() === dataBarra.getDate() &&
+      const match = d.getDate() === dataBarra.getDate() &&
         d.getMonth() === dataBarra.getMonth() &&
         d.getFullYear() === dataBarra.getFullYear() &&
         (j.status === "Em Andamento" || j.status === "Finalizado");
+      
+      if (match) {
+        console.log(`  ✓ Job #${j.id} no dia ${diasSemana[i]}: ${j.descricao} (${j.status})`);
+      }
+      
+      return match;
     }).length;
+
+    console.log(`${diasSemana[i]} (${dataBarra.toLocaleDateString('pt-BR')}): ${qtd} job(s)`);
 
     contagemPorDia.push({
       dia: diasSemana[i],
