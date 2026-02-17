@@ -702,7 +702,7 @@ body {
 /* Nav-link fica ativo quando submenu está expandido */
 .nav-item:has(.collapse.show) > .nav-link {
   background: linear-gradient(90deg, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.05) 100%);
-  color: var(--primary-blue);
+  color: white;
   border-left-color: var(--primary-blue);
 }
 
