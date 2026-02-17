@@ -1091,7 +1091,12 @@ document.addEventListener('DOMContentLoaded', function () {
 /* =============================================================
    CONFIGURAÇÕES GERAIS E INICIALIZAÇÃO
    ============================================================= */
-console.log('🔥 MAIN.JS VERSÃO 2.0 CARREGADO - COM PAGINAÇÃO FUNCIONÁRIOS');
+console.log('� MAIN.JS VERSÃO 3.0 - 17/FEB/2026 14:45');
+console.log('✨ NOVIDADES DESTA VERSÃO:');
+console.log('  ✅ Jobs da Semana (usa data_inicio ao invés de data_job)');
+console.log('  ✅ Máscaras: CEP e Telefone nos Contatos');
+console.log('  ✅ Modal de confirmação ao salvar empresa');
+console.log('  ✅ Cache desabilitado - sempre versão nova');
 
 // Detecta automaticamente se está rodando local ou no Railway
 // Tornar disponível globalmente para outros módulos (notificacoes.js)
