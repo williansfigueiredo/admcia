@@ -482,7 +482,9 @@ body {
 
 .sidebar.collapsed .nav-link {
   justify-content: center;
-
+  margin: 4px 8px;
+  padding: 10px;
+  border-radius: 8px;
 }
 
 .sidebar.collapsed .nav-link .d-flex {
@@ -502,6 +504,15 @@ body {
   display: none !important;
 }
 
+.sidebar.collapsed .collapse::before {
+  display: none;
+}
+
+.sidebar.collapsed .nav-item {
+  margin: 2px 4px;
+  position: relative;
+}
+
 /* =============================================================
    SUBMENU FLUTUANTE QUANDO SIDEBAR COLLAPSED
    Aparece ao passar o mouse nos ícones
@@ -513,10 +524,6 @@ body {
 }
 
 /* Quando sidebar collapsed: mostra submenu flutuante no hover */
-.sidebar.collapsed .nav-item {
-  position: relative;
-}
-
 .sidebar.collapsed .collapsed-submenu {
   display: none;
   position: absolute;
@@ -592,15 +599,6 @@ body {
   margin-left: 70px;
 }
 
-/* Estilos do nav-icon */
-.nav-icon {
-  font-size: 1.1rem;
-  margin-right: 12px;
-  width: 20px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
 .nav-text {
   flex: 1;
   white-space: nowrap;
@@ -634,21 +632,49 @@ body {
   padding-left: 8px;
 }
 
+/* =============================================================
+   SIDEBAR - SEPARADORES VISUAIS E LAYOUT MELHORADO
+   ============================================================= */
+
 .menu-label {
-  color: #94a3b8;
-  font-size: 0.7rem;
+  color: #64748b;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  padding: 20px 24px 10px 24px;
+  padding: 16px 24px 8px 24px;
   transition: opacity 0.2s;
   white-space: nowrap;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Linha decorativa após o label */
+.menu-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.3) 0%, transparent 100%);
+  margin-right: 20px;
+}
+
+/* Container do grupo de menu */
+.nav-item {
+  margin: 2px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .nav-link {
   color: #cbd5e1;
-  padding: 12px 24px;
-  font-size: 0.9rem;
+  padding: 11px 16px;
+  font-size: 0.875rem;
   font-weight: 500;
   display: flex;
   justify-content: space-between;
@@ -656,38 +682,70 @@ body {
   cursor: pointer;
   text-decoration: none;
   border-left: 3px solid transparent;
+  border-radius: 6px;
   transition: all 0.2s;
   gap: 0;
+  margin: 2px 0;
 }
 
 .nav-link:hover {
   color: white;
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .nav-link.active {
-  background-color: rgba(14, 165, 233, 0.1);
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.05) 100%);
   color: var(--primary-blue);
   border-left-color: var(--primary-blue);
 }
 
-/* Submenu */
+/* Ícones do nav */
+.nav-icon {
+  font-size: 1.1rem;
+  width: 24px;
+  min-width: 24px;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.nav-link:hover .nav-icon,
+.nav-link.active .nav-icon {
+  opacity: 1;
+}
+
+/* Submenu com visual melhorado */
 .submenu-link {
-  padding-left: 54px;
-  font-size: 0.85rem;
+  padding: 9px 16px 9px 48px;
+  font-size: 0.82rem;
   color: #94a3b8;
-  padding-top: 8px;
-  padding-bottom: 8px;
   display: flex;
   align-items: center;
   text-decoration: none;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: all 0.2s;
+  border-radius: 4px;
+  margin: 1px 8px 1px 16px;
+  position: relative;
+}
+
+/* Linha conectora vertical do submenu */
+.collapse::before {
+  content: '';
+  position: absolute;
+  left: 32px;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.collapse {
+  position: relative;
 }
 
 .submenu-link i {
   margin-right: 8px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   width: 16px;
   min-width: 16px;
   flex-shrink: 0;
@@ -695,11 +753,21 @@ body {
 
 .submenu-link:hover {
   color: white;
+  background: rgba(255, 255, 255, 0.04);
+  padding-left: 52px;
 }
 
 .submenu-link.active {
   color: var(--primary-blue);
   font-weight: 600;
+  background: rgba(14, 165, 233, 0.08);
+}
+
+/* Divisor entre grupos de navegação */
+.nav-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 12px 20px;
 }
 
 /* --- MAIN CONTENT & SPA LOGIC --- */

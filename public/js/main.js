@@ -479,7 +479,7 @@ window.handleSearchResultClick = function (type, id) {
  * Atualiza os indicadores de status no header
  */
 async function updateStatusIndicators() {
-  console.log('🔄 Atualizando indicadores de status...');
+  
 
   // 1. VERIFICA CONEXÃO COM SERVIDOR
   const statusOnline = document.querySelector('.status-online');
@@ -581,7 +581,7 @@ async function updateStatusIndicators() {
     console.warn('⚠️ statusFuncionarios ou todosOsJobsCache não encontrado');
   }
 
-  console.log('✅ Indicadores atualizados');
+  
 
   // 4. ATUALIZA GRÁFICO DE JOBS DA SEMANA
   atualizarGraficoJobsSemana();
@@ -658,7 +658,7 @@ async function atualizarGraficoJobsSemana() {
       miniChart.appendChild(barra);
     });
 
-    console.log('✅ Mini-gráfico de jobs da semana atualizado');
+    
   } catch (error) {
     console.error('❌ Erro ao carregar gráfico da semana:', error);
   }
@@ -698,7 +698,7 @@ function openUserProfileMenu() {
   dropdown.classList.add('show');
   overlay.classList.add('show');
 
-  console.log('📋 Menu de perfil aberto');
+  
 }
 
 /**
@@ -713,7 +713,7 @@ function closeUserProfileMenu() {
   dropdown.classList.remove('show');
   overlay.classList.remove('show');
 
-  console.log('📋 Menu de perfil fechado');
+  
 }
 
 /**
@@ -743,8 +743,7 @@ function navegarParaConfiguracoes(tabId = 'tab-perfil') {
     if (tabButton) {
       const tab = new bootstrap.Tab(tabButton);
       tab.show();
-      console.log(`✅ Aba ${tabId} ativada!`);
-    } else {
+          } else {
       console.warn(`⚠️ Botão da aba #${tabId} não encontrado`);
     }
 
@@ -757,7 +756,7 @@ function navegarParaConfiguracoes(tabId = 'tab-perfil') {
   // Remove ativo do menu lateral
   document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
 
-  console.log('✅ Configurações exibida com sucesso!');
+  
 }
 
 /**
@@ -924,7 +923,7 @@ async function handleLogout() {
     sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('usuario');
 
-    console.log('🚪 Logout realizado');
+    
 
     // Redireciona para login
     window.location.href = '/login';
@@ -993,12 +992,12 @@ async function loadUserProfileData() {
   let avatarUrl = null;
   if (userData.avatar_base64) {
     avatarUrl = userData.avatar_base64; // Já é uma data URL completa
-    console.log('🖼️ Usando avatar_base64 (Base64)');
+    
   } else if (userData.avatar) {
     avatarUrl = userData.avatar.startsWith('/') ? userData.avatar : `/uploads/avatars/${userData.avatar}`;
     console.log('🖼️ Usando avatar (path):', avatarUrl);
   } else {
-    console.log('⚠️ Nenhum avatar disponível');
+    
   }
 
   const displayData = {
@@ -1090,12 +1089,12 @@ document.addEventListener('DOMContentLoaded', function () {
 /* =============================================================
    CONFIGURAÇÕES GERAIS E INICIALIZAÇÃO
    ============================================================= */
-console.log('� MAIN.JS VERSÃO 3.0 - 17/FEB/2026 14:45');
-console.log('✨ NOVIDADES DESTA VERSÃO:');
-console.log('  ✅ Jobs da Semana (usa data_inicio ao invés de data_job)');
-console.log('  ✅ Máscaras: CEP e Telefone nos Contatos');
-console.log('  ✅ Modal de confirmação ao salvar empresa');
-console.log('  ✅ Cache desabilitado - sempre versão nova');
+
+
+
+
+
+
 
 // Detecta automaticamente se está rodando local ou no Railway
 // Tornar disponível globalmente para outros módulos (notificacoes.js)
@@ -1123,13 +1122,13 @@ function naoEstaNoLogin() {
 async function verificarAutenticacaoInicial() {
   // Evita verificações duplicadas simultâneas
   if (verificandoAutenticacao) {
-    console.log('⏳ Verificação já em andamento - aguardando...');
+    
     return false;
   }
 
   // Não verifica se estiver na página de login
   if (!naoEstaNoLogin()) {
-    console.log('📄 Página de login - pula verificação');
+    
     return true;
   }
 
@@ -1138,7 +1137,7 @@ async function verificarAutenticacaoInicial() {
   const token = sessionStorage.getItem('auth_token');
 
   if (!token) {
-    console.log('⚠️ Sem token - limpando sessão e redirecionando');
+    
     // Limpa TUDO do sessionStorage incluindo currentView
     sessionStorage.clear();
     window.location.replace('/login'); // Usa replace para não criar histórico
@@ -1163,7 +1162,7 @@ async function verificarAutenticacaoInicial() {
       throw new Error('Autenticação falhou');
     }
 
-    console.log('✅ Autenticação válida');
+    
     return true;
 
   } catch (error) {
@@ -1188,19 +1187,19 @@ function iniciarMonitoramentoConexao() {
 
   // Detecta quando fica offline
   window.addEventListener('offline', () => {
-    console.log('🔴 Conexão perdida');
+    
     estaOffline = true;
   });
 
   // Detecta quando volta online e verifica autenticação
   window.addEventListener('online', async () => {
-    console.log('🟢 Conexão restaurada - verificando autenticação...');
+    
 
     if (estaOffline) {
       const token = sessionStorage.getItem('auth_token');
 
       if (!token) {
-        console.log('⚠️ Sem token após reconexão - redirecionando para login');
+        
         window.location.replace('/login');
         return;
       }
@@ -1218,7 +1217,7 @@ function iniciarMonitoramentoConexao() {
           throw new Error('Token inválido após reconexão');
         }
 
-        console.log('✅ Token válido após reconexão');
+        
         estaOffline = false;
 
         // Recarrega a página para atualizar dados
@@ -1272,7 +1271,7 @@ function iniciarMonitoramentoConexao() {
     }
   }, 10 * 60 * 1000); // 10 minutos
 
-  console.log('🔒 Monitoramento de sessão ativado');
+  
 }
 
 // Flag para evitar múltiplas execuções do DOMContentLoaded
@@ -1283,7 +1282,7 @@ function obterViewInicial() {
   // Só restaura se houver token válido (usuário autenticado)
   const token = sessionStorage.getItem('auth_token');
   if (!token) {
-    console.log('🚫 Sem token - limpando view salva');
+    
     sessionStorage.removeItem('currentView');
     return 'principal';
   }
@@ -1292,7 +1291,7 @@ function obterViewInicial() {
 
   // Se não houver view salva, retorna principal
   if (!viewSalva) {
-    console.log('🏠 Nenhuma view salva - usando principal');
+    
     return 'principal';
   }
 
@@ -1307,21 +1306,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Evita múltiplas execuções
   if (sistemaInicializado) {
-    console.log('⚠️ Sistema já inicializado - ignorando DOMContentLoaded duplicado');
+    
     return;
   }
   sistemaInicializado = true;
 
   // Não executa se estiver na página de login
   if (!naoEstaNoLogin()) {
-    console.log('📄 Página de login - não executa inicialização do sistema');
+    
     return;
   }
 
   // Verifica autenticação ANTES de fazer qualquer coisa
   const autenticado = await verificarAutenticacaoInicial();
   if (!autenticado) {
-    console.log('❌ Não autenticado - parando inicialização');
+    
     sistemaInicializado = false; // Permite tentar novamente
     return;
   }
@@ -1356,9 +1355,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Carrega funcionários
-    console.log('🚨 TENTANDO CHAMAR carregarFuncionarios()...');
+    
     if (typeof window.carregarFuncionarios === 'function') {
-      console.log('✅ Função carregarFuncionarios existe!');
+      
       window.carregarFuncionarios();
     } else {
       console.error('❌ Função carregarFuncionarios NÃO existe!');
@@ -1379,7 +1378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await switchView(viewInicial);
     }
 
-    console.log('✅ Sistema completamente inicializado');
+    
   } catch (error) {
     console.error('❌ Erro durante inicialização:', error);
     sistemaInicializado = false; // Permite tentar novamente em caso de erro
@@ -2476,15 +2475,15 @@ window.salvarNovoJob = async function () {
     const operadorId = selectOperadorEl?.value;
     let equipeCompleta = [];
 
-    console.log('========================================');
-    console.log('📋 MONTANDO EQUIPE PARA SALVAR');
+    
+    
     console.log('📋 Select Operador Element:', selectOperadorEl);
     console.log('📋 Operador Técnico ID (value):', operadorId);
     console.log('📋 Operador Técnico ID tipo:', typeof operadorId);
     console.log('📋 Operador Técnico é truthy?:', !!operadorId);
     console.log('📋 Equipe do Evento (window.equipeDoJob):', JSON.stringify(window.equipeDoJob));
     console.log('📋 Tamanho da equipe do evento:', (window.equipeDoJob || []).length);
-    console.log('========================================');
+    
 
     // PRIMEIRO: Adiciona o Operador Técnico (se selecionado)
     if (operadorId && operadorId !== '' && operadorId !== 'undefined') {
@@ -2523,14 +2522,14 @@ window.salvarNovoJob = async function () {
 
     job.equipe = equipeCompleta;
 
-    console.log('========================================');
-    console.log('📋 EQUIPE FINAL A SER ENVIADA:');
+    
+    
     console.log('📋 Total de membros:', equipeCompleta.length);
     equipeCompleta.forEach((m, i) => {
       console.log(`   ${i + 1}. ${m.nome} (ID: ${m.funcionario_id}) - ${m.funcao}`);
     });
     console.log('📋 JSON da equipe:', JSON.stringify(equipeCompleta));
-    console.log('========================================');
+    
 
     // Edição ou Criação?
     const isEdit = window.__jobEditandoId != null;
@@ -2606,7 +2605,7 @@ function atualizarMiniGraficoSemana(todosJobs, dataSegundaAtual) {
   const container = document.getElementById('mini-chart-jobs');
   if (!container) return;
 
-  console.log('📊 === ATUALIZANDO GRÁFICO DE JOBS DA SEMANA ===');
+  
   console.log('Total de jobs recebidos:', todosJobs.length);
 
   container.innerHTML = "";
@@ -3792,7 +3791,7 @@ function renderizarTabelaContratos(pagina) {
     });
   }
 
-  console.log('✅ Renderizando paginação...');
+  
   renderizarBotoesPaginacaoContratos(divPaginacao, pagina, totalPaginas);
 
   // Atualiza visibilidade table/cards conforme tela
@@ -4726,7 +4725,7 @@ if (document.getElementById('lista-itens-job')) {
 function atualizarValorTotalPedido() {
   const linhas = document.querySelectorAll('#lista-itens-job tr');
   if (!linhas || linhas.length === 0) {
-    console.log('DEBUG atualizarValorTotal - Nenhum item na tabela');
+    
     return;
   }
 
@@ -5839,7 +5838,7 @@ window.alternarViewCliente = function (modo) {
     console.log('📱 Alternando para lista - Mobile detectado:', isMobile);
 
     if (isMobile && window.paginacaoClientes && window.paginacaoClientes.listaTotalFiltrada && window.paginacaoClientes.listaTotalFiltrada.length > 0) {
-      console.log('🔄 Renderizando lista mobile...');
+      
       setTimeout(() => {
         renderizarPaginaClientes();
         // Força exibição do container
@@ -6300,7 +6299,7 @@ window.mudarPaginaClientes = function (novaPagina) {
 
 // Função para voltar à lista de clientes mantendo a página
 window.voltarParaListaClientes = function () {
-  console.log('🔙 Voltando para lista de clientes...');
+  
   switchView('clientes');
 }
 
@@ -6963,7 +6962,7 @@ window.editarJob = async function (jobId) {
   const badgeModoView = document.getElementById('badge-modo-visualizacao');
   if (badgeModoView) {
     badgeModoView.remove();
-    console.log('✏️ [EDITARJOB] Badge de visualização removido');
+    
   }
 
   // ====================================================================
@@ -6982,7 +6981,7 @@ window.editarJob = async function (jobId) {
     await carregarLogoNoPedido();
   }
 
-  console.log('✏️ [EDITARJOB] Modo edição ativado - inputs habilitados');
+  
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
@@ -8805,7 +8804,7 @@ if (!window.paginacaoFuncionarios) {
 
 // 1. CARREGAR LISTA DE FUNCIONÁRIOS
 window.carregarFuncionarios = async function () {
-  console.log('🔄 Carregando funcionários do servidor...');
+  
 
   try {
     const res = await fetch(`${API_URL}/funcionarios/todos`);
@@ -9356,7 +9355,7 @@ async function handleAvatarFuncionarioUpload(event, funcionarioId) {
     // Re-renderiza os cards para mostrar a nova foto
     window.renderizarFuncionariosPaginado();
 
-    console.log('📸 Avatar do funcionário atualizado (preview)');
+    
 
     // Envia imagem para o servidor
     await uploadAvatarFuncionarioToServer(file, funcionarioId);
@@ -9512,7 +9511,7 @@ window.salvarFuncionario = function () {
       // Se é um novo funcionário e tem email, tentar enviar email de boas-vindas
       if (isNovoFuncionario && dados.email && resultado.senha_temporaria) {
         try {
-          console.log('📧 Tentando enviar email de boas-vindas...');
+          
 
           if (window.emailService) {
             const emailEnviado = await window.emailService.notificarNovoFuncionario({
@@ -9522,12 +9521,12 @@ window.salvarFuncionario = function () {
             });
 
             if (emailEnviado) {
-              console.log('✅ Email de boas-vindas enviado com sucesso!');
+              
             } else {
-              console.log('⚠️ Email não foi enviado (serviço não configurado ou erro)');
+              
             }
           } else {
-            console.log('⚠️ Serviço de email não disponível');
+            
           }
         } catch (error) {
           console.error('❌ Erro ao enviar email de boas-vindas:', error);
@@ -10493,7 +10492,7 @@ function carregarSelectEquipe(listaFuncionarios) {
 
   // Se o elemento não existir no HTML, para a execução para não dar erro
   if (!select) {
-    console.log('🟡 Select selectFuncionarioEquipe NÃO encontrado!');
+    
     return;
   }
 
@@ -10520,7 +10519,7 @@ function carregarSelectEquipe(listaFuncionarios) {
 }
 // 2. Adicionar Funcionário na Tabela Visual
 window.adicionarFuncionarioEquipe = function () {
-  console.log('🔵 Função adicionarFuncionarioEquipe chamada!');
+  
 
   const select = document.getElementById('selectFuncionarioEquipe');
   const inputFuncao = document.getElementById('inputFuncaoEquipe');
@@ -10623,7 +10622,7 @@ window.verDetalhesFuncionario = async function (id) {
     // 3. Clica na aba de histórico de forma mais robusta
     const historicoTab = document.getElementById('historico-tab');
     if (historicoTab) {
-      console.log('✅ Tab de histórico encontrada, clicando...');
+      
       // Usa Bootstrap Tab corretamente
       const tab = new bootstrap.Tab(historicoTab);
       tab.show();
@@ -10938,18 +10937,18 @@ function renderizarCalendarioFuncionario(listaJobs) {
       if (!job.job_id) {
         // Escala standalone (sem job associado)
         icone = '📅';
-        console.log('  → Ícone: 📅 (escala standalone)');
+        
       } else if (job.is_manual === 1) {
         // Escala manual criada pelo usuário
         icone = '✋';
-        console.log('  → Ícone: ✋ (escala manual)');
+        
       } else {
         // Escala automática da equipe
         icone = '📋';
-        console.log('  → Ícone: 📋 (escala automática)');
+        
       }
     } else {
-      console.log('  → Ícone: 📋 (job)');
+      
     }
 
     const titulo = `📋 #${job.id} - ${job.descricao || 'Sem descrição'}`;
@@ -11751,7 +11750,7 @@ window.resetarSenhaFuncionario = async function () {
     // Tentar enviar email de senha resetada se possível
     if (result.email && result.senha_temporaria) {
       try {
-        console.log('📧 Tentando enviar email de senha resetada...');
+        
 
         if (window.emailService) {
           const emailEnviado = await window.emailService.notificarResetSenha({
@@ -11761,7 +11760,7 @@ window.resetarSenhaFuncionario = async function () {
           });
 
           if (emailEnviado) {
-            console.log('✅ Email de senha resetada enviado com sucesso!');
+            
 
             // Adicionar informação visual se possível
             setTimeout(() => {
@@ -11770,10 +11769,10 @@ window.resetarSenhaFuncionario = async function () {
               }
             }, 1000);
           } else {
-            console.log('⚠️ Email não foi enviado (serviço não configurado ou erro)');
+            
           }
         } else {
-          console.log('⚠️ Serviço de email não disponível');
+          
         }
       } catch (error) {
         console.error('❌ Erro ao enviar email de senha resetada:', error);
@@ -12020,7 +12019,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabSistema = document.querySelector('[data-bs-target="#tab-sistema"]');
   if (tabSistema) {
     tabSistema.addEventListener('shown.bs.tab', () => {
-      console.log('🔧 Aba Sistema ativada, carregando dados...');
+      
       carregarConfigNumeroPedido();
       carregarControleAcesso();
     });
@@ -12053,9 +12052,9 @@ window.logoEmpresa = null;
 
 // CARREGAR DADOS DA EMPRESA
 async function carregarDadosEmpresa() {
-  console.log('📥 ========================================');
-  console.log('📥 CARREGANDO DADOS DA EMPRESA');
-  console.log('📥 ========================================');
+  
+  
+  
 
   try {
     console.log('📡 Buscando dados de:', `${API_URL}/empresa`);
@@ -12092,8 +12091,8 @@ async function carregarDadosEmpresa() {
         preview.innerHTML = `<img src="${empresa.logo}" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
       }
 
-      console.log('✅ Dados da empresa carregados e preenchidos no formulário!');
-      console.log('✅ ========================================');
+      
+      
     } else {
       console.warn('⚠️ Nenhum dado de empresa encontrado no servidor');
     }
@@ -12109,9 +12108,9 @@ async function carregarDadosEmpresa() {
 async function salvarDadosEmpresa(e) {
   if (e) e.preventDefault();
 
-  console.log('💾 ========================================');
-  console.log('💾 INICIANDO SALVAMENTO DOS DADOS DA EMPRESA');
-  console.log('💾 ========================================');
+  
+  
+  
 
   // IDs corrigidos para corresponder ao HTML
   const dados = {
@@ -12134,13 +12133,13 @@ async function salvarDadosEmpresa(e) {
     logo: window.logoEmpresa
   };
 
-  console.log('📤 Dados coletados do formulário:');
+  
   console.table(dados);
   console.log('🌐 API_URL:', API_URL);
   console.log('🔗 URL completa:', `${API_URL}/empresa`);
 
   try {
-    console.log('📡 Enviando requisição POST para /empresa...');
+    
 
     const res = await fetch(`${API_URL}/empresa`, {
       method: 'POST',
@@ -12150,7 +12149,7 @@ async function salvarDadosEmpresa(e) {
       body: JSON.stringify(dados)
     });
 
-    console.log('📨 Resposta recebida!');
+    
     console.log('📨 Status HTTP:', res.status);
     console.log('📨 Status Text:', res.statusText);
     console.log('📨 Headers:', Object.fromEntries(res.headers.entries()));
@@ -12159,9 +12158,9 @@ async function salvarDadosEmpresa(e) {
     console.log('📦 Resultado parseado:', result);
 
     if (result.success) {
-      console.log('✅ ========================================');
-      console.log('✅ SALVAMENTO CONCLUÍDO COM SUCESSO!');
-      console.log('✅ ========================================');
+      
+      
+      
 
       // Exibe modal de sucesso (com fallback se Swal não estiver disponível)
       if (typeof window.Swal !== 'undefined') {
@@ -12187,7 +12186,7 @@ async function salvarDadosEmpresa(e) {
 
       // Recarrega os dados para confirmar
       setTimeout(() => {
-        console.log('🔄 Recarregando dados da empresa para confirmar...');
+        
         carregarDadosEmpresa();
       }, 500);
     } else {
@@ -12244,7 +12243,7 @@ function setupLogoUpload() {
         const result = await res.json();
         if (result.success) {
           window.logoEmpresa = base64;
-          console.log('✅ Logo salvo!');
+          
         }
       } catch (err) {
         console.error('Erro ao salvar logo:', err);
@@ -12265,7 +12264,7 @@ window.removerLogoEmpresa = async function () {
     const preview = document.getElementById('configLogoPreview');
     preview.innerHTML = '<i class="bi bi-image text-muted" style="font-size: 2rem;"></i>';
 
-    console.log('✅ Logo removido!');
+    
   } catch (err) {
     console.error('Erro ao remover logo:', err);
   }
@@ -12316,7 +12315,7 @@ async function carregarLogoNoPedido() {
       }
     }
 
-    console.log('✅ Logo e nome da empresa carregados no pedido');
+    
   } catch (err) {
     console.error('Erro ao carregar logo no pedido:', err);
   }
@@ -12356,7 +12355,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // =============================================================
 
 function setupTodosCamposCEP() {
-  console.log('🔧 Configurando busca automática de CEP em todos os campos...');
+  
 
   // Lista de TODOS os campos de CEP do sistema
   const camposCEP = [
@@ -12396,7 +12395,7 @@ function setupTodosCamposCEP() {
     });
   });
 
-  console.log('✅ Busca automática de CEP configurada em todos os campos!');
+  
 }
 
 
@@ -12513,7 +12512,7 @@ function inicializarFinanceiro() {
   // Sempre recarrega quando entrar na view (removido check de financeiroCarregado)
   financeiroCarregado = true;
 
-  console.log('💰 Inicializando módulo financeiro...');
+  
 
   // Verifica se Chart.js está carregado
   if (typeof Chart === 'undefined') {
@@ -12528,7 +12527,7 @@ function inicializarFinanceiro() {
 
   // Pequeno delay para garantir que o canvas já está renderizado
   setTimeout(() => {
-    console.log('🎨 Iniciando carregamento dos gráficos...');
+    
     carregarGraficoFluxoCaixa();
     carregarGraficoDespesasCategoria();
   }, 100);
@@ -13336,12 +13335,12 @@ async function excluirTransacao(id) {
 async function carregarGraficoFluxoCaixa() {
   const canvas = document.getElementById('financeChart');
   if (!canvas) {
-    console.log('❌ Canvas financeChart não encontrado');
+    
     return;
   }
 
   try {
-    console.log('📊 Carregando gráfico de fluxo de caixa...');
+    
     const response = await fetch(`${API_URL}/financeiro/grafico-fluxo`);
     const dados = await response.json();
 
@@ -13421,7 +13420,7 @@ async function carregarGraficoFluxoCaixa() {
       }
     });
 
-    console.log('✅ Gráfico de fluxo de caixa carregado');
+    
   } catch (error) {
     console.error('❌ Erro ao carregar gráfico:', error);
   }
@@ -13439,12 +13438,12 @@ let despesasCategoriaChartInstance = null;
 async function carregarGraficoDespesasCategoria() {
   const canvas = document.getElementById('despesasCategoriaChart');
   if (!canvas) {
-    console.log('❌ Canvas despesasCategoriaChart não encontrado');
+    
     return;
   }
 
   try {
-    console.log('🍰 Carregando gráfico de despesas por categoria...');
+    
     const response = await fetch(`${API_URL}/financeiro/despesas-por-categoria`);
     const dados = await response.json();
 
@@ -13477,7 +13476,7 @@ async function carregarGraficoDespesasCategoria() {
 
     // Se não houver dados, mostra mensagem
     if (!dados.labels || dados.labels.length === 0) {
-      console.log('⚠️ Nenhuma despesa cadastrada no mês atual');
+      
       const legendaEl = document.getElementById('despesasCategoriaLegenda');
       if (legendaEl) {
         legendaEl.innerHTML = '<span class="text-muted">Nenhuma despesa cadastrada este mês</span>';
@@ -13534,7 +13533,7 @@ async function carregarGraficoDespesasCategoria() {
       legendaEl.innerHTML = legendaHtml;
     }
 
-    console.log('✅ Gráfico de despesas por categoria carregado');
+    
   } catch (error) {
     console.error('❌ Erro ao carregar gráfico de despesas:', error);
   }
@@ -13670,7 +13669,7 @@ async function testarSistemaNotificacoes() {
   try {
     // Executar teste via console e capturar resultado
     if (typeof window.debugNotificacoes === 'function') {
-      console.log('🧪 Iniciando teste de notificações...');
+      
       await window.debugNotificacoes();
 
       container.innerHTML = `
@@ -13935,7 +13934,7 @@ function aplicarMascaraTelefoneJob(valor) {
  * Inicializa as máscaras nos campos do formulário de pedido
  */
 function inicializarMascarasFormularioJob() {
-  console.log('🎭 Inicializando máscaras no formulário de pedido...');
+  
 
   // CEP
   const cepInput = document.getElementById('jobCep');
@@ -13943,7 +13942,7 @@ function inicializarMascarasFormularioJob() {
     cepInput.addEventListener('input', function () {
       this.value = aplicarMascaraCEP(this.value);
     });
-    console.log('  ✓ Máscara CEP aplicada');
+    
   }
 
   // CNPJ/CPF do Pagador
@@ -13952,7 +13951,7 @@ function inicializarMascarasFormularioJob() {
     cnpjCpfInput.addEventListener('input', function () {
       this.value = aplicarMascaraCPFouCNPJ(this.value);
     });
-    console.log('  ✓ Máscara CPF/CNPJ aplicada');
+    
   }
 
   // Telefone do Solicitante
@@ -13961,7 +13960,7 @@ function inicializarMascarasFormularioJob() {
     telSolicitante.addEventListener('input', function () {
       this.value = aplicarMascaraTelefoneJob(this.value);
     });
-    console.log('  ✓ Máscara Telefone Solicitante aplicada');
+    
   }
 
   // Telefone da Produção Local
@@ -13970,7 +13969,7 @@ function inicializarMascarasFormularioJob() {
     telProducao.addEventListener('input', function () {
       this.value = aplicarMascaraTelefoneJob(this.value);
     });
-    console.log('  ✓ Máscara Telefone Produção aplicada');
+    
   }
 
   // CEP do Pagador (se existir)
@@ -13979,10 +13978,10 @@ function inicializarMascarasFormularioJob() {
     cepPagador.addEventListener('input', function () {
       this.value = aplicarMascaraCEP(this.value);
     });
-    console.log('  ✓ Máscara CEP Pagador aplicada');
+    
   }
 
-  console.log('✅ Máscaras do formulário de pedido inicializadas');
+  
 }
 
 /**
@@ -13990,7 +13989,7 @@ function inicializarMascarasFormularioJob() {
  * Inclui: modais, formulários de cadastro, RH, etc.
  */
 function inicializarTodasAsMascaras() {
-  console.log('🎭 Inicializando TODAS as máscaras do sistema...');
+  
 
   // 1. Máscaras de CEP
   const camposCep = [
@@ -14051,7 +14050,7 @@ function inicializarTodasAsMascaras() {
   // 4. Reinicializa máscaras do formulário de pedido
   inicializarMascarasFormularioJob();
 
-  console.log('✅ Todas as máscaras foram inicializadas');
+  
 }
 
 // Inicializa as máscaras quando o DOM estiver pronto
