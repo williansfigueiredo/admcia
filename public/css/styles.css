@@ -699,6 +699,18 @@ body {
   border-left-color: var(--primary-blue);
 }
 
+/* Nav-link fica ativo quando submenu está expandido */
+.nav-item:has(.collapse.show) > .nav-link {
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.05) 100%);
+  color: var(--primary-blue);
+  border-left-color: var(--primary-blue);
+}
+
+.nav-item:has(.collapse.show) > .nav-link .nav-icon {
+  color: var(--primary-blue);
+  opacity: 1;
+}
+
 /* Ícones do nav */
 .nav-icon {
   font-size: 1.1rem;
@@ -708,9 +720,14 @@ body {
   opacity: 0.85;
 }
 
-.nav-link:hover .nav-icon,
+.nav-link:hover .nav-icon {
+  opacity: 1;
+  color: white;
+}
+
 .nav-link.active .nav-icon {
   opacity: 1;
+  color: var(--primary-blue);
 }
 
 /* Submenu com visual melhorado */
@@ -761,6 +778,10 @@ body {
   color: var(--primary-blue);
   font-weight: 600;
   background: rgba(14, 165, 233, 0.08);
+}
+
+.submenu-link.active i {
+  color: var(--primary-blue);
 }
 
 /* Divisor entre grupos de navegação */
