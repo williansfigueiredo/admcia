@@ -6335,6 +6335,9 @@ window.editarCliente = function (id) {
 
       // 3. Abre a tela de cadastro
       switchView('cadastro-cliente');
+      
+      // Inicializa máscaras nos campos do formulário
+      setTimeout(inicializarTodasAsMascaras, 100);
 
       // 4. Preenche os campos (Função auxiliar interna)
       const setVal = (idCampo, valor) => {
@@ -6398,6 +6401,9 @@ window.abrirTelaNovoCliente = function () {
   adicionarNovoContato();
 
   switchView('cadastro-cliente');
+  
+  // Inicializa máscaras nos campos do formulário
+  setTimeout(inicializarTodasAsMascaras, 100);
 }
 
 /* =============================================================
@@ -9382,6 +9388,9 @@ window.abrirTelaNovoFuncionario = function () {
   if (btn) { btn.style.display = 'inline-block'; btn.innerHTML = 'Salvar Ficha'; }
 
   switchView('cadastro-funcionario');
+  
+  // Inicializa máscaras nos campos do formulário
+  setTimeout(inicializarTodasAsMascaras, 100);
 };
 
 // FUNÇÃO AUXILIAR: PREENCHER FORMULÁRIO
@@ -9560,6 +9569,9 @@ window.editarFuncionario = async function (id) {
     if (btn) { btn.style.display = 'inline-block'; btn.innerHTML = 'Atualizar Dados'; }
 
     switchView('cadastro-funcionario');
+    
+    // Inicializa máscaras nos campos do formulário
+    setTimeout(inicializarTodasAsMascaras, 100);
   }
 };
 
@@ -9765,6 +9777,9 @@ window.editarFuncionario = async function (id) {
 
     // 6. Troca a tela para o formulário
     switchView('cadastro-funcionario');
+    
+    // Inicializa máscaras nos campos do formulário
+    setTimeout(inicializarTodasAsMascaras, 100);
   }
 };
 
@@ -13855,15 +13870,99 @@ function inicializarMascarasFormularioJob() {
   console.log('✅ Máscaras do formulário de pedido inicializadas');
 }
 
+/**
+ * Inicializa máscaras em TODOS os campos do sistema
+ * Inclui: modais, formulários de cadastro, RH, etc.
+ */
+function inicializarTodasAsMascaras() {
+  console.log('🎭 Inicializando TODAS as máscaras do sistema...');
+  
+  // 1. Máscaras de CEP
+  const camposCep = [
+    'cadCliCep',      // Cadastro de cliente
+    'rhCep'           // RH
+  ];
+  
+  camposCep.forEach(id => {
+    const campo = document.getElementById(id);
+    if (campo && !campo.dataset.mascaraAplicada) {
+      campo.addEventListener('input', function() {
+        this.value = aplicarMascaraCEP(this.value);
+      });
+      campo.dataset.mascaraAplicada = 'true';
+      console.log(`  ✓ Máscara CEP aplicada em ${id}`);
+    }
+  });
+  
+  // 2. Máscaras de CPF/CNPJ
+  const camposCpfCnpj = [
+    'cadCliDoc',           // Cadastro de cliente
+    'modalClienteCpfCnpj', // Modal novo cliente
+    'modalFuncCpf',        // Modal novo funcionário
+    'rhCpf'                // RH
+  ];
+  
+  camposCpfCnpj.forEach(id => {
+    const campo = document.getElementById(id);
+    if (campo && !campo.dataset.mascaraAplicada) {
+      campo.addEventListener('input', function() {
+        this.value = aplicarMascaraCPFouCNPJ(this.value);
+      });
+      campo.dataset.mascaraAplicada = 'true';
+      console.log(`  ✓ Máscara CPF/CNPJ aplicada em ${id}`);
+    }
+  });
+  
+  // 3. Máscaras de Telefone
+  const camposTelefone = [
+    'modalClienteTelefone', // Modal novo cliente
+    'modalFuncTelefone',    // Modal novo funcionário
+    'rhTelefone'            // RH
+  ];
+  
+  camposTelefone.forEach(id => {
+    const campo = document.getElementById(id);
+    if (campo && !campo.dataset.mascaraAplicada) {
+      campo.addEventListener('input', function() {
+        this.value = aplicarMascaraTelefoneJob(this.value);
+      });
+      campo.dataset.mascaraAplicada = 'true';
+      console.log(`  ✓ Máscara Telefone aplicada em ${id}`);
+    }
+  });
+  
+  // 4. Reinicializa máscaras do formulário de pedido
+  inicializarMascarasFormularioJob();
+  
+  console.log('✅ Todas as máscaras foram inicializadas');
+}
+
 // Inicializa as máscaras quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', function() {
   inicializarMascarasFormularioJob();
+  inicializarTodasAsMascaras();
   
   // Também reinicializa quando o modal de pedido é aberto
   const modalElement = document.getElementById('modalNovoJob');
   if (modalElement) {
     modalElement.addEventListener('shown.bs.modal', function() {
       setTimeout(inicializarMascarasFormularioJob, 100);
+    });
+  }
+  
+  // Reinicializa quando modal de novo cliente é aberto
+  const modalCliente = document.getElementById('modalNovoCliente');
+  if (modalCliente) {
+    modalCliente.addEventListener('shown.bs.modal', function() {
+      setTimeout(inicializarTodasAsMascaras, 100);
+    });
+  }
+  
+  // Reinicializa quando modal de novo funcionário é aberto
+  const modalFunc = document.getElementById('modalNovoFuncionario');
+  if (modalFunc) {
+    modalFunc.addEventListener('shown.bs.modal', function() {
+      setTimeout(inicializarTodasAsMascaras, 100);
     });
   }
 });
@@ -13873,3 +13972,4 @@ window.aplicarMascaraCEP = aplicarMascaraCEP;
 window.aplicarMascaraCPFouCNPJ = aplicarMascaraCPFouCNPJ;
 window.aplicarMascaraTelefoneJob = aplicarMascaraTelefoneJob;
 window.inicializarMascarasFormularioJob = inicializarMascarasFormularioJob;
+window.inicializarTodasAsMascaras = inicializarTodasAsMascaras;
