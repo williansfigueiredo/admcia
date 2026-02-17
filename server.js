@@ -1088,13 +1088,16 @@ app.post('/jobs', (req, res) => {
 
     // 2. Definição dos Valores (Incluindo numero_pedido)
     // CALCULAR DATA DE VENCIMENTO baseado no prazo
+    // PRIORIDADE: 1) data_vencimento explícita, 2) prazo_pagamento + data_inicio
     let dataVencimento = null;
-    if (data.prazo_pagamento && data.data_inicio) {
+    if (data.data_vencimento) {
+      // Se o usuário definiu uma data de vencimento específica, usa ela
+      dataVencimento = formatarDataSQL(data.data_vencimento);
+    } else if (data.prazo_pagamento && data.data_inicio) {
+      // Senão, calcula baseado no prazo de pagamento
       const dataInicio = new Date(data.data_inicio);
       dataInicio.setDate(dataInicio.getDate() + parseInt(data.prazo_pagamento));
       dataVencimento = formatarDataSQL(dataInicio);
-    } else if (data.data_vencimento) {
-      dataVencimento = formatarDataSQL(data.data_vencimento);
     }
 
     const values = [
@@ -1380,13 +1383,16 @@ app.put('/jobs/:id', (req, res) => {
     };
 
     // CALCULAR DATA DE VENCIMENTO baseado no prazo
+    // PRIORIDADE: 1) data_vencimento explícita, 2) prazo_pagamento + data_inicio
     let dataVencimento = null;
-    if (data.prazo_pagamento && data.data_inicio) {
+    if (data.data_vencimento) {
+      // Se o usuário definiu uma data de vencimento específica, usa ela
+      dataVencimento = formatarDataSQL(data.data_vencimento);
+    } else if (data.prazo_pagamento && data.data_inicio) {
+      // Senão, calcula baseado no prazo de pagamento
       const dataInicio = new Date(data.data_inicio);
       dataInicio.setDate(dataInicio.getDate() + parseInt(data.prazo_pagamento));
       dataVencimento = formatarDataSQL(dataInicio);
-    } else if (data.data_vencimento) {
-      dataVencimento = formatarDataSQL(data.data_vencimento);
     }
 
     // MONTAR ENDEREÇO COMPLETO DO PAGADOR
@@ -1764,8 +1770,7 @@ app.get('/financeiro/transacoes', (req, res) => {
       NULL as observacoes
     FROM jobs j
     LEFT JOIN clientes c ON j.cliente_id = c.id
-    WHERE j.status != 'Cancelado'
-      AND NOT EXISTS (SELECT 1 FROM transacoes t WHERE t.job_id = j.id AND t.tipo = 'receita')
+    WHERE NOT EXISTS (SELECT 1 FROM transacoes t WHERE t.job_id = j.id AND t.tipo = 'receita')
     
     UNION ALL
     

@@ -479,7 +479,7 @@ window.handleSearchResultClick = function (type, id) {
  * Atualiza os indicadores de status no header
  */
 async function updateStatusIndicators() {
-  
+
 
   // 1. VERIFICA CONEXÃO COM SERVIDOR
   const statusOnline = document.querySelector('.status-online');
@@ -581,7 +581,7 @@ async function updateStatusIndicators() {
     console.warn('⚠️ statusFuncionarios ou todosOsJobsCache não encontrado');
   }
 
-  
+
 
   // 4. ATUALIZA GRÁFICO DE JOBS DA SEMANA
   atualizarGraficoJobsSemana();
@@ -658,7 +658,7 @@ async function atualizarGraficoJobsSemana() {
       miniChart.appendChild(barra);
     });
 
-    
+
   } catch (error) {
     console.error('❌ Erro ao carregar gráfico da semana:', error);
   }
@@ -698,7 +698,7 @@ function openUserProfileMenu() {
   dropdown.classList.add('show');
   overlay.classList.add('show');
 
-  
+
 }
 
 /**
@@ -713,7 +713,7 @@ function closeUserProfileMenu() {
   dropdown.classList.remove('show');
   overlay.classList.remove('show');
 
-  
+
 }
 
 /**
@@ -743,7 +743,7 @@ function navegarParaConfiguracoes(tabId = 'tab-perfil') {
     if (tabButton) {
       const tab = new bootstrap.Tab(tabButton);
       tab.show();
-          } else {
+    } else {
       console.warn(`⚠️ Botão da aba #${tabId} não encontrado`);
     }
 
@@ -756,7 +756,7 @@ function navegarParaConfiguracoes(tabId = 'tab-perfil') {
   // Remove ativo do menu lateral
   document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
 
-  
+
 }
 
 /**
@@ -923,7 +923,7 @@ async function handleLogout() {
     sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('usuario');
 
-    
+
 
     // Redireciona para login
     window.location.href = '/login';
@@ -992,12 +992,12 @@ async function loadUserProfileData() {
   let avatarUrl = null;
   if (userData.avatar_base64) {
     avatarUrl = userData.avatar_base64; // Já é uma data URL completa
-    
+
   } else if (userData.avatar) {
     avatarUrl = userData.avatar.startsWith('/') ? userData.avatar : `/uploads/avatars/${userData.avatar}`;
     console.log('🖼️ Usando avatar (path):', avatarUrl);
   } else {
-    
+
   }
 
   const displayData = {
@@ -1122,13 +1122,13 @@ function naoEstaNoLogin() {
 async function verificarAutenticacaoInicial() {
   // Evita verificações duplicadas simultâneas
   if (verificandoAutenticacao) {
-    
+
     return false;
   }
 
   // Não verifica se estiver na página de login
   if (!naoEstaNoLogin()) {
-    
+
     return true;
   }
 
@@ -1137,7 +1137,7 @@ async function verificarAutenticacaoInicial() {
   const token = sessionStorage.getItem('auth_token');
 
   if (!token) {
-    
+
     // Limpa TUDO do sessionStorage incluindo currentView
     sessionStorage.clear();
     window.location.replace('/login'); // Usa replace para não criar histórico
@@ -1162,7 +1162,7 @@ async function verificarAutenticacaoInicial() {
       throw new Error('Autenticação falhou');
     }
 
-    
+
     return true;
 
   } catch (error) {
@@ -1187,19 +1187,19 @@ function iniciarMonitoramentoConexao() {
 
   // Detecta quando fica offline
   window.addEventListener('offline', () => {
-    
+
     estaOffline = true;
   });
 
   // Detecta quando volta online e verifica autenticação
   window.addEventListener('online', async () => {
-    
+
 
     if (estaOffline) {
       const token = sessionStorage.getItem('auth_token');
 
       if (!token) {
-        
+
         window.location.replace('/login');
         return;
       }
@@ -1217,7 +1217,7 @@ function iniciarMonitoramentoConexao() {
           throw new Error('Token inválido após reconexão');
         }
 
-        
+
         estaOffline = false;
 
         // Recarrega a página para atualizar dados
@@ -1271,7 +1271,7 @@ function iniciarMonitoramentoConexao() {
     }
   }, 10 * 60 * 1000); // 10 minutos
 
-  
+
 }
 
 // Flag para evitar múltiplas execuções do DOMContentLoaded
@@ -1282,7 +1282,7 @@ function obterViewInicial() {
   // Só restaura se houver token válido (usuário autenticado)
   const token = sessionStorage.getItem('auth_token');
   if (!token) {
-    
+
     sessionStorage.removeItem('currentView');
     return 'principal';
   }
@@ -1291,7 +1291,7 @@ function obterViewInicial() {
 
   // Se não houver view salva, retorna principal
   if (!viewSalva) {
-    
+
     return 'principal';
   }
 
@@ -1306,21 +1306,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Evita múltiplas execuções
   if (sistemaInicializado) {
-    
+
     return;
   }
   sistemaInicializado = true;
 
   // Não executa se estiver na página de login
   if (!naoEstaNoLogin()) {
-    
+
     return;
   }
 
   // Verifica autenticação ANTES de fazer qualquer coisa
   const autenticado = await verificarAutenticacaoInicial();
   if (!autenticado) {
-    
+
     sistemaInicializado = false; // Permite tentar novamente
     return;
   }
@@ -1355,9 +1355,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Carrega funcionários
-    
+
     if (typeof window.carregarFuncionarios === 'function') {
-      
+
       window.carregarFuncionarios();
     } else {
       console.error('❌ Função carregarFuncionarios NÃO existe!');
@@ -1378,7 +1378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await switchView(viewInicial);
     }
 
-    
+
   } catch (error) {
     console.error('❌ Erro durante inicialização:', error);
     sistemaInicializado = false; // Permite tentar novamente em caso de erro
@@ -2475,15 +2475,15 @@ window.salvarNovoJob = async function () {
     const operadorId = selectOperadorEl?.value;
     let equipeCompleta = [];
 
-    
-    
+
+
     console.log('📋 Select Operador Element:', selectOperadorEl);
     console.log('📋 Operador Técnico ID (value):', operadorId);
     console.log('📋 Operador Técnico ID tipo:', typeof operadorId);
     console.log('📋 Operador Técnico é truthy?:', !!operadorId);
     console.log('📋 Equipe do Evento (window.equipeDoJob):', JSON.stringify(window.equipeDoJob));
     console.log('📋 Tamanho da equipe do evento:', (window.equipeDoJob || []).length);
-    
+
 
     // PRIMEIRO: Adiciona o Operador Técnico (se selecionado)
     if (operadorId && operadorId !== '' && operadorId !== 'undefined') {
@@ -2522,14 +2522,14 @@ window.salvarNovoJob = async function () {
 
     job.equipe = equipeCompleta;
 
-    
-    
+
+
     console.log('📋 Total de membros:', equipeCompleta.length);
     equipeCompleta.forEach((m, i) => {
       console.log(`   ${i + 1}. ${m.nome} (ID: ${m.funcionario_id}) - ${m.funcao}`);
     });
     console.log('📋 JSON da equipe:', JSON.stringify(equipeCompleta));
-    
+
 
     // Edição ou Criação?
     const isEdit = window.__jobEditandoId != null;
@@ -2605,7 +2605,7 @@ function atualizarMiniGraficoSemana(todosJobs, dataSegundaAtual) {
   const container = document.getElementById('mini-chart-jobs');
   if (!container) return;
 
-  
+
   console.log('Total de jobs recebidos:', todosJobs.length);
 
   container.innerHTML = "";
@@ -3177,7 +3177,7 @@ function iniciarSidebar() {
         // Item do submenu flutuante clicado - a função já foi executada via onclick
         return;
       }
-      
+
       // Verificar se clicou em um link do menu em dispositivo móvel
       if (window.innerWidth < 992) {
         const isMenuLink = e.target.closest('.submenu-link') ||
@@ -3791,7 +3791,7 @@ function renderizarTabelaContratos(pagina) {
     });
   }
 
-  
+
   renderizarBotoesPaginacaoContratos(divPaginacao, pagina, totalPaginas);
 
   // Atualiza visibilidade table/cards conforme tela
@@ -4491,11 +4491,14 @@ function atualizarCacheEInterface(id, tipo, novoValor) {
         }
       }
     }
+
+    // === ATUALIZAÇÃO IMEDIATA DOS CARDS ===
+    atualizarCardsComCache();
   }
 
   // Força notificações
   if (typeof window.forcarAtualizacaoNotificacoes === 'function') {
-    setTimeout(() => window.forcarAtualizacaoNotificacoes(), 300);
+    setTimeout(() => window.forcarAtualizacaoNotificacoes(), 100);
   }
 
   // Renderiza tabela com dados atualizados
@@ -4507,7 +4510,57 @@ function atualizarCacheEInterface(id, tipo, novoValor) {
     }
     if (typeof carregarEstoque === 'function') carregarEstoque();
     alert(`✅ Pedido atualizado para: ${novoValor}`);
-  }, 200);
+  }, 100);
+}
+
+// Função para atualizar cards imediatamente usando dados do cache
+function atualizarCardsComCache() {
+  const jobs = window.todosOsJobsCache || [];
+  
+  // --- CARD 1: JOBS ---
+  const elValorJobs = document.getElementById('kpi-contratos-ativos');
+  if (elValorJobs) {
+    let countJobs = 0;
+    if (estadoViewJobs === 'ativos') {
+      countJobs = jobs.filter(j => j.status === 'Agendado' || j.status === 'Confirmado' || j.status === 'Em Andamento').length;
+    } else if (estadoViewJobs === 'finalizados') {
+      countJobs = jobs.filter(j => j.status === 'Finalizado').length;
+    } else {
+      countJobs = jobs.filter(j => j.status === 'Cancelado').length;
+    }
+    elValorJobs.innerText = countJobs;
+  }
+
+  // --- CARD 2: FATURAMENTO ---
+  const elValorFat = document.getElementById('kpi-contratos-valor');
+  if (elValorFat) {
+    let valorExibir = 0;
+    if (estadoViewFaturamento === 'previsao') {
+      const jobsPrevisao = jobs.filter(j => j.status === 'Agendado' || j.status === 'Confirmado' || j.status === 'Em Andamento');
+      valorExibir = jobsPrevisao.reduce((acc, curr) => acc + Number(curr.valor), 0);
+    } else if (estadoViewFaturamento === 'finalizado') {
+      const jobsFinalizados = jobs.filter(j => j.status === 'Finalizado');
+      valorExibir = jobsFinalizados.reduce((acc, curr) => acc + Number(curr.valor), 0);
+    } else {
+      const jobsCancelados = jobs.filter(j => j.status === 'Cancelado');
+      valorExibir = jobsCancelados.reduce((acc, curr) => acc + Number(curr.valor), 0);
+    }
+    elValorFat.innerText = formatarMoedaK(valorExibir);
+  }
+
+  // --- CARD 3: FINANCEIRO (FATURAS PENDENTES) ---
+  const elValorFin = document.getElementById('kpi-contratos-pendentes');
+  if (elValorFin) {
+    let countFin = 0;
+    if (estadoViewFinanceiro === 'pendentes') {
+      countFin = jobs.filter(j => j.pagamento === 'Pendente').length;
+    } else if (estadoViewFinanceiro === 'vencidas') {
+      countFin = jobs.filter(j => j.pagamento === 'Vencido').length;
+    } else {
+      countFin = jobs.filter(j => j.pagamento === 'Cancelado').length;
+    }
+    elValorFin.innerText = countFin;
+  }
 }
 
 function cancelarEdicao(selectElem, valorOriginal, tipo) {
@@ -4725,7 +4778,7 @@ if (document.getElementById('lista-itens-job')) {
 function atualizarValorTotalPedido() {
   const linhas = document.querySelectorAll('#lista-itens-job tr');
   if (!linhas || linhas.length === 0) {
-    
+
     return;
   }
 
@@ -5838,7 +5891,7 @@ window.alternarViewCliente = function (modo) {
     console.log('📱 Alternando para lista - Mobile detectado:', isMobile);
 
     if (isMobile && window.paginacaoClientes && window.paginacaoClientes.listaTotalFiltrada && window.paginacaoClientes.listaTotalFiltrada.length > 0) {
-      
+
       setTimeout(() => {
         renderizarPaginaClientes();
         // Força exibição do container
@@ -6299,7 +6352,7 @@ window.mudarPaginaClientes = function (novaPagina) {
 
 // Função para voltar à lista de clientes mantendo a página
 window.voltarParaListaClientes = function () {
-  
+
   switchView('clientes');
 }
 
@@ -6962,7 +7015,7 @@ window.editarJob = async function (jobId) {
   const badgeModoView = document.getElementById('badge-modo-visualizacao');
   if (badgeModoView) {
     badgeModoView.remove();
-    
+
   }
 
   // ====================================================================
@@ -6981,7 +7034,7 @@ window.editarJob = async function (jobId) {
     await carregarLogoNoPedido();
   }
 
-  
+
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
@@ -8804,7 +8857,7 @@ if (!window.paginacaoFuncionarios) {
 
 // 1. CARREGAR LISTA DE FUNCIONÁRIOS
 window.carregarFuncionarios = async function () {
-  
+
 
   try {
     const res = await fetch(`${API_URL}/funcionarios/todos`);
@@ -9355,7 +9408,7 @@ async function handleAvatarFuncionarioUpload(event, funcionarioId) {
     // Re-renderiza os cards para mostrar a nova foto
     window.renderizarFuncionariosPaginado();
 
-    
+
 
     // Envia imagem para o servidor
     await uploadAvatarFuncionarioToServer(file, funcionarioId);
@@ -9511,7 +9564,7 @@ window.salvarFuncionario = function () {
       // Se é um novo funcionário e tem email, tentar enviar email de boas-vindas
       if (isNovoFuncionario && dados.email && resultado.senha_temporaria) {
         try {
-          
+
 
           if (window.emailService) {
             const emailEnviado = await window.emailService.notificarNovoFuncionario({
@@ -9521,12 +9574,12 @@ window.salvarFuncionario = function () {
             });
 
             if (emailEnviado) {
-              
+
             } else {
-              
+
             }
           } else {
-            
+
           }
         } catch (error) {
           console.error('❌ Erro ao enviar email de boas-vindas:', error);
@@ -10492,7 +10545,7 @@ function carregarSelectEquipe(listaFuncionarios) {
 
   // Se o elemento não existir no HTML, para a execução para não dar erro
   if (!select) {
-    
+
     return;
   }
 
@@ -10519,7 +10572,7 @@ function carregarSelectEquipe(listaFuncionarios) {
 }
 // 2. Adicionar Funcionário na Tabela Visual
 window.adicionarFuncionarioEquipe = function () {
-  
+
 
   const select = document.getElementById('selectFuncionarioEquipe');
   const inputFuncao = document.getElementById('inputFuncaoEquipe');
@@ -10622,7 +10675,7 @@ window.verDetalhesFuncionario = async function (id) {
     // 3. Clica na aba de histórico de forma mais robusta
     const historicoTab = document.getElementById('historico-tab');
     if (historicoTab) {
-      
+
       // Usa Bootstrap Tab corretamente
       const tab = new bootstrap.Tab(historicoTab);
       tab.show();
@@ -10937,18 +10990,18 @@ function renderizarCalendarioFuncionario(listaJobs) {
       if (!job.job_id) {
         // Escala standalone (sem job associado)
         icone = '📅';
-        
+
       } else if (job.is_manual === 1) {
         // Escala manual criada pelo usuário
         icone = '✋';
-        
+
       } else {
         // Escala automática da equipe
         icone = '📋';
-        
+
       }
     } else {
-      
+
     }
 
     const titulo = `📋 #${job.id} - ${job.descricao || 'Sem descrição'}`;
@@ -11750,7 +11803,7 @@ window.resetarSenhaFuncionario = async function () {
     // Tentar enviar email de senha resetada se possível
     if (result.email && result.senha_temporaria) {
       try {
-        
+
 
         if (window.emailService) {
           const emailEnviado = await window.emailService.notificarResetSenha({
@@ -11760,7 +11813,7 @@ window.resetarSenhaFuncionario = async function () {
           });
 
           if (emailEnviado) {
-            
+
 
             // Adicionar informação visual se possível
             setTimeout(() => {
@@ -11769,10 +11822,10 @@ window.resetarSenhaFuncionario = async function () {
               }
             }, 1000);
           } else {
-            
+
           }
         } else {
-          
+
         }
       } catch (error) {
         console.error('❌ Erro ao enviar email de senha resetada:', error);
@@ -12019,7 +12072,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabSistema = document.querySelector('[data-bs-target="#tab-sistema"]');
   if (tabSistema) {
     tabSistema.addEventListener('shown.bs.tab', () => {
-      
+
       carregarConfigNumeroPedido();
       carregarControleAcesso();
     });
@@ -12052,9 +12105,9 @@ window.logoEmpresa = null;
 
 // CARREGAR DADOS DA EMPRESA
 async function carregarDadosEmpresa() {
-  
-  
-  
+
+
+
 
   try {
     console.log('📡 Buscando dados de:', `${API_URL}/empresa`);
@@ -12091,8 +12144,8 @@ async function carregarDadosEmpresa() {
         preview.innerHTML = `<img src="${empresa.logo}" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
       }
 
-      
-      
+
+
     } else {
       console.warn('⚠️ Nenhum dado de empresa encontrado no servidor');
     }
@@ -12108,9 +12161,9 @@ async function carregarDadosEmpresa() {
 async function salvarDadosEmpresa(e) {
   if (e) e.preventDefault();
 
-  
-  
-  
+
+
+
 
   // IDs corrigidos para corresponder ao HTML
   const dados = {
@@ -12133,13 +12186,13 @@ async function salvarDadosEmpresa(e) {
     logo: window.logoEmpresa
   };
 
-  
+
   console.table(dados);
   console.log('🌐 API_URL:', API_URL);
   console.log('🔗 URL completa:', `${API_URL}/empresa`);
 
   try {
-    
+
 
     const res = await fetch(`${API_URL}/empresa`, {
       method: 'POST',
@@ -12149,7 +12202,7 @@ async function salvarDadosEmpresa(e) {
       body: JSON.stringify(dados)
     });
 
-    
+
     console.log('📨 Status HTTP:', res.status);
     console.log('📨 Status Text:', res.statusText);
     console.log('📨 Headers:', Object.fromEntries(res.headers.entries()));
@@ -12158,9 +12211,9 @@ async function salvarDadosEmpresa(e) {
     console.log('📦 Resultado parseado:', result);
 
     if (result.success) {
-      
-      
-      
+
+
+
 
       // Exibe modal de sucesso (com fallback se Swal não estiver disponível)
       if (typeof window.Swal !== 'undefined') {
@@ -12186,7 +12239,7 @@ async function salvarDadosEmpresa(e) {
 
       // Recarrega os dados para confirmar
       setTimeout(() => {
-        
+
         carregarDadosEmpresa();
       }, 500);
     } else {
@@ -12243,7 +12296,7 @@ function setupLogoUpload() {
         const result = await res.json();
         if (result.success) {
           window.logoEmpresa = base64;
-          
+
         }
       } catch (err) {
         console.error('Erro ao salvar logo:', err);
@@ -12264,7 +12317,7 @@ window.removerLogoEmpresa = async function () {
     const preview = document.getElementById('configLogoPreview');
     preview.innerHTML = '<i class="bi bi-image text-muted" style="font-size: 2rem;"></i>';
 
-    
+
   } catch (err) {
     console.error('Erro ao remover logo:', err);
   }
@@ -12315,7 +12368,7 @@ async function carregarLogoNoPedido() {
       }
     }
 
-    
+
   } catch (err) {
     console.error('Erro ao carregar logo no pedido:', err);
   }
@@ -12355,7 +12408,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // =============================================================
 
 function setupTodosCamposCEP() {
-  
+
 
   // Lista de TODOS os campos de CEP do sistema
   const camposCEP = [
@@ -12395,7 +12448,7 @@ function setupTodosCamposCEP() {
     });
   });
 
-  
+
 }
 
 
@@ -12512,7 +12565,7 @@ function inicializarFinanceiro() {
   // Sempre recarrega quando entrar na view (removido check de financeiroCarregado)
   financeiroCarregado = true;
 
-  
+
 
   // Verifica se Chart.js está carregado
   if (typeof Chart === 'undefined') {
@@ -12527,7 +12580,7 @@ function inicializarFinanceiro() {
 
   // Pequeno delay para garantir que o canvas já está renderizado
   setTimeout(() => {
-    
+
     carregarGraficoFluxoCaixa();
     carregarGraficoDespesasCategoria();
   }, 100);
@@ -13335,12 +13388,12 @@ async function excluirTransacao(id) {
 async function carregarGraficoFluxoCaixa() {
   const canvas = document.getElementById('financeChart');
   if (!canvas) {
-    
+
     return;
   }
 
   try {
-    
+
     const response = await fetch(`${API_URL}/financeiro/grafico-fluxo`);
     const dados = await response.json();
 
@@ -13420,7 +13473,7 @@ async function carregarGraficoFluxoCaixa() {
       }
     });
 
-    
+
   } catch (error) {
     console.error('❌ Erro ao carregar gráfico:', error);
   }
@@ -13438,12 +13491,12 @@ let despesasCategoriaChartInstance = null;
 async function carregarGraficoDespesasCategoria() {
   const canvas = document.getElementById('despesasCategoriaChart');
   if (!canvas) {
-    
+
     return;
   }
 
   try {
-    
+
     const response = await fetch(`${API_URL}/financeiro/despesas-por-categoria`);
     const dados = await response.json();
 
@@ -13476,7 +13529,7 @@ async function carregarGraficoDespesasCategoria() {
 
     // Se não houver dados, mostra mensagem
     if (!dados.labels || dados.labels.length === 0) {
-      
+
       const legendaEl = document.getElementById('despesasCategoriaLegenda');
       if (legendaEl) {
         legendaEl.innerHTML = '<span class="text-muted">Nenhuma despesa cadastrada este mês</span>';
@@ -13533,7 +13586,7 @@ async function carregarGraficoDespesasCategoria() {
       legendaEl.innerHTML = legendaHtml;
     }
 
-    
+
   } catch (error) {
     console.error('❌ Erro ao carregar gráfico de despesas:', error);
   }
@@ -13669,7 +13722,7 @@ async function testarSistemaNotificacoes() {
   try {
     // Executar teste via console e capturar resultado
     if (typeof window.debugNotificacoes === 'function') {
-      
+
       await window.debugNotificacoes();
 
       container.innerHTML = `
@@ -13934,7 +13987,7 @@ function aplicarMascaraTelefoneJob(valor) {
  * Inicializa as máscaras nos campos do formulário de pedido
  */
 function inicializarMascarasFormularioJob() {
-  
+
 
   // CEP
   const cepInput = document.getElementById('jobCep');
@@ -13942,7 +13995,7 @@ function inicializarMascarasFormularioJob() {
     cepInput.addEventListener('input', function () {
       this.value = aplicarMascaraCEP(this.value);
     });
-    
+
   }
 
   // CNPJ/CPF do Pagador
@@ -13951,7 +14004,7 @@ function inicializarMascarasFormularioJob() {
     cnpjCpfInput.addEventListener('input', function () {
       this.value = aplicarMascaraCPFouCNPJ(this.value);
     });
-    
+
   }
 
   // Telefone do Solicitante
@@ -13960,7 +14013,7 @@ function inicializarMascarasFormularioJob() {
     telSolicitante.addEventListener('input', function () {
       this.value = aplicarMascaraTelefoneJob(this.value);
     });
-    
+
   }
 
   // Telefone da Produção Local
@@ -13969,7 +14022,7 @@ function inicializarMascarasFormularioJob() {
     telProducao.addEventListener('input', function () {
       this.value = aplicarMascaraTelefoneJob(this.value);
     });
-    
+
   }
 
   // CEP do Pagador (se existir)
@@ -13978,10 +14031,10 @@ function inicializarMascarasFormularioJob() {
     cepPagador.addEventListener('input', function () {
       this.value = aplicarMascaraCEP(this.value);
     });
-    
+
   }
 
-  
+
 }
 
 /**
@@ -13989,7 +14042,7 @@ function inicializarMascarasFormularioJob() {
  * Inclui: modais, formulários de cadastro, RH, etc.
  */
 function inicializarTodasAsMascaras() {
-  
+
 
   // 1. Máscaras de CEP
   const camposCep = [
@@ -14050,7 +14103,7 @@ function inicializarTodasAsMascaras() {
   // 4. Reinicializa máscaras do formulário de pedido
   inicializarMascarasFormularioJob();
 
-  
+
 }
 
 // Inicializa as máscaras quando o DOM estiver pronto
