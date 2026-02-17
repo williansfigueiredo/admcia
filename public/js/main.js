@@ -12813,6 +12813,12 @@ async function carregarTransacoes() {
   const categoria = document.getElementById('finFiltroCategoria')?.value || 'todos';
   const dataInicio = document.getElementById('finFiltroDataInicio')?.value || '';
   const dataFim = document.getElementById('finFiltroDataFim')?.value || '';
+  
+  // IMPORTANTE: Zera os cards antes de carregar novos dados (evita valores fantasmas)
+  const resumoContainer = document.getElementById('resumoTransacoesFiltradas');
+  if (resumoContainer) {
+    resumoContainer.style.display = 'none';
+  }
 
   const params = new URLSearchParams();
   if (tipo !== 'todos') params.append('tipo', tipo);
@@ -12956,16 +12962,25 @@ function atualizarResumoTransacoesFiltradas() {
   // Formata valores
   const formatarValor = (v) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  // Pega os elementos dos cards
+  const elemAReceber = document.getElementById('totalAReceber');
+  const elemAPagar = document.getElementById('totalAPagar');
+  const elemRecebido = document.getElementById('totalPagoRecebido');
+  const elemBalanco = document.getElementById('balancoFiltrado');
+
   // Se não houver transações filtradas, zera os valores e oculta os cards
   if (!Array.isArray(transacoesFiltradas) || transacoesFiltradas.length === 0) {
-    // Zera todos os valores antes de ocultar
-    const elemAReceber = document.getElementById('totalAReceber');
-    const elemAPagar = document.getElementById('totalAPagar');
-    const elemRecebido = document.getElementById('totalPagoRecebido');
-    const elemBalanco = document.getElementById('balancoFiltrado');
-
-    if (elemAReceber) elemAReceber.textContent = formatarValor(0);
-    if (elemAPagar) elemAPagar.textContent = formatarValor(0);
+    console.log('⚠️ Nenhuma transação filtrada - Zerando cards');
+    
+    // Zera todos os valores
+    if (elemAReceber) {
+      elemAReceber.textContent = formatarValor(0);
+      elemAReceber.className = 'h5 mb-0 fw-bold text-success';
+    }
+    if (elemAPagar) {
+      elemAPagar.textContent = formatarValor(0);
+      elemAPagar.className = 'h5 mb-0 fw-bold text-danger';
+    }
     if (elemRecebido) {
       elemRecebido.textContent = formatarValor(0);
       elemRecebido.className = 'h5 mb-0 fw-bold text-primary';
@@ -12976,9 +12991,13 @@ function atualizarResumoTransacoesFiltradas() {
     }
     
     // Oculta o container
-    if (resumoContainer) resumoContainer.style.display = 'none';
+    if (resumoContainer) {
+      resumoContainer.style.display = 'none';
+    }
     return;
   }
+
+  console.log('✅ Calculando resumo de', transacoesFiltradas.length, 'transações');
 
   // Mostra o container de resumo
   if (resumoContainer) resumoContainer.style.display = 'flex';
@@ -13009,14 +13028,24 @@ function atualizarResumoTransacoesFiltradas() {
   const balancoFiltrado = (totalRecebido - totalPago) + (totalAReceber - totalAPagar);
   const jaEfetivado = totalRecebido - totalPago; // Saldo já pago/recebido (receitas pagas - despesas pagas)
 
-  // Atualiza os elementos
-  const elemAReceber = document.getElementById('totalAReceber');
-  const elemAPagar = document.getElementById('totalAPagar');
-  const elemRecebido = document.getElementById('totalPagoRecebido');
-  const elemBalanco = document.getElementById('balancoFiltrado');
+  console.log('📊 Resumo calculado:', {
+    aReceber: totalAReceber,
+    aPagar: totalAPagar,
+    recebido: totalRecebido,
+    pago: totalPago,
+    jaEfetivado: jaEfetivado,
+    balancoFiltrado: balancoFiltrado
+  });
 
-  if (elemAReceber) elemAReceber.textContent = formatarValor(totalAReceber);
-  if (elemAPagar) elemAPagar.textContent = formatarValor(totalAPagar);
+  // Atualiza os elementos
+  if (elemAReceber) {
+    elemAReceber.textContent = formatarValor(totalAReceber);
+    elemAReceber.className = 'h5 mb-0 fw-bold text-success';
+  }
+  if (elemAPagar) {
+    elemAPagar.textContent = formatarValor(totalAPagar);
+    elemAPagar.className = 'h5 mb-0 fw-bold text-danger';
+  }
   // CORREÇÃO: Mostra Receitas Pagas - Despesas Pagas
   if (elemRecebido) {
     elemRecebido.textContent = formatarValor(jaEfetivado);
