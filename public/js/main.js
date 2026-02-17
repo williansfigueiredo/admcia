@@ -12183,23 +12183,27 @@ async function salvarDadosEmpresa(e) {
       console.log('✅ SALVAMENTO CONCLUÍDO COM SUCESSO!');
       console.log('✅ ========================================');
 
-      // Exibe modal de sucesso
-      const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        didOpen: (toast) => {
-          toast.addEventListener('mouseenter', Swal.stopTimer)
-          toast.addEventListener('mouseleave', Swal.resumeTimer)
-        }
-      });
+      // Exibe modal de sucesso (com fallback se Swal não estiver disponível)
+      if (typeof window.Swal !== 'undefined') {
+        const Toast = window.Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.addEventListener('mouseenter', window.Swal.stopTimer)
+            toast.addEventListener('mouseleave', window.Swal.resumeTimer)
+          }
+        });
 
-      Toast.fire({
-        icon: 'success',
-        title: 'Dados da empresa salvos com sucesso!'
-      });
+        Toast.fire({
+          icon: 'success',
+          title: 'Dados da empresa salvos com sucesso!'
+        });
+      } else {
+        alert('✅ Dados da empresa salvos com sucesso!');
+      }
 
       // Recarrega os dados para confirmar
       setTimeout(() => {
