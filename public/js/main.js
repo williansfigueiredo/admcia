@@ -1573,35 +1573,56 @@ async function atualizarDashboard() {
     console.log('📅 SEMANA ATUAL:', dataSegunda.toLocaleDateString('pt-BR'), 'a', dataDomingo.toLocaleDateString('pt-BR'));
     console.log('📆 HOJE:', agora.toLocaleDateString('pt-BR'), '- Dia da semana:', diaSemana);
 
-    // Filtra: Jobs desta semana que estão "Em Andamento" OU "Finalizado"
-    // (mantém histórico da semana, não diminui quando finaliza)
-    // Usa data_inicio (data de execução) ao invés de data_job (data de criação)
-    const jobsDaSemana = jobs.filter(job => {
-      // Usa data_inicio se disponível, senão usa data_job como fallback
-      const dataExecucao = new Date(job.data_inicio || job.data_job);
-      dataExecucao.setHours(0, 0, 0, 0);
+    // CONTA DIAS DE TRABALHO NA SEMANA (não apenas quantidade de jobs)
+    // Cada job pode ter múltiplos dias (ex: 18/02 a 19/02 = 2 dias)
+    let totalDiasTrabalho = 0;
 
-      const dentroSemana = dataExecucao >= dataSegunda && dataExecucao <= dataDomingo;
+    jobs.forEach(job => {
+      // Só conta jobs com status "Em Andamento" ou "Finalizado"
       const statusCorreto = job.status === "Em Andamento" || job.status === "Finalizado";
-      
-      console.log(`Job #${job.id}: ${job.descricao}`);
-      console.log(`  data_inicio: ${job.data_inicio}, data_job: ${job.data_job}`);
-      console.log(`  dataExecucao: ${dataExecucao.toLocaleDateString('pt-BR')}`);
-      console.log(`  status: ${job.status}`);
-      console.log(`  dentroSemana: ${dentroSemana}, statusCorreto: ${statusCorreto}`);
-      console.log(`  INCLUÍDO: ${dentroSemana && statusCorreto}`);
-      console.log('---');
+      if (!statusCorreto) {
+        console.log(`Job #${job.id}: ${job.descricao} - IGNORADO (status: ${job.status})`);
+        return;
+      }
 
-      // Verifica se a data de início cai dentro da semana
-      return dentroSemana && statusCorreto;
+      // Pega data_inicio e data_fim do job
+      const dataInicio = new Date(job.data_inicio || job.data_job);
+      dataInicio.setHours(0, 0, 0, 0);
+      
+      // Se não tem data_fim, considera apenas 1 dia (data_inicio)
+      const dataFim = job.data_fim ? new Date(job.data_fim) : new Date(dataInicio);
+      dataFim.setHours(0, 0, 0, 0);
+
+      console.log(`Job #${job.id}: ${job.descricao}`);
+      console.log(`  Período: ${dataInicio.toLocaleDateString('pt-BR')} a ${dataFim.toLocaleDateString('pt-BR')}`);
+
+      // Conta cada dia do job que cai dentro da semana
+      let diasDoJob = 0;
+      const diaAtual = new Date(dataInicio);
+      
+      while (diaAtual <= dataFim) {
+        // Verifica se esse dia está dentro da semana atual
+        if (diaAtual >= dataSegunda && diaAtual <= dataDomingo) {
+          diasDoJob++;
+          console.log(`    ✓ ${diaAtual.toLocaleDateString('pt-BR')} - CONTA`);
+        } else {
+          console.log(`    ✗ ${diaAtual.toLocaleDateString('pt-BR')} - fora da semana`);
+        }
+        // Avança para o próximo dia
+        diaAtual.setDate(diaAtual.getDate() + 1);
+      }
+
+      console.log(`  Total de dias na semana: ${diasDoJob}`);
+      console.log('---');
+      
+      totalDiasTrabalho += diasDoJob;
     });
 
-    // Atualiza o Número Grande do Card
+    // Atualiza o Número Grande do Card com DIAS DE TRABALHO
     const elJobs = document.getElementById('kpi-jobs');
     if (elJobs) {
-      elJobs.innerText = jobsDaSemana.length;
-      console.log(`📊 TOTAL DE JOBS DA SEMANA: ${jobsDaSemana.length}`);
-      console.log('Jobs incluídos:', jobsDaSemana.map(j => `#${j.id} - ${j.descricao}`));
+      elJobs.innerText = totalDiasTrabalho;
+      console.log(`📊 TOTAL DE DIAS DE TRABALHO NA SEMANA: ${totalDiasTrabalho}`);
     }
 
     // Atualiza Tabela (Últimas Diárias)
