@@ -3141,9 +3141,44 @@ function iniciarSidebar() {
     });
   }
 
-  // *** NOVO: Fechar sidebar ao clicar em qualquer item do menu em mobile ***
+  // *** NAVEGAÇÃO DIRETA QUANDO SIDEBAR COLLAPSED ***
+  // Clique nos nav-links navega para view default quando collapsed
+  if (sidebar) {
+    const navItems = sidebar.querySelectorAll('.nav-item[data-default-view]');
+    navItems.forEach(item => {
+      const navLink = item.querySelector('.nav-link');
+      if (navLink) {
+        navLink.addEventListener('click', (e) => {
+          // Se sidebar está collapsed E é desktop
+          if (sidebar.classList.contains('collapsed') && window.innerWidth >= 992) {
+            const defaultView = item.getAttribute('data-default-view');
+            if (defaultView) {
+              e.preventDefault();
+              e.stopPropagation();
+              switchView(defaultView);
+            }
+          }
+        });
+      }
+    });
+
+    // *** FECHAR SUBMENU AO CLICAR FORA ***
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.nav-item') && sidebar.classList.contains('collapsed')) {
+        // Fecha qualquer submenu flutuante aberto (o CSS cuida disso via hover)
+      }
+    });
+  }
+
+  // *** FECHAR SIDEBAR AO CLICAR EM ITEM DO SUBMENU FLUTUANTE ***
   if (sidebar) {
     sidebar.addEventListener('click', (e) => {
+      const isCollapsedSubmenuItem = e.target.closest('.collapsed-submenu-item');
+      if (isCollapsedSubmenuItem && sidebar.classList.contains('collapsed')) {
+        // Item do submenu flutuante clicado - a função já foi executada via onclick
+        return;
+      }
+      
       // Verificar se clicou em um link do menu em dispositivo móvel
       if (window.innerWidth < 992) {
         const isMenuLink = e.target.closest('.submenu-link') ||

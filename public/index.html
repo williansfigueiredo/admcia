@@ -461,13 +461,20 @@
     <div class="nav flex-column">
       <div class="menu-label">DASHBOARDS</div>
 
-      <div class="nav-item">
+      <div class="nav-item" data-default-view="principal">
 
         <div class="nav-link active" data-bs-toggle="collapse" data-bs-target="#menuIndicadores" title="Indicadores">
           <div class="d-flex align-items-center">
             <i class="bi bi-grid-fill nav-icon"></i> <span class="nav-text">Indicadores</span>
           </div>
           <i class="bi bi-chevron-down small nav-arrow"></i>
+        </div>
+
+        <!-- Submenu flutuante para quando collapsed -->
+        <div class="collapsed-submenu">
+          <div class="collapsed-submenu-title">Indicadores</div>
+          <div class="collapsed-submenu-item" onclick="switchView('principal')">Principal</div>
+          <div class="collapsed-submenu-item" onclick="switchView('financeiro')">Financeiro</div>
         </div>
 
         <div class="collapse show" id="menuIndicadores">
@@ -482,13 +489,22 @@
 
       <div class="menu-label">COMERCIAL</div>
 
-      <div class="nav-item">
+      <div class="nav-item" data-default-view="clientes">
 
         <div class="nav-link" data-bs-toggle="collapse" data-bs-target="#menuComercial" title="Vendas e CRM">
           <div class="d-flex align-items-center">
             <i class="bi bi-bag nav-icon"></i> <span class="nav-text">Vendas e CRM</span>
           </div>
           <i class="bi bi-chevron-down small nav-arrow"></i>
+        </div>
+
+        <!-- Submenu flutuante para quando collapsed -->
+        <div class="collapsed-submenu">
+          <div class="collapsed-submenu-title">Vendas e CRM</div>
+          <div class="collapsed-submenu-item" onclick="switchView('clientes')">Clientes (PF/PJ)</div>
+          <div class="collapsed-submenu-item" onclick="abrirTelaNovoCliente()">Novo Cliente</div>
+          <div class="collapsed-submenu-item" onclick="switchView('contratos')">Contratos Ativos</div>
+          <div class="collapsed-submenu-item" onclick="switchView('novo-job')">Novo Pedido</div>
         </div>
 
         <div class="collapse" id="menuComercial">
@@ -515,12 +531,19 @@
 
       <div class="menu-label">OPERACIONAL</div>
 
-      <div class="nav-item">
+      <div class="nav-item" data-default-view="estoque">
         <div class="nav-link active" data-bs-toggle="collapse" data-bs-target="#menuOperacional" title="Inventário">
           <div class="d-flex align-items-center">
             <i class="bi bi-box-seam nav-icon"></i> <span class="nav-text">Inventário</span>
           </div>
           <i class="bi bi-chevron-down small nav-arrow"></i>
+        </div>
+
+        <!-- Submenu flutuante para quando collapsed -->
+        <div class="collapsed-submenu">
+          <div class="collapsed-submenu-title">Inventário</div>
+          <div class="collapsed-submenu-item" onclick="switchView('estoque')">Estoque Geral</div>
+          <div class="collapsed-submenu-item" onclick="switchView('novo-item')">Novo Item</div>
         </div>
 
         <div class="collapse show" id="menuOperacional">
@@ -534,13 +557,21 @@
       </div>
 
       <div class="menu-label">GESTÃO INTERNA</div>
-      <div class="nav-item">
+      <div class="nav-item" data-default-view="funcionarios">
         <div class="nav-link" data-bs-toggle="collapse" data-bs-target="#menuRH" title="RH">
           <div class="d-flex align-items-center">
             <i class="bi bi-people nav-icon"></i> <span class="nav-text">RH</span>
           </div>
           <i class="bi bi-chevron-down small nav-arrow"></i>
         </div>
+
+        <!-- Submenu flutuante para quando collapsed -->
+        <div class="collapsed-submenu">
+          <div class="collapsed-submenu-title">RH</div>
+          <div class="collapsed-submenu-item" onclick="switchView('funcionarios')">Funcionários</div>
+          <div class="collapsed-submenu-item" onclick="abrirTelaNovoFuncionario()">Novo Funcionário</div>
+        </div>
+
         <div class="collapse" id="menuRH">
           <div class="submenu-link" id="link-funcionarios" onclick="switchView('funcionarios')">
             <span class="nav-text">Funcionários</span>
@@ -552,7 +583,7 @@
         </div>
       </div>
 
-      <div class="nav-item mt-auto">
+      <div class="nav-item mt-auto" data-default-view="configuracoes">
         <div class="nav-link" title="Configurações" onclick="handleProfileMenuClick('settings', event)" style="cursor: pointer;">
           <div class="d-flex align-items-center">
             <i class="bi bi-gear nav-icon"></i> <span class="nav-text">Configurações</span>
