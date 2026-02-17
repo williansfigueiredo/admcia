@@ -118,7 +118,7 @@ app.get('/dashboard', requireAuth, (req, res) => {
 app.get('/invoice', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'invoice.html'));
 
-});  
+});
 
 // =============================================================
 // 4. CONEXÃO COM BANCO DE DADOS (MySQL)
@@ -1471,6 +1471,27 @@ app.put('/jobs/:id', (req, res) => {
         console.error("Erro UPDATE Job:", err);
         return res.status(500).json({ error: err.message });
       }
+
+      // =========================================================
+      // ATUALIZAR TRANSAÇÃO ASSOCIADA (SE EXISTIR)
+      // =========================================================
+      const sqlUpdateTransacao = `
+        UPDATE transacoes 
+        SET data_vencimento = ?, 
+            valor = ?,
+            descricao = ?
+        WHERE job_id = ? AND tipo = 'receita'
+      `;
+      const descricaoTransacao = `Pedido - ${data.descricao || 'Serviço'}`;
+      const valorJob = parseFloat(data.valor) || 0;
+      
+      db.query(sqlUpdateTransacao, [dataVencimento, valorJob, descricaoTransacao, id], (errTrans) => {
+        if (errTrans) {
+          console.error('❌ Erro ao atualizar transação:', errTrans);
+        } else {
+          console.log(`✅ Transação do Job #${id} atualizada com nova data de vencimento: ${dataVencimento}`);
+        }
+      });
 
       // =========================================================
       // 3. IMPLEMENTAÇÃO DA ATUALIZAÇÃO DA EQUIPE
