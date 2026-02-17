@@ -1546,7 +1546,7 @@ async function atualizarDashboard() {
     const el = document.getElementById('kpi-faturamento');
     if (el) el.innerText = formatarMoedaK(dataFaturamento.total || 0);
 
-    // 3. Jobs, Tabela e Lógica da Semana (Jobs em Andamento)
+    // 3. Jobs, Tabela e Lógica da Semana (Jobs da Semana - Em Andamento + Finalizado)
     const resJobs = await fetch(`${API_URL}/jobs`);
     const jobs = await resJobs.json();
 
@@ -1564,14 +1564,18 @@ async function atualizarDashboard() {
     dataDomingo.setDate(dataDomingo.getDate() + 6);
     dataDomingo.setHours(23, 59, 59, 999); // Fim do dia
 
-    // Filtra: Só Jobs desta semana E que estão "Em Andamento"
+    // Filtra: Jobs desta semana que estão "Em Andamento" OU "Finalizado"
+    // (mantém histórico da semana, não diminui quando finaliza)
+    // Usa data_inicio (data de execução) ao invés de data_job (data de criação)
     const jobsDaSemana = jobs.filter(job => {
-      const dataJob = new Date(job.data_job);
-      dataJob.setHours(dataJob.getHours() + 3); // Ajuste Fuso
+      // Usa data_inicio se disponível, senão usa data_job como fallback
+      const dataExecucao = new Date(job.data_inicio || job.data_job);
+      dataExecucao.setHours(0, 0, 0, 0);
 
-      return dataJob >= dataSegunda &&
-        dataJob <= dataDomingo &&
-        job.status === "Em Andamento";
+      // Verifica se a data de início cai dentro da semana
+      return dataExecucao >= dataSegunda &&
+        dataExecucao <= dataDomingo &&
+        (job.status === "Em Andamento" || job.status === "Finalizado");
     });
 
     // Atualiza o Número Grande do Card
@@ -2654,12 +2658,13 @@ function atualizarMiniGraficoSemana(todosJobs, dataSegundaAtual) {
     dataBarra.setHours(0, 0, 0, 0);
 
     const qtd = todosJobs.filter(j => {
-      const d = new Date(j.data_job);
-      d.setHours(d.getHours() + 3);
+      // Usa data_inicio (data de execução) ao invés de data_job
+      const d = new Date(j.data_inicio || j.data_job);
+      d.setHours(0, 0, 0, 0);
       return d.getDate() === dataBarra.getDate() &&
         d.getMonth() === dataBarra.getMonth() &&
         d.getFullYear() === dataBarra.getFullYear() &&
-        j.status === "Em Andamento";
+        (j.status === "Em Andamento" || j.status === "Finalizado");
     }).length;
 
     contagemPorDia.push({
@@ -2678,9 +2683,13 @@ function atualizarMiniGraficoSemana(todosJobs, dataSegundaAtual) {
     const dPassado = new Date(dataSegundaPassada);
     dPassado.setDate(dPassado.getDate() + i);
     const qtdPassada = todosJobs.filter(j => {
-      const d = new Date(j.data_job);
-      d.setHours(d.getHours() + 3);
-      return d.getDate() === dPassado.getDate() && j.status === "Em Andamento";
+      // Usa data_inicio (data de execução) ao invés de data_job
+      const d = new Date(j.data_inicio || j.data_job);
+      d.setHours(0, 0, 0, 0);
+      return d.getDate() === dPassado.getDate() &&
+        d.getMonth() === dPassado.getMonth() &&
+        d.getFullYear() === dPassado.getFullYear() &&
+        (j.status === "Em Andamento" || j.status === "Finalizado");
     }).length;
     totalSemanaPassada += qtdPassada;
   }
@@ -6459,6 +6468,33 @@ window.adicionarNovoContato = function () {
   `;
 
   listaContatos.insertAdjacentHTML('beforeend', contatoHTML);
+  
+  // Aplica máscara de telefone no campo recém-criado
+  const novoContato = document.getElementById(`contato-${idContato}`);
+  if (novoContato) {
+    const campoTelefone = novoContato.querySelector('.contato-telefone');
+    if (campoTelefone) {
+      campoTelefone.addEventListener('input', function() {
+        let valor = this.value.replace(/\D/g, '');
+        
+        if (valor.length > 11) valor = valor.substring(0, 11);
+        
+        if (valor.length > 10) {
+          // Celular: (00) 00000-0000
+          valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2, 7) + '-' + valor.substring(7);
+        } else if (valor.length > 6) {
+          // Fixo: (00) 0000-0000
+          valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2, 6) + '-' + valor.substring(6);
+        } else if (valor.length > 2) {
+          valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2);
+        } else if (valor.length > 0) {
+          valor = '(' + valor;
+        }
+        
+        this.value = valor;
+      });
+    }
+  }
 }
 
 // Função para remover um contato da lista
@@ -12109,10 +12145,27 @@ async function salvarDadosEmpresa(e) {
     console.log('📦 Resultado parseado:', result);
 
     if (result.success) {
-      alert('✅ Dados da empresa salvos com sucesso!');
       console.log('✅ ========================================');
       console.log('✅ SALVAMENTO CONCLUÍDO COM SUCESSO!');
       console.log('✅ ========================================');
+
+      // Exibe modal de sucesso
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+
+      Toast.fire({
+        icon: 'success',
+        title: 'Dados da empresa salvos com sucesso!'
+      });
 
       // Recarrega os dados para confirmar
       setTimeout(() => {
@@ -12370,6 +12423,54 @@ function setupMascarasEmpresa() {
         valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2, 6) + '-' + valor.substring(6);
       } else if (valor.length > 2) {
         valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2);
+      }
+
+      this.value = valor;
+    });
+  }
+
+  // Máscara de CEP (Empresa): 00000-000
+  const inputCEPEmpresa = document.getElementById('configCEP');
+  if (inputCEPEmpresa) {
+    inputCEPEmpresa.addEventListener('input', function () {
+      let valor = this.value.replace(/\D/g, '');
+
+      if (valor.length > 8) valor = valor.substring(0, 8);
+
+      if (valor.length > 5) {
+        valor = valor.substring(0, 5) + '-' + valor.substring(5);
+      }
+
+      this.value = valor;
+    });
+  }
+
+  // Máscara de CEP (Funcionário): 00000-000
+  const inputCEPFunc = document.getElementById('configCep');
+  if (inputCEPFunc) {
+    inputCEPFunc.addEventListener('input', function () {
+      let valor = this.value.replace(/\D/g, '');
+
+      if (valor.length > 8) valor = valor.substring(0, 8);
+
+      if (valor.length > 5) {
+        valor = valor.substring(0, 5) + '-' + valor.substring(5);
+      }
+
+      this.value = valor;
+    });
+  }
+
+  // Máscara de CEP (Cadastro RH): 00000-000
+  const inputCEPRH = document.getElementById('rhCep');
+  if (inputCEPRH) {
+    inputCEPRH.addEventListener('input', function () {
+      let valor = this.value.replace(/\D/g, '');
+
+      if (valor.length > 8) valor = valor.substring(0, 8);
+
+      if (valor.length > 5) {
+        valor = valor.substring(0, 5) + '-' + valor.substring(5);
       }
 
       this.value = valor;
@@ -13876,7 +13977,9 @@ function inicializarTodasAsMascaras() {
   // 1. Máscaras de CEP
   const camposCep = [
     'cadCliCep',      // Cadastro de cliente
-    'rhCep'           // RH
+    'rhCep',          // RH
+    'configCEP',      // Empresa (Configurações)
+    'configCep'       // Funcionário (Configurações)
   ];
   
   camposCep.forEach(id => {
