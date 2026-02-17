@@ -2131,17 +2131,20 @@ window.salvarJobTelaCheia = async function () {
   const isEdit = Number.isInteger(window.__jobEditandoId);
 
   // =================================================================
-  // 🔒 TRAVA DE SEGURANÇA: DETECTAR SE JÁ ESTÁ FINALIZADO/CANCELADO
+  // 🔒 VALIDAÇÃO DE ESTOQUE: APENAS EM NOVOS PEDIDOS
   // =================================================================
-  // Verifica se é um job que JÁ ESTÁ finalizado ou cancelado
-  const isJobInativo = isEdit && (window.__statusJobAtual === 'Finalizado' || window.__statusJobAtual === 'Cancelado');
-
-  // Só valida estoque se o job estiver ATIVO. Se estiver finalizado, deixa passar.
-  if (!isJobInativo) {
+  // IMPORTANTE: Ao editar um pedido, NÃO validamos o estoque porque:
+  // 1. Os itens originais já foram baixados do estoque quando o pedido foi criado
+  // 2. O sistema devolve/baixa o estoque automaticamente durante a edição
+  // 3. Validar novamente causaria erro de "estoque insuficiente" mesmo sem mudanças
+  
+  if (!isEdit) {
+    // Apenas valida estoque em NOVOS pedidos
+    console.log("🆕 Novo pedido: Validando estoque antes de salvar...");
     const estoqueOk = await window.validarEstoqueAntesSalvar(itensArray);
     if (!estoqueOk) return;
   } else {
-    console.log("⚠️ Job inativo (Finalizado/Cancelado): Pulando validação de estoque.");
+    console.log("✏️ Editando pedido: Pulando validação de estoque (itens já estão reservados).");
   }
 
   // 3. CÁLCULO FINANCEIRO (AQUI ESTAVA O PROBLEMA DE APARECER 00,00)
