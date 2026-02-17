@@ -5674,7 +5674,7 @@ window.salvarClienteFull = function () {
  */
 window.buscarCepGenerico = async function (cep, prefixo, inputElement = null) {
   cep = cep.replace(/\D/g, "");
-  
+
   if (cep.length !== 8) {
     if (inputElement) {
       inputElement.style.borderColor = '';
@@ -5747,7 +5747,7 @@ window.buscarCepGenerico = async function (cep, prefixo, inputElement = null) {
   } catch (error) {
     console.error('❌ Erro ao buscar CEP:', error);
     alert('⚠️ Erro ao buscar CEP. Verifique sua conexão.');
-    
+
     if (inputElement) {
       inputElement.style.borderColor = '#dc3545';
       inputElement.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
@@ -11975,12 +11975,12 @@ async function carregarDadosEmpresa() {
   console.log('📥 ========================================');
   console.log('📥 CARREGANDO DADOS DA EMPRESA');
   console.log('📥 ========================================');
-  
+
   try {
     console.log('📡 Buscando dados de:', `${API_URL}/empresa`);
     const res = await fetch(`${API_URL}/empresa`);
     console.log('📨 Status da resposta:', res.status);
-    
+
     const empresa = await res.json();
     console.log('📦 Dados recebidos:', empresa);
 
@@ -12058,10 +12058,10 @@ async function salvarDadosEmpresa(e) {
 
   try {
     console.log('📡 Enviando requisição POST para /empresa...');
-    
+
     const res = await fetch(`${API_URL}/empresa`, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(dados)
@@ -12080,7 +12080,7 @@ async function salvarDadosEmpresa(e) {
       console.log('✅ ========================================');
       console.log('✅ SALVAMENTO CONCLUÍDO COM SUCESSO!');
       console.log('✅ ========================================');
-      
+
       // Recarrega os dados para confirmar
       setTimeout(() => {
         console.log('🔄 Recarregando dados da empresa para confirmar...');
@@ -12306,9 +12306,9 @@ function setupMascarasEmpresa() {
   if (inputCNPJ) {
     inputCNPJ.addEventListener('input', function () {
       let valor = this.value.replace(/\D/g, '');
-      
+
       if (valor.length > 14) valor = valor.substring(0, 14);
-      
+
       if (valor.length > 12) {
         valor = valor.substring(0, 2) + '.' + valor.substring(2, 5) + '.' + valor.substring(5, 8) + '/' + valor.substring(8, 12) + '-' + valor.substring(12);
       } else if (valor.length > 8) {
@@ -12318,7 +12318,7 @@ function setupMascarasEmpresa() {
       } else if (valor.length > 2) {
         valor = valor.substring(0, 2) + '.' + valor.substring(2);
       }
-      
+
       this.value = valor;
     });
   }
@@ -12328,9 +12328,9 @@ function setupMascarasEmpresa() {
   if (inputTelefone) {
     inputTelefone.addEventListener('input', function () {
       let valor = this.value.replace(/\D/g, '');
-      
+
       if (valor.length > 11) valor = valor.substring(0, 11);
-      
+
       if (valor.length > 10) {
         valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2, 7) + '-' + valor.substring(7);
       } else if (valor.length > 6) {
@@ -12338,7 +12338,7 @@ function setupMascarasEmpresa() {
       } else if (valor.length > 2) {
         valor = '(' + valor.substring(0, 2) + ') ' + valor.substring(2);
       }
-      
+
       this.value = valor;
     });
   }
@@ -12647,27 +12647,28 @@ function atualizarResumoTransacoesFiltradas() {
 
   let totalAReceber = 0;
   let totalAPagar = 0;
-  let totalPagoRecebido = 0;
+  let totalRecebido = 0;
+  let totalPago = 0;
 
   transacoesFiltradas.forEach(t => {
     const valor = parseFloat(t.valor) || 0;
-
     if (t.tipo === 'receita') {
       if (t.status === 'pendente' || t.status === 'atrasado') {
         totalAReceber += valor;
       } else if (t.status === 'pago') {
-        totalPagoRecebido += valor;
+        totalRecebido += valor;
       }
     } else if (t.tipo === 'despesa') {
       if (t.status === 'pendente' || t.status === 'atrasado') {
         totalAPagar += valor;
       } else if (t.status === 'pago') {
-        totalPagoRecebido -= valor;
+        totalPago += valor;
       }
     }
   });
 
-  const balancoFiltrado = totalAReceber - totalAPagar;
+  // Novo cálculo: (Total Recebido - Total Pago) + (Total a Receber - Total a Pagar)
+  const balancoFiltrado = (totalRecebido - totalPago) + (totalAReceber - totalAPagar);
 
   // Formata valores
   const formatarValor = (v) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -12675,12 +12676,12 @@ function atualizarResumoTransacoesFiltradas() {
   // Atualiza os elementos
   const elemAReceber = document.getElementById('totalAReceber');
   const elemAPagar = document.getElementById('totalAPagar');
-  const elemPagoRecebido = document.getElementById('totalPagoRecebido');
+  const elemRecebido = document.getElementById('totalPagoRecebido');
   const elemBalanco = document.getElementById('balancoFiltrado');
 
   if (elemAReceber) elemAReceber.textContent = formatarValor(totalAReceber);
   if (elemAPagar) elemAPagar.textContent = formatarValor(totalAPagar);
-  if (elemPagoRecebido) elemPagoRecebido.textContent = formatarValor(totalPagoRecebido);
+  if (elemRecebido) elemRecebido.textContent = formatarValor(totalRecebido);
 
   if (elemBalanco) {
     elemBalanco.textContent = formatarValor(balancoFiltrado);
