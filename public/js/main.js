@@ -12762,15 +12762,30 @@ async function carregarResumoFinanceiro() {
     saldoEl.classList.remove('text-success', 'text-danger');
     saldoEl.classList.add(dados.saldo >= 0 ? 'text-success' : 'text-danger');
 
-    // Quantidade de vencidas
+    // Quantidade e valor de vencidas
     const qtdEl = document.getElementById('finQtdVencidas');
+    const vencidosDetalhesEl = document.getElementById('finVencidosDetalhes');
+    const vencidosValorEl = document.getElementById('finVencidosValor');
+    
     if (qtdEl) {
       qtdEl.textContent = dados.qtdVencidas + ' vencida' + (dados.qtdVencidas !== 1 ? 's' : '');
       qtdEl.classList.remove('bg-success-subtle', 'text-success', 'bg-danger-subtle', 'text-danger');
       if (dados.qtdVencidas > 0) {
         qtdEl.classList.add('bg-danger-subtle', 'text-danger');
+        // Mostra detalhes dos vencidos quando houver
+        if (vencidosDetalhesEl) {
+          vencidosDetalhesEl.style.display = 'block';
+          // Animação suave de fade in
+          setTimeout(() => { vencidosDetalhesEl.style.opacity = '1'; }, 10);
+        }
+        if (vencidosValorEl) vencidosValorEl.textContent = formatarValor(dados.vencidas);
       } else {
         qtdEl.classList.add('bg-success-subtle', 'text-success');
+        // Esconde detalhes quando não houver vencidos
+        if (vencidosDetalhesEl) {
+          vencidosDetalhesEl.style.opacity = '0';
+          setTimeout(() => { vencidosDetalhesEl.style.display = 'none'; }, 300);
+        }
       }
     }
 

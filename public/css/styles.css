@@ -700,13 +700,13 @@ body {
 }
 
 /* Nav-link fica ativo quando submenu está expandido */
-.nav-item:has(.collapse.show) > .nav-link {
+.nav-item:has(.collapse.show)>.nav-link {
   background: linear-gradient(90deg, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.05) 100%);
   color: white;
   border-left-color: var(--primary-blue);
 }
 
-.nav-item:has(.collapse.show) > .nav-link .nav-icon {
+.nav-item:has(.collapse.show)>.nav-link .nav-icon {
   color: var(--primary-blue);
   opacity: 1;
 }
@@ -1364,6 +1364,30 @@ tr[onclick]:active {
   font-weight: 700;
   color: var(--text-dark);
   letter-spacing: -0.5px;
+}
+
+/* Detalhes dos cards financeiros */
+.card-custom.stat-card .border-top {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease;
+}
+
+[data-bs-theme="dark"] .card-custom.stat-card .border-top {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.card-custom.stat-card .small {
+  line-height: 1.6;
+}
+
+.card-custom.stat-card .small .bi {
+  font-size: 0.9em;
+}
+
+/* Animação suave para detalhes de vencidos */
+#finVencidosDetalhes {
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 /* Tabela Financeira */
