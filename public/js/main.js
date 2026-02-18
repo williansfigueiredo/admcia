@@ -7491,6 +7491,27 @@ function renderizarFinanceiroPerfil(listaJobs) {
         else classeBadge = 'badge bg-warning text-dark';
       }
 
+      // Calcula alerta de vencimento
+      let alertaVencimento = '';
+      if (job.pagamento !== 'Pago' && job.pagamento !== 'Cancelado' && job.data_vencimento) {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        
+        const vencimento = new Date(job.data_vencimento);
+        vencimento.setHours(0, 0, 0, 0);
+        
+        const diffTime = vencimento - hoje;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) {
+          alertaVencimento = '<span class="badge bg-warning text-dark ms-2" title="Vence hoje!"><i class="bi bi-exclamation-triangle-fill"></i> Vence hoje</span>';
+        } else if (diffDays === 1) {
+          alertaVencimento = '<span class="badge bg-warning-subtle text-warning ms-2" title="Vence amanhã"><i class="bi bi-bell-fill"></i> Amanhã</span>';
+        } else if (diffDays === 2) {
+          alertaVencimento = '<span class="badge bg-warning-subtle text-warning ms-2" title="Vence em 2 dias"><i class="bi bi-bell"></i> 2 dias</span>';
+        }
+      }
+
       const trFin = document.createElement('tr');
       trFin.innerHTML = `
                 <td class="ps-3">${job.vencimento_texto || 'À vista'}</td>
@@ -7500,6 +7521,7 @@ function renderizarFinanceiroPerfil(listaJobs) {
                     <span class="${classeBadge}">
                         ${job.pagamento}
                     </span>
+                    ${alertaVencimento}
                 </td>
             `;
       tbody.appendChild(trFin);
@@ -12766,7 +12788,7 @@ async function carregarResumoFinanceiro() {
     const qtdEl = document.getElementById('finQtdVencidas');
     const vencidosDetalhesEl = document.getElementById('finVencidosDetalhes');
     const vencidosValorEl = document.getElementById('finVencidosValor');
-    
+
     if (qtdEl) {
       qtdEl.textContent = dados.qtdVencidas + ' vencida' + (dados.qtdVencidas !== 1 ? 's' : '');
       qtdEl.classList.remove('bg-success-subtle', 'text-success', 'bg-danger-subtle', 'text-danger');
@@ -12939,6 +12961,34 @@ function renderizarTransacoesPaginadas() {
     }
   };
 
+  // Função para calcular alertas de vencimento
+  const getAlertaVencimento = (dataVencimento, status) => {
+    // Não mostra alerta se já está pago ou cancelado
+    if (status === 'pago' || status === 'cancelado') return '';
+    
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    const vencimento = new Date(dataVencimento);
+    vencimento.setHours(0, 0, 0, 0);
+    
+    const diffTime = vencimento - hoje;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      // Vence hoje
+      return '<span class="badge bg-warning text-dark ms-2" title="Vence hoje!"><i class="bi bi-exclamation-triangle-fill"></i> Vence hoje</span>';
+    } else if (diffDays === 1) {
+      // Vence amanhã
+      return '<span class="badge bg-warning-subtle text-warning ms-2" title="Vence amanhã"><i class="bi bi-bell-fill"></i> Amanhã</span>';
+    } else if (diffDays === 2) {
+      // Vence em 2 dias
+      return '<span class="badge bg-warning-subtle text-warning ms-2" title="Vence em 2 dias"><i class="bi bi-bell"></i> 2 dias</span>';
+    }
+    
+    return '';
+  };
+
   let html = '';
   transacoesPagina.forEach(t => {
     const tipoClass = t.tipo === 'receita' ? 'text-income' : 'text-expense';
@@ -12954,7 +13004,7 @@ function renderizarTransacoesPaginadas() {
         <td>${t.categoria || '-'}</td>
         <td class="fw-bold ${tipoClass}">${formatarValor(t.valor, t.tipo)}</td>
         <td>${formatarData(t.data_vencimento)}</td>
-        <td>${getBadgeStatus(t.status)}</td>
+        <td>${getBadgeStatus(t.status)}${getAlertaVencimento(t.data_vencimento, t.status)}</td>
         <td class="text-end">
           ${isJob ? `
             <button class="btn btn-sm btn-outline-primary" onclick="window.setJobOrigin('financeiro'); abrirDetalhesJob(${t.id})" title="Ver pedido completo">
