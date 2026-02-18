@@ -1850,7 +1850,10 @@ function preencherTabela(listaJobs) {
             
             <td>${getStatusPill(job.status)}</td>
             
-            <td>${getPagamentoPill(job.pagamento)}</td>
+            <td>
+                ${getPagamentoPill(job.pagamento)}
+                ${job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : ''}
+            </td>
         `;
     tabela.appendChild(tr);
 
@@ -1872,6 +1875,7 @@ function preencherTabela(listaJobs) {
           <div class="diaria-pills">
             ${getStatusPill(job.status)}
             ${getPagamentoPill(job.pagamento)}
+            ${job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : ''}
           </div>
         </div>
       `;
@@ -3874,6 +3878,7 @@ function renderizarTabelaContratos(pagina) {
                           onclick="abrirMenuStatus(this, ${job.id}, 'pagamento', '${job.pagamento}')">
                           ${job.pagamento}
                     </span>
+                    ${job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : ''}
                 </td>
 
 <td class="text-end pe-4">
@@ -3916,6 +3921,7 @@ function renderizarTabelaContratos(pagina) {
           <div class="contrato-pills">
             <span class="${getStatusPill(job.status, true)} cursor-pointer" onclick="abrirMenuStatus(this, ${job.id}, 'status', '${job.status}')">${job.status}</span>
             <span class="${getPagamentoPill(job.pagamento, true)} cursor-pointer" onclick="abrirMenuStatus(this, ${job.id}, 'pagamento', '${job.pagamento}')">${job.pagamento}</span>
+            ${job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : ''}
           </div>
         `;
         mobileContainer.appendChild(card);
@@ -7491,25 +7497,10 @@ function renderizarFinanceiroPerfil(listaJobs) {
         else classeBadge = 'badge bg-warning text-dark';
       }
 
-      // Calcula alerta de vencimento
+      // Calcula alerta de vencimento usando função global
       let alertaVencimento = '';
-      if (job.pagamento !== 'Pago' && job.pagamento !== 'Cancelado' && job.data_vencimento) {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        
-        const vencimento = new Date(job.data_vencimento);
-        vencimento.setHours(0, 0, 0, 0);
-        
-        const diffTime = vencimento - hoje;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 0) {
-          alertaVencimento = '<span class="badge bg-warning text-dark ms-2" title="Vence hoje!"><i class="bi bi-exclamation-triangle-fill"></i> Vence hoje</span>';
-        } else if (diffDays === 1) {
-          alertaVencimento = '<span class="badge bg-warning-subtle text-warning ms-2" title="Vence amanhã"><i class="bi bi-bell-fill"></i> Amanhã</span>';
-        } else if (diffDays === 2) {
-          alertaVencimento = '<span class="badge bg-warning-subtle text-warning ms-2" title="Vence em 2 dias"><i class="bi bi-bell"></i> 2 dias</span>';
-        }
+      if (job.data_vencimento) {
+        alertaVencimento = window.calcularAlertaVencimento(job.data_vencimento, job.pagamento);
       }
 
       const trFin = document.createElement('tr');
@@ -12911,6 +12902,46 @@ async function carregarTransacoes() {
   }
 }
 
+// Função global para calcular alertas de vencimento (reutilizável)
+window.calcularAlertaVencimento = function(dataVencimento, status) {
+  // Não mostra alerta se já está pago, cancelado ou vencido
+  if (status === 'pago' || status === 'cancelado' || status === 'atrasado' || status === 'Pago' || status === 'Cancelado' || status === 'Vencido') return '';
+  
+  if (!dataVencimento) return '';
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  const vencimento = new Date(dataVencimento);
+  vencimento.setHours(0, 0, 0, 0);
+  
+  const diffTime = vencimento - hoje;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  // Alertas com ANTECEDÊNCIA
+  if (diffDays < 0) {
+    // Já venceu
+    return '';
+  } else if (diffDays === 0) {
+    // Vence hoje - ÚLTIMO DIA
+    return '<span class="badge bg-danger text-white ms-2" title="Último dia para pagamento!"><i class="bi bi-exclamation-octagon-fill"></i> Último dia</span>';
+  } else if (diffDays === 1) {
+    // Vence amanhã
+    return '<span class="badge bg-warning text-dark ms-2" title="Vence amanhã"><i class="bi bi-exclamation-triangle-fill"></i> Vence amanhã</span>';
+  } else if (diffDays === 2) {
+    // Vence em 2 dias
+    return '<span class="badge bg-warning text-dark ms-2" title="Vence em 2 dias"><i class="bi bi-exclamation-triangle"></i> 2 dias</span>';
+  } else if (diffDays >= 3 && diffDays <= 5) {
+    // Vence em 3-5 dias - Próximo do vencimento
+    return '<span class="badge bg-info-subtle text-info ms-2" title="Próximo do vencimento (" + diffDays + " dias)"><i class="bi bi-bell-fill"></i> Próximo (" + diffDays + "d)</span>';
+  } else if (diffDays >= 6 && diffDays <= 7) {
+    // Vence em 6-7 dias
+    return '<span class="badge bg-secondary-subtle text-secondary ms-2" title="Vence em " + diffDays + " dias"><i class="bi bi-bell"></i> " + diffDays + " dias</span>';
+  }
+  
+  return '';
+};
+
 // Renderiza transações com paginação
 function renderizarTransacoesPaginadas() {
   const tbody = document.getElementById('tabelaTransacoesBody');
@@ -12963,30 +12994,7 @@ function renderizarTransacoesPaginadas() {
 
   // Função para calcular alertas de vencimento
   const getAlertaVencimento = (dataVencimento, status) => {
-    // Não mostra alerta se já está pago ou cancelado
-    if (status === 'pago' || status === 'cancelado') return '';
-    
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    
-    const vencimento = new Date(dataVencimento);
-    vencimento.setHours(0, 0, 0, 0);
-    
-    const diffTime = vencimento - hoje;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      // Vence hoje
-      return '<span class="badge bg-warning text-dark ms-2" title="Vence hoje!"><i class="bi bi-exclamation-triangle-fill"></i> Vence hoje</span>';
-    } else if (diffDays === 1) {
-      // Vence amanhã
-      return '<span class="badge bg-warning-subtle text-warning ms-2" title="Vence amanhã"><i class="bi bi-bell-fill"></i> Amanhã</span>';
-    } else if (diffDays === 2) {
-      // Vence em 2 dias
-      return '<span class="badge bg-warning-subtle text-warning ms-2" title="Vence em 2 dias"><i class="bi bi-bell"></i> 2 dias</span>';
-    }
-    
-    return '';
+    return window.calcularAlertaVencimento(dataVencimento, status);
   };
 
   let html = '';

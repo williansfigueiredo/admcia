@@ -1396,8 +1396,24 @@ tr[onclick]:active {
   border: 1px solid #ffc107;
 }
 
+.badge.bg-info-subtle {
+  background-color: #cfe2ff !important;
+  border: 1px solid #0dcaf0;
+  color: #0a58ca;
+}
+
+.badge.bg-secondary-subtle {
+  background-color: #e2e3e5 !important;
+  border: 1px solid #6c757d;
+  color: #495057;
+}
+
 .badge.bg-warning {
   animation: pulse-warning 2s infinite;
+}
+
+.badge.bg-danger {
+  animation: pulse-danger 1.5s infinite;
 }
 
 @keyframes pulse-warning {
@@ -1409,9 +1425,33 @@ tr[onclick]:active {
   }
 }
 
+@keyframes pulse-danger {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
 [data-bs-theme="dark"] .badge.bg-warning-subtle {
   background-color: rgba(255, 193, 7, 0.15) !important;
   border: 1px solid rgba(255, 193, 7, 0.4);
+  color: #ffca2c;
+}
+
+[data-bs-theme="dark"] .badge.bg-info-subtle {
+  background-color: rgba(13, 202, 240, 0.15) !important;
+  border: 1px solid rgba(13, 202, 240, 0.4);
+  color: #6edff6;
+}
+
+[data-bs-theme="dark"] .badge.bg-secondary-subtle {
+  background-color: rgba(108, 117, 125, 0.15) !important;
+  border: 1px solid rgba(108, 117, 125, 0.4);
+  color: #dee2e6;
 }
 
 /* Tabela Financeira */
