@@ -12924,44 +12924,58 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
   }
   
   try {
+    // Pega data de hoje (apenas dia, sem horas)
     const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+    const hojeStr = hoje.toISOString().split('T')[0]; // YYYY-MM-DD
     
     // Trata a data de vencimento - pode vir como string ou Date
-    let vencimento = new Date(dataVencimento);
+    let vencimentoStr = dataVencimento;
+    if (typeof dataVencimento === 'object' && dataVencimento !== null) {
+      vencimentoStr = new Date(dataVencimento).toISOString().split('T')[0];
+    } else if (typeof dataVencimento === 'string') {
+      // Se vier no formato brasileiro (DD/MM/YYYY), converte para YYYY-MM-DD
+      if (dataVencimento.includes('/')) {
+        const [dia, mes, ano] = dataVencimento.split('/');
+        vencimentoStr = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      } else {
+        vencimentoStr = dataVencimento.split('T')[0]; // Remove timezone se existir
+      }
+    }
     
-    // Se a data veio no formato brasileiro ou ISO, ajusta
-    if (isNaN(vencimento.getTime())) {
-      console.error('❌ Data inválida:', dataVencimento);
+    // Cria objetos Date apenas com a data, sem hora (evita problema de timezone)
+    const hojeDate = new Date(hojeStr + 'T00:00:00');
+    const vencimentoDate = new Date(vencimentoStr + 'T00:00:00');
+    
+    if (isNaN(vencimentoDate.getTime())) {
+      console.error('❌ Data de vencimento inválida:', dataVencimento);
       return '';
     }
     
-    vencimento.setHours(0, 0, 0, 0);
-    
-    const diffTime = vencimento.getTime() - hoje.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Calcula diferença em dias (usando apenas as datas, sem horas)
+    const diffTime = vencimentoDate.getTime() - hojeDate.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     
     console.log('🔔 Alerta vencimento:', { 
       dataVencimento, 
       status, 
-      hoje: hoje.toISOString().split('T')[0],
-      vencimento: vencimento.toISOString().split('T')[0],
+      hoje: hojeStr,
+      vencimento: vencimentoStr,
       diffDays 
     });
     
-    // Alertas simplificados - APENAS ÍCONE
+    // Alertas com ícone ⚠️
     if (diffDays < 0) {
-      // Já passou (não mostra, pois status já é "Vencido")
+      // Já passou (não mostra, pois status já deve ser "Vencido")
       return '';
     } else if (diffDays === 0) {
       // Vence HOJE
       return '<span class="ms-2" title="⚠️ VENCE HOJE!" style="cursor: help; font-size: 1.2em;">⚠️</span>';
     } else if (diffDays === 1) {
       // Vence amanhã
-      return '<span class="ms-2" title="Vence amanhã" style="cursor: help; font-size: 1.2em;">⚠️</span>';
+      return '<span class="ms-2" title="⚠️ Vence amanhã" style="cursor: help; font-size: 1.2em;">⚠️</span>';
     } else if (diffDays === 2) {
       // Vence em 2 dias
-      return '<span class="ms-2" title="Vence em 2 dias" style="cursor: help; font-size: 1.1em;">⚠️</span>';
+      return '<span class="ms-2" title="⚠️ Vence em 2 dias" style="cursor: help; font-size: 1.1em;">⚠️</span>';
     }
     
     return '';
