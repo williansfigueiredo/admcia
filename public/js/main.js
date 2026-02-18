@@ -12924,9 +12924,13 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
   // DEBUG: Sempre loga quando a função é chamada
   console.log('🔔 calcularAlertaVencimento chamada:', { dataVencimento, status });
   
-  // Não mostra alerta se já está pago, cancelado ou vencido
-  if (status === 'pago' || status === 'cancelado' || status === 'atrasado' || status === 'Pago' || status === 'Cancelado' || status === 'Vencido') {
-    console.log('⏭️ Status bloqueado (já pago/cancelado/vencido):', status);
+  // Normaliza status para minúsculo para comparação
+  const statusLower = (status || '').toLowerCase();
+  
+  // Não mostra alerta se já está pago ou cancelado
+  // NOTA: Removido "vencido/atrasado" da lista - queremos mostrar alerta para vencidos!
+  if (statusLower === 'pago' || statusLower === 'cancelado') {
+    console.log('⏭️ Status bloqueado (pago/cancelado):', status);
     return '';
   }
   
@@ -12936,64 +12940,66 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
   }
   
   try {
-    // Pega data de hoje (apenas dia, sem horas) - USA HORÁRIO LOCAL, NÃO UTC!
+    // Pega data de hoje (apenas dia, sem horas) - USA HORÁRIO LOCAL
     const hoje = new Date();
-    const ano = hoje.getFullYear();
-    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-    const dia = String(hoje.getDate()).padStart(2, '0');
-    const hojeStr = `${ano}-${mes}-${dia}`; // YYYY-MM-DD em horário local
+    const hojeAno = hoje.getFullYear();
+    const hojeMes = hoje.getMonth() + 1;
+    const hojeDia = hoje.getDate();
     
-    // Trata a data de vencimento - pode vir como string ou Date
-    let vencimentoStr = dataVencimento;
-    if (typeof dataVencimento === 'object' && dataVencimento !== null) {
-      const d = new Date(dataVencimento);
-      const vAno = d.getFullYear();
-      const vMes = String(d.getMonth() + 1).padStart(2, '0');
-      const vDia = String(d.getDate()).padStart(2, '0');
-      vencimentoStr = `${vAno}-${vMes}-${vDia}`;
-    } else if (typeof dataVencimento === 'string') {
-      // Se vier no formato brasileiro (DD/MM/YYYY), converte para YYYY-MM-DD
+    // Extrai ano/mês/dia da data de vencimento SEM criar objeto Date (evita timezone)
+    let vencAno, vencMes, vencDia;
+    
+    if (typeof dataVencimento === 'string') {
       if (dataVencimento.includes('/')) {
-        const [dia, mes, ano] = dataVencimento.split('/');
-        vencimentoStr = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-      } else {
-        // Se vier no formato ISO, extrai apenas a data sem usar toISOString()
-        const d = new Date(dataVencimento);
-        const vAno = d.getFullYear();
-        const vMes = String(d.getMonth() + 1).padStart(2, '0');
-        const vDia = String(d.getDate()).padStart(2, '0');
-        vencimentoStr = `${vAno}-${vMes}-${vDia}`;
+        // Formato brasileiro: DD/MM/YYYY
+        const partes = dataVencimento.split('/');
+        vencDia = parseInt(partes[0], 10);
+        vencMes = parseInt(partes[1], 10);
+        vencAno = parseInt(partes[2], 10);
+      } else if (dataVencimento.includes('T')) {
+        // Formato ISO: 2026-02-18T03:00:00.000Z - extrai APENAS a parte da data
+        const dataPartes = dataVencimento.split('T')[0].split('-');
+        vencAno = parseInt(dataPartes[0], 10);
+        vencMes = parseInt(dataPartes[1], 10);
+        vencDia = parseInt(dataPartes[2], 10);
+      } else if (dataVencimento.includes('-')) {
+        // Formato YYYY-MM-DD
+        const partes = dataVencimento.split('-');
+        vencAno = parseInt(partes[0], 10);
+        vencMes = parseInt(partes[1], 10);
+        vencDia = parseInt(partes[2], 10);
       }
+    } else if (typeof dataVencimento === 'object' && dataVencimento !== null) {
+      // Date object - usa getters locais
+      const d = new Date(dataVencimento);
+      vencAno = d.getFullYear();
+      vencMes = d.getMonth() + 1;
+      vencDia = d.getDate();
     }
     
-    // Cria objetos Date apenas com a data, sem hora (evita problema de timezone)
-    const hojeDate = new Date(hojeStr + 'T00:00:00');
-    const vencimentoDate = new Date(vencimentoStr + 'T00:00:00');
-    
-    if (isNaN(vencimentoDate.getTime())) {
-      console.error('❌ Data de vencimento inválida:', dataVencimento);
+    if (!vencAno || !vencMes || !vencDia) {
+      console.error('❌ Não foi possível extrair data de:', dataVencimento);
       return '';
     }
     
-    // Calcula diferença em dias (usando apenas as datas, sem horas)
-    const diffTime = vencimentoDate.getTime() - hojeDate.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    // Calcula diferença em dias (maneira simples e confiável)
+    const hojeMs = new Date(hojeAno, hojeMes - 1, hojeDia).getTime();
+    const vencMs = new Date(vencAno, vencMes - 1, vencDia).getTime();
+    const diffDays = Math.round((vencMs - hojeMs) / (1000 * 60 * 60 * 24));
     
     console.log('🔔 Alerta vencimento calculado:', { 
       dataVencimento, 
-      status, 
-      hoje: hojeStr,
-      vencimento: vencimentoStr,
-      diffDays,
-      hojeDate: hojeDate.toISOString(),
-      vencimentoDate: vencimentoDate.toISOString()
+      status,
+      hoje: `${hojeDia}/${hojeMes}/${hojeAno}`,
+      vencimento: `${vencDia}/${vencMes}/${vencAno}`,
+      diffDays
     });
     
     // Alertas com ícone ⚠️
     if (diffDays < 0) {
-      // Já passou (não mostra, pois status já deve ser "Vencido")
-      console.log('⏭️ Data já passou (diffDays < 0)');
-      return '';
+      // Já passou - mostra VERMELHO com texto "VENCIDO"
+      console.log('⚠️ VENCIDO! (diffDays:', diffDays, ')');
+      return '<span title="⚠️ VENCIDO!" style="color: #dc3545; font-size: 0.95em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;">⚠️</span>';
     } else if (diffDays === 0) {
       // Vence HOJE - VERMELHO
       console.log('⚠️ VENCE HOJE! Retornando alerta');
