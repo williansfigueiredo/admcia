@@ -1783,6 +1783,7 @@ app.get('/financeiro/transacoes', (req, res) => {
     SELECT 
       'job' COLLATE utf8mb4_unicode_ci as origem,
       j.id,
+      j.id as job_id,
       j.descricao COLLATE utf8mb4_unicode_ci as descricao,
       'receita' COLLATE utf8mb4_unicode_ci as tipo,
       CASE 
@@ -1796,6 +1797,7 @@ app.get('/financeiro/transacoes', (req, res) => {
       CASE 
         WHEN j.pagamento = 'Pago' THEN 'pago'
         WHEN j.pagamento = 'Cancelado' THEN 'cancelado'
+        WHEN j.pagamento = 'Vencido' THEN 'atrasado'
         WHEN COALESCE(j.data_vencimento, j.data_inicio, j.data_job) < CURRENT_DATE() AND j.pagamento != 'Pago' THEN 'atrasado'
         ELSE 'pendente'
       END COLLATE utf8mb4_unicode_ci as status_calc,
@@ -1812,6 +1814,7 @@ app.get('/financeiro/transacoes', (req, res) => {
     SELECT 
       'transacao' COLLATE utf8mb4_unicode_ci as origem,
       t.id,
+      t.job_id,
       t.descricao COLLATE utf8mb4_unicode_ci as descricao,
       t.tipo COLLATE utf8mb4_unicode_ci as tipo,
       t.categoria COLLATE utf8mb4_unicode_ci as categoria,

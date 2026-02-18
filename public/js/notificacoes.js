@@ -94,6 +94,14 @@ window.debugNotificacoes = async function () {
 };
 
 /**
+ * Carrega e renderiza todas as notificações
+ */
+async function carregarNotificacoes() {
+  await renderizarNotificacoes();
+  atualizarBadgeNotificacoes();
+}
+
+/**
  * Força atualização das notificações (para debug)
  */
 window.forcarAtualizacaoNotificacoes = async function () {

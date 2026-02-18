@@ -12995,23 +12995,23 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
       diffDays
     });
     
-    // Alertas com ícone ⚠️
+    // Alertas com ícone Bootstrap (emojis não aceitam CSS color)
     if (diffDays < 0) {
       // Já passou - mostra VERMELHO com texto "VENCIDO"
       console.log('⚠️ VENCIDO! (diffDays:', diffDays, ')');
-      return '<span title="⚠️ VENCIDO!" style="color: #dc3545; font-size: 0.95em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;">⚠️</span>';
+      return '<i class="bi bi-exclamation-triangle-fill" title="VENCIDO!" style="color: #dc3545; font-size: 0.95em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;"></i>';
     } else if (diffDays === 0) {
       // Vence HOJE - VERMELHO
       console.log('⚠️ VENCE HOJE! Retornando alerta');
-      return '<span title="⚠️ VENCE HOJE!" style="color: #dc3545; font-size: 0.95em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;">⚠️</span>';
+      return '<i class="bi bi-exclamation-triangle-fill" title="VENCE HOJE!" style="color: #dc3545; font-size: 0.95em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;"></i>';
     } else if (diffDays === 1) {
       // Vence amanhã - AMARELO
       console.log('⚠️ Vence amanhã! Retornando alerta');
-      return '<span title="⚠️ Vence amanhã" style="color: #ffc107; font-size: 0.9em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;">⚠️</span>';
+      return '<i class="bi bi-exclamation-triangle-fill" title="Vence amanhã" style="color: #ffc107; font-size: 0.9em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;"></i>';
     } else if (diffDays === 2) {
       // Vence em 2 dias - AMARELO
       console.log('⚠️ Vence em 2 dias! Retornando alerta');
-      return '<span title="⚠️ Vence em 2 dias" style="color: #ffc107; font-size: 0.85em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;">⚠️</span>';
+      return '<i class="bi bi-exclamation-triangle-fill" title="Vence em 2 dias" style="color: #ffc107; font-size: 0.85em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;"></i>';
     }
     
     console.log('⏭️ Fora do range de alerta (diffDays:', diffDays, ')');
