@@ -1850,9 +1850,8 @@ function preencherTabela(listaJobs) {
             
             <td>${getStatusPill(job.status)}</td>
             
-            <td>
-                ${getPagamentoPill(job.pagamento)}
-                ${job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : ''}
+            <td style="white-space: nowrap;">
+                ${getPagamentoPill(job.pagamento)}${job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : ''}
             </td>
         `;
     tabela.appendChild(tr);
@@ -3872,13 +3871,12 @@ function renderizarTabelaContratos(pagina) {
                           ${job.status}
                     </span>
                 </td>
-                <td style="position: relative;">
+                <td style="white-space: nowrap;">
                     <span class="${getPagamentoPill(job.pagamento, true)} cursor-pointer" 
-                          style="display: inline-block; width: 100%; text-align: center;"
+                          style="display: inline-block; text-align: center;"
                           onclick="abrirMenuStatus(this, ${job.id}, 'pagamento', '${job.pagamento}')">
                           ${job.pagamento}
-                    </span>
-                    ${job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : ''}
+                    </span>${job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : ''}
                 </td>
 
 <td class="text-end pe-4">
@@ -3918,10 +3916,9 @@ function renderizarTabelaContratos(pagina) {
             <span class="contrato-valor">${formatarMoeda(job.valor)}</span>
             ${job.data_vencimento ? `<span class="small text-muted"><i class="bi bi-calendar-check"></i> Venc: ${window.formatarDataLocal(job.data_vencimento, { day: '2-digit', month: 'short' })}</span>` : ''}
           </div>
-          <div class="contrato-pills">
+          <div class="contrato-pills" style="white-space: nowrap;">
             <span class="${getStatusPill(job.status, true)} cursor-pointer" onclick="abrirMenuStatus(this, ${job.id}, 'status', '${job.status}')">${job.status}</span>
-            <span class="${getPagamentoPill(job.pagamento, true)} cursor-pointer" onclick="abrirMenuStatus(this, ${job.id}, 'pagamento', '${job.pagamento}')">${job.pagamento}</span>
-            ${job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : ''}
+            <span class="${getPagamentoPill(job.pagamento, true)} cursor-pointer" onclick="abrirMenuStatus(this, ${job.id}, 'pagamento', '${job.pagamento}')">${job.pagamento}</span>${job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : ''}
           </div>
         `;
         mobileContainer.appendChild(card);
@@ -12936,21 +12933,33 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
   }
   
   try {
-    // Pega data de hoje (apenas dia, sem horas)
+    // Pega data de hoje (apenas dia, sem horas) - USA HORÁRIO LOCAL, NÃO UTC!
     const hoje = new Date();
-    const hojeStr = hoje.toISOString().split('T')[0]; // YYYY-MM-DD
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    const hojeStr = `${ano}-${mes}-${dia}`; // YYYY-MM-DD em horário local
     
     // Trata a data de vencimento - pode vir como string ou Date
     let vencimentoStr = dataVencimento;
     if (typeof dataVencimento === 'object' && dataVencimento !== null) {
-      vencimentoStr = new Date(dataVencimento).toISOString().split('T')[0];
+      const d = new Date(dataVencimento);
+      const vAno = d.getFullYear();
+      const vMes = String(d.getMonth() + 1).padStart(2, '0');
+      const vDia = String(d.getDate()).padStart(2, '0');
+      vencimentoStr = `${vAno}-${vMes}-${vDia}`;
     } else if (typeof dataVencimento === 'string') {
       // Se vier no formato brasileiro (DD/MM/YYYY), converte para YYYY-MM-DD
       if (dataVencimento.includes('/')) {
         const [dia, mes, ano] = dataVencimento.split('/');
         vencimentoStr = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
       } else {
-        vencimentoStr = dataVencimento.split('T')[0]; // Remove timezone se existir
+        // Se vier no formato ISO, extrai apenas a data sem usar toISOString()
+        const d = new Date(dataVencimento);
+        const vAno = d.getFullYear();
+        const vMes = String(d.getMonth() + 1).padStart(2, '0');
+        const vDia = String(d.getDate()).padStart(2, '0');
+        vencimentoStr = `${vAno}-${vMes}-${vDia}`;
       }
     }
     
@@ -12985,15 +12994,15 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
     } else if (diffDays === 0) {
       // Vence HOJE - VERMELHO
       console.log('⚠️ VENCE HOJE! Retornando alerta');
-      return '<span class="ms-1" title="⚠️ VENCE HOJE!" style="color: #dc3545; font-size: 1.2em; cursor: default; display: inline-block; vertical-align: middle;">⚠️</span>';
+      return '<span title="⚠️ VENCE HOJE!" style="color: #dc3545; font-size: 0.95em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;">⚠️</span>';
     } else if (diffDays === 1) {
       // Vence amanhã - AMARELO
       console.log('⚠️ Vence amanhã! Retornando alerta');
-      return '<span class="ms-1" title="⚠️ Vence amanhã" style="color: #ffc107; font-size: 1.1em; cursor: default; display: inline-block; vertical-align: middle;">⚠️</span>';
+      return '<span title="⚠️ Vence amanhã" style="color: #ffc107; font-size: 0.9em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;">⚠️</span>';
     } else if (diffDays === 2) {
       // Vence em 2 dias - AMARELO
       console.log('⚠️ Vence em 2 dias! Retornando alerta');
-      return '<span class="ms-1" title="⚠️ Vence em 2 dias" style="color: #ffc107; font-size: 1.05em; cursor: default; display: inline-block; vertical-align: middle;">⚠️</span>';
+      return '<span title="⚠️ Vence em 2 dias" style="color: #ffc107; font-size: 0.85em; cursor: default; display: inline-block; vertical-align: middle; margin-left: 4px;">⚠️</span>';
     }
     
     console.log('⏭️ Fora do range de alerta (diffDays:', diffDays, ')');
@@ -13074,7 +13083,7 @@ function renderizarTransacoesPaginadas() {
         <td>${t.categoria || '-'}</td>
         <td class="fw-bold ${tipoClass}">${formatarValor(t.valor, t.tipo)}</td>
         <td>${formatarData(t.data_vencimento)}</td>
-        <td>${getBadgeStatus(t.status)}${getAlertaVencimento(t.data_vencimento, t.status)}</td>
+        <td style="white-space: nowrap;">${getBadgeStatus(t.status)}${getAlertaVencimento(t.data_vencimento, t.status)}</td>
         <td class="text-end">
           ${isJob ? `
             <button class="btn btn-sm btn-outline-primary" onclick="window.setJobOrigin('financeiro'); abrirDetalhesJob(${t.id})" title="Ver pedido completo">
