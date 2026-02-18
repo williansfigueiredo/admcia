@@ -1,167 +1,211 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧪 Teste de Email - AdminCIA</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .status-icon { font-size: 1.2em; margin-right: 8px; }
-        .test-result { padding: 15px; border-radius: 8px; margin: 10px 0; }
-        .success { background: #d1e7dd; border: 1px solid #badbcc; color: #0f5132; }
-        .error { background: #f8d7da; border: 1px solid #f5c2c7; color: #842029; }
-        .loading { background: #e9ecef; border: 1px solid #dee2e6; color: #495057; }
-        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-</head>
-<body>
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white text-center">
-                        <h3><i class="fas fa-envelope"></i> 🧪 Teste de Email</h3>
-                        <small>Ferramenta para testar o serviço de email do sistema</small>
-                    </div>
-                    
-                    <div class="card-body">
-                        <div id="resultados"></div>
-                        
-                        <!-- Teste 1: Status do Email -->
-                        <div class="card mb-3">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5><span class="status-icon">📊</span>Status do Serviço de Email</h5>
-                                <button class="btn btn-outline-primary btn-sm" onclick="verificarStatusEmail()">
-                                    <i class="fas fa-sync-alt"></i> Verificar
-                                </button>
-                            </div>
-                            <div class="card-body">
-                                <div id="status-resultado" class="text-muted">
-                                    Clique em "Verificar" para verificar se o serviço de email está configurado
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Teste 2: Teste de Envio -->
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h5><span class="status-icon">✉️</span>Teste de Envio</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label class="form-label">Email Destinatário *</label>
-                                    <input type="email" class="form-control" id="emailTeste" placeholder="seu@email.com" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Assunto (opcional)</label>
-                                    <input type="text" class="form-control" id="assuntoTeste" placeholder="Teste de Email">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Mensagem (opcional)</label>
-                                    <textarea class="form-control" id="mensagemTeste" rows="3" placeholder="Digite sua mensagem de teste aqui..."></textarea>
-                                </div>
-                                <button class="btn btn-success" onclick="testarEnvioEmail()">
-                                    <i class="fas fa-paper-plane"></i> Enviar Teste
-                                </button>
-                                <div id="teste-resultado" class="mt-3"></div>
-                            </div>
-                        </div>
 
-                        <!-- Teste 2.5: Diagnóstico SMTP -->
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h5><span class="status-icon">🔍</span>Diagnóstico SMTP</h5>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted small">Testa diferentes configurações para encontrar a melhor para seu provedor</p>
-                                <button class="btn btn-warning" onclick="diagnosticarSMTP()">
-                                    <i class="fas fa-search"></i> Diagnosticar Configurações
-                                </button>
-                                <div id="diagnostico-resultado" class="mt-3"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Teste 3: Emails Específicos -->
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h5><span class="status-icon">📧</span>Emails Específicos do Sistema</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <h6>📩 Email de Novo Acesso</h6>
-                                        <div class="mb-2">
-                                            <input type="text" class="form-control mb-1" id="nomeNovo" placeholder="Nome do funcionário">
-                                            <input type="email" class="form-control mb-1" id="emailNovo" placeholder="email@exemplo.com">
-                                            <input type="text" class="form-control mb-1" id="senhaNova" placeholder="senha123">
-                                        </div>
-                                        <button class="btn btn-info btn-sm" onclick="testarNovoAcesso()">
-                                            Testar Novo Acesso
-                                        </button>
-                                        <div id="novo-resultado" class="mt-2"></div>
-                                    </div>
-                                    
-                                    <div class="col-md-6 mb-3">
-                                        <h6>🔑 Email de Senha Resetada</h6>
-                                        <div class="mb-2">
-                                            <input type="text" class="form-control mb-1" id="nomeReset" placeholder="Nome do funcionário">
-                                            <input type="email" class="form-control mb-1" id="emailReset" placeholder="email@exemplo.com">
-                                            <input type="text" class="form-control mb-1" id="senhaReset" placeholder="novaSenha123">
-                                        </div>
-                                        <button class="btn btn-warning btn-sm" onclick="testarSenhaResetada()">
-                                            Testar Reset Senha
-                                        </button>
-                                        <div id="reset-resultado" class="mt-2"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Ajuda -->
-                        <div class="card bg-light">
-                            <div class="card-header">
-                                <h6><span class="status-icon">💡</span>Configuração Necessária</h6>
-                            </div>
-                            <div class="card-body">
-                                <small class="text-muted">
-                                    Para o email funcionar, configure as seguintes variáveis no Railway:<br>
-                                    • <code>EMAIL_HOST</code> = smtp.gmail.com (ou seu provedor)<br>
-                                    • <code>EMAIL_PORT</code> = 587 (ou 465 para SSL)<br>
-                                    • <code>EMAIL_USER</code> = seu@email.com<br>
-                                    • <code>EMAIL_PASS</code> = sua_senha_de_app<br>
-                                    • <code>SMTP_FROM_NAME</code> = Nome da Empresa (opcional)
-                                </small>
-                            </div>
-                        </div>
-                    </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧪 Teste de Email - AdminCIA</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .status-icon {
+      font-size: 1.2em;
+      margin-right: 8px;
+    }
+
+    .test-result {
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+
+    .success {
+      background: #d1e7dd;
+      border: 1px solid #badbcc;
+      color: #0f5132;
+    }
+
+    .error {
+      background: #f8d7da;
+      border: 1px solid #f5c2c7;
+      color: #842029;
+    }
+
+    .loading {
+      background: #e9ecef;
+      border: 1px solid #dee2e6;
+      color: #495057;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card shadow">
+          <div class="card-header bg-primary text-white text-center">
+            <h3><i class="fas fa-envelope"></i> 🧪 Teste de Email</h3>
+            <small>Ferramenta para testar o serviço de email do sistema</small>
+          </div>
+
+          <div class="card-body">
+            <div id="resultados"></div>
+
+            <!-- Teste 1: Status do Email -->
+            <div class="card mb-3">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><span class="status-icon">📊</span>Status do Serviço de Email</h5>
+                <button class="btn btn-outline-primary btn-sm" onclick="verificarStatusEmail()">
+                  <i class="fas fa-sync-alt"></i> Verificar
+                </button>
+              </div>
+              <div class="card-body">
+                <div id="status-resultado" class="text-muted">
+                  Clique em "Verificar" para verificar se o serviço de email está configurado
                 </div>
+              </div>
             </div>
+
+            <!-- Teste 2: Teste de Envio -->
+            <div class="card mb-3">
+              <div class="card-header">
+                <h5><span class="status-icon">✉️</span>Teste de Envio</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label">Email Destinatário *</label>
+                  <input type="email" class="form-control" id="emailTeste" placeholder="seu@email.com" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Assunto (opcional)</label>
+                  <input type="text" class="form-control" id="assuntoTeste" placeholder="Teste de Email">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Mensagem (opcional)</label>
+                  <textarea class="form-control" id="mensagemTeste" rows="3"
+                    placeholder="Digite sua mensagem de teste aqui..."></textarea>
+                </div>
+                <button class="btn btn-success" onclick="testarEnvioEmail()">
+                  <i class="fas fa-paper-plane"></i> Enviar Teste
+                </button>
+                <div id="teste-resultado" class="mt-3"></div>
+              </div>
+            </div>
+
+            <!-- Teste 2.5: Diagnóstico SMTP -->
+            <div class="card mb-3">
+              <div class="card-header">
+                <h5><span class="status-icon">🔍</span>Diagnóstico SMTP</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted small">Testa diferentes configurações para encontrar a melhor para seu provedor</p>
+                <button class="btn btn-warning" onclick="diagnosticarSMTP()">
+                  <i class="fas fa-search"></i> Diagnosticar Configurações
+                </button>
+                <div id="diagnostico-resultado" class="mt-3"></div>
+              </div>
+            </div>
+
+            <!-- Teste 3: Emails Específicos -->
+            <div class="card mb-3">
+              <div class="card-header">
+                <h5><span class="status-icon">📧</span>Emails Específicos do Sistema</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <h6>📩 Email de Novo Acesso</h6>
+                    <div class="mb-2">
+                      <input type="text" class="form-control mb-1" id="nomeNovo" placeholder="Nome do funcionário">
+                      <input type="email" class="form-control mb-1" id="emailNovo" placeholder="email@exemplo.com">
+                      <input type="text" class="form-control mb-1" id="senhaNova" placeholder="senha123">
+                    </div>
+                    <button class="btn btn-info btn-sm" onclick="testarNovoAcesso()">
+                      Testar Novo Acesso
+                    </button>
+                    <div id="novo-resultado" class="mt-2"></div>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <h6>🔑 Email de Senha Resetada</h6>
+                    <div class="mb-2">
+                      <input type="text" class="form-control mb-1" id="nomeReset" placeholder="Nome do funcionário">
+                      <input type="email" class="form-control mb-1" id="emailReset" placeholder="email@exemplo.com">
+                      <input type="text" class="form-control mb-1" id="senhaReset" placeholder="novaSenha123">
+                    </div>
+                    <button class="btn btn-warning btn-sm" onclick="testarSenhaResetada()">
+                      Testar Reset Senha
+                    </button>
+                    <div id="reset-resultado" class="mt-2"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ajuda -->
+            <div class="card bg-light">
+              <div class="card-header">
+                <h6><span class="status-icon">💡</span>Configuração Necessária</h6>
+              </div>
+              <div class="card-body">
+                <small class="text-muted">
+                  Para o email funcionar, configure as seguintes variáveis no Railway:<br>
+                  • <code>EMAIL_HOST</code> = smtp.gmail.com (ou seu provedor)<br>
+                  • <code>EMAIL_PORT</code> = 587 (ou 465 para SSL)<br>
+                  • <code>EMAIL_USER</code> = seu@email.com<br>
+                  • <code>EMAIL_PASS</code> = sua_senha_de_app<br>
+                  • <code>SMTP_FROM_NAME</code> = Nome da Empresa (opcional)
+                </small>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // ========================================
-        // FUNÇÕES DE TESTE DE EMAIL
-        // ========================================
-        
-        async function verificarStatusEmail() {
-            const resultado = document.getElementById('status-resultado');
-            resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Verificando configuração...</div>';
-            
-            try {
-                const response = await fetch('/debug/email-status');
-                const data = await response.json();
-                
-                if (data.success) {
-                    resultado.innerHTML = `
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ========================================
+    // FUNÇÕES DE TESTE DE EMAIL
+    // ========================================
+
+    async function verificarStatusEmail() {
+      const resultado = document.getElementById('status-resultado');
+      resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Verificando configuração...</div>';
+
+      try {
+        const response = await fetch('/debug/email-status');
+        const data = await response.json();
+
+        if (data.success) {
+          resultado.innerHTML = `
                         <div class="success">
                             <strong>✅ ${data.message}</strong><br>
-                            ${data.configurado ? 
-                                '<small class="text-success">Pronto para enviar emails!</small>' : 
-                                '<small class="text-warning">Configure as variáveis de ambiente primeiro</small>'
-                            }
+                            ${data.configurado ?
+              '<small class="text-success">Pronto para enviar emails!</small>' :
+              '<small class="text-warning">Configure as variáveis de ambiente primeiro</small>'
+            }
                         </div>
                         ${!data.configurado ? `
                         <div class="mt-2 p-2 border rounded bg-light">
@@ -170,110 +214,110 @@
                         </div>
                         ` : ''}
                     `;
-                } else {
-                    resultado.innerHTML = `
+        } else {
+          resultado.innerHTML = `
                         <div class="error">
                             <strong>❌ Erro:</strong> ${data.message}<br>
                             <small>${data.error || 'Erro desconhecido'}</small>
                         </div>
                     `;
-                }
-            } catch (error) {
-                resultado.innerHTML = `
+        }
+      } catch (error) {
+        resultado.innerHTML = `
                     <div class="error">
                         <strong>❌ Erro de conexão:</strong> ${error.message}
                     </div>
                 `;
-            }
-        }
-        
-        async function testarEnvioEmail() {
-            const email = document.getElementById('emailTeste').value;
-            const assunto = document.getElementById('assuntoTeste').value;
-            const mensagem = document.getElementById('mensagemTeste').value;
-            const resultado = document.getElementById('teste-resultado');
-            
-            if (!email) {
-                resultado.innerHTML = '<div class="error">❌ Email destinatário é obrigatório!</div>';
-                return;
-            }
-            
-            resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Enviando email de teste...</div>';
-            
-            try {
-                const response = await fetch('/debug/testar-email', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        destinatario: email,
-                        assunto: assunto || undefined,
-                        mensagem: mensagem || undefined
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    resultado.innerHTML = `
+      }
+    }
+
+    async function testarEnvioEmail() {
+      const email = document.getElementById('emailTeste').value;
+      const assunto = document.getElementById('assuntoTeste').value;
+      const mensagem = document.getElementById('mensagemTeste').value;
+      const resultado = document.getElementById('teste-resultado');
+
+      if (!email) {
+        resultado.innerHTML = '<div class="error">❌ Email destinatário é obrigatório!</div>';
+        return;
+      }
+
+      resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Enviando email de teste...</div>';
+
+      try {
+        const response = await fetch('/debug/testar-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            destinatario: email,
+            assunto: assunto || undefined,
+            mensagem: mensagem || undefined
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          resultado.innerHTML = `
                         <div class="success">
                             <strong>✅ ${data.message}</strong><br>
                             <small>Message ID: ${data.messageId}</small><br>
                             <small>Enviado em: ${data.detalhes?.enviado_em}</small>
                         </div>
                     `;
-                } else {
-                    // Melhor tratamento de erros
-                    let errorDetails = '';
-                    if (data.details) {
-                        errorDetails = `<br><small>Detalhes: Tentativas: ${data.details.attempt}, Código: ${data.details.code}</small>`;
-                    }
-                    
-                    resultado.innerHTML = `
+        } else {
+          // Melhor tratamento de erros
+          let errorDetails = '';
+          if (data.details) {
+            errorDetails = `<br><small>Detalhes: Tentativas: ${data.details.attempt}, Código: ${data.details.code}</small>`;
+          }
+
+          resultado.innerHTML = `
                         <div class="error">
                             <strong>❌ ${data.message}</strong><br>
                             <small>${data.error || 'Erro desconhecido'}</small>
                             ${errorDetails}
                         </div>
                     `;
-                    
-                    // Se for erro de timeout, sugerir diagnóstico
-                    if (data.error && (data.error.includes('timeout') || data.error.includes('ETIMEDOUT'))) {
-                        resultado.innerHTML += `
+
+          // Se for erro de timeout, sugerir diagnóstico
+          if (data.error && (data.error.includes('timeout') || data.error.includes('ETIMEDOUT'))) {
+            resultado.innerHTML += `
                             <div class="mt-2 p-2 border rounded bg-warning-light">
                                 <small><i class="bi bi-lightbulb-fill me-1"></i>
                                 <strong>Dica:</strong> Erro de timeout detectado. Tente usar o <strong>Diagnóstico SMTP</strong> abaixo para encontrar as configurações corretas.</small>
                             </div>
                         `;
-                    }
-                }
-            } catch (error) {
-                resultado.innerHTML = `
+          }
+        }
+      } catch (error) {
+        resultado.innerHTML = `
                     <div class="error">
                         <strong>❌ Erro de conexão:</strong> ${error.message}
                     </div>
                 `;
-            }
-        }
-        
-        async function diagnosticarSMTP() {
-            const resultado = document.getElementById('diagnostico-resultado');
-            
-            resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Testando configurações SMTP... (pode levar até 2 minutos)</div>';
-            
-            try {
-                const response = await fetch('/debug/testar-smtp-configs', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success && data.configs) {
-                    let html = `
+      }
+    }
+
+    async function diagnosticarSMTP() {
+      const resultado = document.getElementById('diagnostico-resultado');
+
+      resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Testando configurações SMTP... (pode levar até 2 minutos)</div>';
+
+      try {
+        const response = await fetch('/debug/testar-smtp-configs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.configs) {
+          let html = `
                         <div class="success">
                             <strong>✅ Diagnóstico concluído!</strong><br>
                             <small>${data.message}</small>
@@ -292,12 +336,12 @@
                                     </thead>
                                     <tbody>
                     `;
-                    
-                    data.configs.forEach(config => {
-                        const statusIcon = config.status === 'success' ? '✅' : '❌';
-                        const statusClass = config.status === 'success' ? 'text-success' : 'text-danger';
-                        
-                        html += `
+
+          data.configs.forEach(config => {
+            const statusIcon = config.status === 'success' ? '✅' : '❌';
+            const statusClass = config.status === 'success' ? 'text-success' : 'text-danger';
+
+            html += `
                             <tr>
                                 <td><strong>${config.name}</strong></td>
                                 <td><small>${config.host}:${config.port}</small></td>
@@ -305,122 +349,123 @@
                                 <td><small>${config.message}</small></td>
                             </tr>
                         `;
-                    });
-                    
-                    html += `
+          });
+
+          html += `
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     `;
-                    
-                    if (data.recommendation) {
-                        html += `
+
+          if (data.recommendation) {
+            html += `
                             <div class="alert alert-success mt-3">
                                 <strong>🎯 Recomendação:</strong> Use <strong>${data.recommendation.name}</strong><br>
                                 <small>Configure no Railway: EMAIL_HOST=${data.recommendation.host}, EMAIL_PORT=${data.recommendation.port}</small>
                             </div>
                         `;
-                    } else {
-                        html += `
+          } else {
+            html += `
                             <div class="alert alert-warning mt-3">
                                 <strong>⚠️ Nenhuma configuração funcionou</strong><br>
                                 <small>Verifique suas credenciais (EMAIL_USER e EMAIL_PASS) e conectividade de rede.</small>
                             </div>
                         `;
-                    }
-                    
-                    resultado.innerHTML = html;
-                    
-                } else {
-                    resultado.innerHTML = `
+          }
+
+          resultado.innerHTML = html;
+
+        } else {
+          resultado.innerHTML = `
                         <div class="error">
                             <strong>❌ ${data.message}</strong><br>
                             <small>${data.error || 'Erro no diagnóstico'}</small>
                         </div>
                     `;
-                }
-            } catch (error) {
-                resultado.innerHTML = `
+        }
+      } catch (error) {
+        resultado.innerHTML = `
                     <div class="error">
                         <strong>❌ Erro no diagnóstico:</strong> ${error.message}
                     </div>
                 `;
-            }
-        }
-        
-        async function testarNovoAcesso() {
-            const nome = document.getElementById('nomeNovo').value;
-            const email = document.getElementById('emailNovo').value;
-            const senha = document.getElementById('senhaNova').value;
-            const resultado = document.getElementById('novo-resultado');
-            
-            if (!nome || !email || !senha) {
-                resultado.innerHTML = '<div class="error">❌ Preencha todos os campos!</div>';
-                return;
-            }
-            
-            resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Enviando...</div>';
-            
-            try {
-                const response = await fetch('/email/novo-acesso', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ nome, email, senha })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    resultado.innerHTML = `<div class="success">✅ ${data.message}</div>`;
-                } else {
-                    resultado.innerHTML = `<div class="error">❌ ${data.message}</div>`;
-                }
-            } catch (error) {
-                resultado.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
-            }
-        }
-        
-        async function testarSenhaResetada() {
-            const nome = document.getElementById('nomeReset').value;
-            const email = document.getElementById('emailReset').value;
-            const senha = document.getElementById('senhaReset').value;
-            const resultado = document.getElementById('reset-resultado');
-            
-            if (!nome || !email || !senha) {
-                resultado.innerHTML = '<div class="error">❌ Preencha todos os campos!</div>';
-                return;
-            }
-            
-            resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Enviando...</div>';
-            
-            try {
-                const response = await fetch('/email/senha-resetada', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ nome, email, senha })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    resultado.innerHTML = `<div class="success">✅ ${data.message}</div>`;
-                } else {
-                    resultado.innerHTML = `<div class="error">❌ ${data.message}</div>`;
-                }
-            } catch (error) {
-                resultado.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
-            }
-        }
-        
-        // Auto-verificar status ao carregar
-        document.addEventListener('DOMContentLoaded', function() {
-            verificarStatusEmail();
+      }
+    }
+
+    async function testarNovoAcesso() {
+      const nome = document.getElementById('nomeNovo').value;
+      const email = document.getElementById('emailNovo').value;
+      const senha = document.getElementById('senhaNova').value;
+      const resultado = document.getElementById('novo-resultado');
+
+      if (!nome || !email || !senha) {
+        resultado.innerHTML = '<div class="error">❌ Preencha todos os campos!</div>';
+        return;
+      }
+
+      resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Enviando...</div>';
+
+      try {
+        const response = await fetch('/email/novo-acesso', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nome, email, senha })
         });
-    </script>
+
+        const data = await response.json();
+
+        if (data.success) {
+          resultado.innerHTML = `<div class="success">✅ ${data.message}</div>`;
+        } else {
+          resultado.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+        }
+      } catch (error) {
+        resultado.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+      }
+    }
+
+    async function testarSenhaResetada() {
+      const nome = document.getElementById('nomeReset').value;
+      const email = document.getElementById('emailReset').value;
+      const senha = document.getElementById('senhaReset').value;
+      const resultado = document.getElementById('reset-resultado');
+
+      if (!nome || !email || !senha) {
+        resultado.innerHTML = '<div class="error">❌ Preencha todos os campos!</div>';
+        return;
+      }
+
+      resultado.innerHTML = '<div class="loading"><div class="spinner"></div> Enviando...</div>';
+
+      try {
+        const response = await fetch('/email/senha-resetada', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nome, email, senha })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          resultado.innerHTML = `<div class="success">✅ ${data.message}</div>`;
+        } else {
+          resultado.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+        }
+      } catch (error) {
+        resultado.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+      }
+    }
+
+    // Auto-verificar status ao carregar
+    document.addEventListener('DOMContentLoaded', function () {
+      verificarStatusEmail();
+    });
+  </script>
 </body>
+
 </html>

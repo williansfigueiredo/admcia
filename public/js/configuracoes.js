@@ -801,8 +801,8 @@ document.addEventListener('DOMContentLoaded', function () {
   tabButtons.forEach(button => {
     button.addEventListener('shown.bs.tab', function (e) {
       // Quando qualquer aba é mostrada, reinicializa os listeners
-      if (e.target.getAttribute('data-bs-target')?.includes('tab-perfil') || 
-          e.target.getAttribute('data-bs-target')?.includes('tab-empresa')) {
+      if (e.target.getAttribute('data-bs-target')?.includes('tab-perfil') ||
+        e.target.getAttribute('data-bs-target')?.includes('tab-empresa')) {
         setTimeout(() => {
           inicializarListenersConfiguracao();
         }, 100);
@@ -837,7 +837,7 @@ document.addEventListener('DOMContentLoaded', function () {
  */
 async function buscarEnderecoPorCEP(cep, tipo = 'perfil') {
   const cepLimpo = cep.replace(/\D/g, "");
-  
+
   if (cepLimpo.length !== 8) {
     return;
   }
@@ -845,7 +845,7 @@ async function buscarEnderecoPorCEP(cep, tipo = 'perfil') {
   try {
     const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
     const data = await response.json();
-    
+
     if (data.erro) {
       console.warn('CEP não encontrado');
       return;
@@ -863,13 +863,13 @@ async function buscarEnderecoPorCEP(cep, tipo = 'perfil') {
       const bairroEmpresa = document.getElementById('configBairroEmpresa');
       const cidadeEmpresa = document.getElementById('configCidadeEmpresa');
       const estadoEmpresa = document.getElementById('configEstadoEmpresa');
-      
+
       if (logradouroEmpresa) logradouroEmpresa.value = data.logradouro || "";
       if (bairroEmpresa) bairroEmpresa.value = data.bairro || "";
       if (cidadeEmpresa) cidadeEmpresa.value = data.localidade || "";
       if (estadoEmpresa) estadoEmpresa.value = data.uf || "";
     }
-    
+
     console.log('✅ Endereço preenchido via CEP');
   } catch (error) {
     console.error('Erro ao buscar CEP:', error);
@@ -914,31 +914,31 @@ function aplicarMascaraCNPJ(valor) {
  */
 function validarCPF(cpf) {
   cpf = cpf.replace(/\D/g, "");
-  
+
   if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
     return false;
   }
-  
+
   let soma = 0;
   let resto;
-  
+
   for (let i = 1; i <= 9; i++) {
     soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
   }
-  
+
   resto = (soma * 10) % 11;
   if (resto === 10 || resto === 11) resto = 0;
   if (resto !== parseInt(cpf.substring(9, 10))) return false;
-  
+
   soma = 0;
   for (let i = 1; i <= 10; i++) {
     soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
   }
-  
+
   resto = (soma * 10) % 11;
   if (resto === 10 || resto === 11) resto = 0;
   if (resto !== parseInt(cpf.substring(10, 11))) return false;
-  
+
   return true;
 }
 
@@ -947,38 +947,38 @@ function validarCPF(cpf) {
  */
 function validarCNPJ(cnpj) {
   cnpj = cnpj.replace(/\D/g, "");
-  
+
   if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) {
     return false;
   }
-  
+
   let tamanho = cnpj.length - 2;
   let numeros = cnpj.substring(0, tamanho);
   let digitos = cnpj.substring(tamanho);
   let soma = 0;
   let pos = tamanho - 7;
-  
+
   for (let i = tamanho; i >= 1; i--) {
     soma += numeros.charAt(tamanho - i) * pos--;
     if (pos < 2) pos = 9;
   }
-  
+
   let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
   if (resultado != digitos.charAt(0)) return false;
-  
+
   tamanho = tamanho + 1;
   numeros = cnpj.substring(0, tamanho);
   soma = 0;
   pos = tamanho - 7;
-  
+
   for (let i = tamanho; i >= 1; i--) {
     soma += numeros.charAt(tamanho - i) * pos--;
     if (pos < 2) pos = 9;
   }
-  
+
   resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
   if (resultado != digitos.charAt(1)) return false;
-  
+
   return true;
 }
 
@@ -987,16 +987,16 @@ function validarCNPJ(cnpj) {
  */
 function validarEVisualizarDocumento(input, tipo) {
   const valor = input.value.replace(/\D/g, "");
-  
+
   // Remove classes anteriores
   input.classList.remove('is-valid', 'is-invalid', 'border-warning');
-  
+
   if (valor.length === 0) {
     return; // Campo vazio, sem validação
   }
-  
+
   let valido = false;
-  
+
   if (tipo === 'cpf') {
     if (valor.length < 11) {
       input.classList.add('border-warning');
@@ -1025,7 +1025,7 @@ function validarEVisualizarDocumento(input, tipo) {
  */
 function aplicarMascaraTelefone(valor) {
   valor = valor.replace(/\D/g, "");
-  
+
   if (valor.length <= 10) {
     // Telefone fixo: (00) 0000-0000
     valor = valor.replace(/^(\d{2})(\d)/, "($1) $2");
@@ -1035,7 +1035,7 @@ function aplicarMascaraTelefone(valor) {
     valor = valor.replace(/^(\d{2})(\d)/, "($1) $2");
     valor = valor.replace(/(\d{5})(\d)/, "$1-$2");
   }
-  
+
   return valor;
 }
 
@@ -1050,80 +1050,80 @@ function aplicarMascaraTelefone(valor) {
  */
 function inicializarListenersConfiguracao() {
   console.log('🔧 Inicializando listeners de configuração...');
-  
+
   // CEP - Perfil do funcionário
   const cepPerfil = document.getElementById('configCep');
   if (cepPerfil) {
     // Remove listeners anteriores antes de adicionar novos (evita duplicação)
     cepPerfil.replaceWith(cepPerfil.cloneNode(true));
     const novoCepPerfil = document.getElementById('configCep');
-    novoCepPerfil.addEventListener('blur', function() {
+    novoCepPerfil.addEventListener('blur', function () {
       buscarEnderecoPorCEP(this.value, 'perfil');
     });
     console.log('  ✓ CEP Perfil listener adicionado');
   }
-  
+
   // CEP - Empresa
   const cepEmpresa = document.getElementById('configCEP');
   if (cepEmpresa) {
     cepEmpresa.replaceWith(cepEmpresa.cloneNode(true));
     const novoCepEmpresa = document.getElementById('configCEP');
-    novoCepEmpresa.addEventListener('blur', function() {
+    novoCepEmpresa.addEventListener('blur', function () {
       buscarEnderecoPorCEP(this.value, 'empresa');
     });
     console.log('  ✓ CEP Empresa listener adicionado');
   }
-  
+
   // CPF - Perfil do funcionário
   const cpfInput = document.getElementById('configCpf');
   if (cpfInput) {
     cpfInput.replaceWith(cpfInput.cloneNode(true));
     const novoCpfInput = document.getElementById('configCpf');
-    novoCpfInput.addEventListener('input', function(e) {
+    novoCpfInput.addEventListener('input', function (e) {
       this.value = aplicarMascaraCPF(this.value);
     });
-    novoCpfInput.addEventListener('blur', function() {
+    novoCpfInput.addEventListener('blur', function () {
       validarEVisualizarDocumento(this, 'cpf');
     });
     console.log('  ✓ CPF listener adicionado');
   }
-  
+
   // CNPJ - Empresa
   const cnpjInput = document.getElementById('configCNPJ');
   if (cnpjInput) {
     cnpjInput.replaceWith(cnpjInput.cloneNode(true));
     const novoCnpjInput = document.getElementById('configCNPJ');
-    novoCnpjInput.addEventListener('input', function(e) {
+    novoCnpjInput.addEventListener('input', function (e) {
       this.value = aplicarMascaraCNPJ(this.value);
     });
-    novoCnpjInput.addEventListener('blur', function() {
+    novoCnpjInput.addEventListener('blur', function () {
       validarEVisualizarDocumento(this, 'cnpj');
     });
     console.log('  ✓ CNPJ listener adicionado');
   }
-  
+
   // Telefone - Perfil do funcionário
   const telefonePerfil = document.getElementById('configTelefone');
   if (telefonePerfil) {
     telefonePerfil.replaceWith(telefonePerfil.cloneNode(true));
     const novoTelefonePerfil = document.getElementById('configTelefone');
-    novoTelefonePerfil.addEventListener('input', function(e) {
+    novoTelefonePerfil.addEventListener('input', function (e) {
       this.value = aplicarMascaraTelefone(this.value);
     });
     console.log('  ✓ Telefone Perfil listener adicionado');
   }
-  
+
   // Telefone - Empresa
   const telefoneEmpresa = document.getElementById('configTelefoneEmpresa');
   if (telefoneEmpresa) {
     telefoneEmpresa.replaceWith(telefoneEmpresa.cloneNode(true));
     const novoTelefoneEmpresa = document.getElementById('configTelefoneEmpresa');
-    novoTelefoneEmpresa.addEventListener('input', function(e) {
+    novoTelefoneEmpresa.addEventListener('input', function (e) {
       this.value = aplicarMascaraTelefone(this.value);
     });
     console.log('  ✓ Telefone Empresa listener adicionado');
   }
-  
+
   console.log('✅ Listeners de configuração inicializados');
 }
 

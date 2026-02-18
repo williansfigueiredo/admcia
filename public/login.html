@@ -17,15 +17,17 @@ SEÇÕES:
 ============================================================
 -->
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Cia ADM</title>
-  
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-  
+
   <style>
     /* ============================================
        ESTILOS DA PÁGINA DE LOGIN
@@ -262,7 +264,9 @@ SEÇÕES:
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .alert {
@@ -281,6 +285,7 @@ SEÇÕES:
         opacity: 0;
         transform: translateY(-10px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -363,15 +368,8 @@ SEÇÕES:
           <label class="form-label" for="email">Email</label>
           <div class="input-group">
             <i class="bi bi-envelope input-icon"></i>
-            <input 
-              type="email" 
-              id="email" 
-              name="email"
-              class="form-control" 
-              placeholder="seu@email.com"
-              autocomplete="email"
-              required
-            >
+            <input type="email" id="email" name="email" class="form-control" placeholder="seu@email.com"
+              autocomplete="email" required>
           </div>
         </div>
 
@@ -380,15 +378,8 @@ SEÇÕES:
           <label class="form-label" for="senha">Senha</label>
           <div class="input-group">
             <i class="bi bi-lock input-icon"></i>
-            <input 
-              type="password" 
-              id="senha" 
-              name="password"
-              class="form-control" 
-              placeholder="••••••••"
-              autocomplete="current-password"
-              required
-            >
+            <input type="password" id="senha" name="password" class="form-control" placeholder="••••••••"
+              autocomplete="current-password" required>
             <button type="button" class="password-toggle" id="togglePassword" aria-label="Mostrar senha">
               <i class="bi bi-eye"></i>
             </button>
@@ -403,7 +394,8 @@ SEÇÕES:
 
         <!-- Link Esqueci Senha -->
         <div style="text-align: center; margin-top: 16px;">
-          <a href="#" id="linkEsqueciSenha" style="color: var(--primary); font-size: 14px; text-decoration: none; font-weight: 500;">
+          <a href="#" id="linkEsqueciSenha"
+            style="color: var(--primary); font-size: 14px; text-decoration: none; font-weight: 500;">
             <i class="bi bi-key me-1"></i>Esqueci minha senha
           </a>
         </div>
@@ -417,13 +409,7 @@ SEÇÕES:
           <label class="form-label" for="emailRecuperacao">Email cadastrado</label>
           <div class="input-group">
             <i class="bi bi-envelope input-icon"></i>
-            <input 
-              type="email" 
-              id="emailRecuperacao" 
-              class="form-control" 
-              placeholder="seu@email.com"
-              required
-            >
+            <input type="email" id="emailRecuperacao" class="form-control" placeholder="seu@email.com" required>
           </div>
           <small style="color: var(--text-muted); font-size: 12px; margin-top: 8px; display: block;">
             Enviaremos um código de verificação para este email.
@@ -450,15 +436,9 @@ SEÇÕES:
           <label class="form-label">Código de Verificação</label>
           <div class="input-group">
             <i class="bi bi-key input-icon"></i>
-            <input 
-              type="text" 
-              id="codigoVerificacao" 
-              class="form-control" 
-              placeholder="XXXXXX"
-              maxlength="6"
+            <input type="text" id="codigoVerificacao" class="form-control" placeholder="XXXXXX" maxlength="6"
               style="text-transform: uppercase; letter-spacing: 4px; text-align: center; font-size: 18px; font-weight: bold;"
-              required
-            >
+              required>
           </div>
           <small style="color: var(--text-muted); font-size: 12px; margin-top: 8px; display: block;">
             Digite o código de 6 dígitos enviado para seu email.
@@ -471,7 +451,8 @@ SEÇÕES:
         </button>
 
         <div style="text-align: center; margin-top: 16px;">
-          <a href="#" id="linkReenviarCodigo" style="color: var(--primary); font-size: 14px; text-decoration: none; margin-right: 16px;">
+          <a href="#" id="linkReenviarCodigo"
+            style="color: var(--primary); font-size: 14px; text-decoration: none; margin-right: 16px;">
             Reenviar código
           </a>
           <a href="#" id="linkVoltarLogin2" style="color: var(--text-muted); font-size: 14px; text-decoration: none;">
@@ -488,14 +469,7 @@ SEÇÕES:
           <label class="form-label">Nova Senha</label>
           <div class="input-group">
             <i class="bi bi-lock input-icon"></i>
-            <input 
-              type="password" 
-              id="novaSenha" 
-              class="form-control" 
-              placeholder="••••••••"
-              minlength="6"
-              required
-            >
+            <input type="password" id="novaSenha" class="form-control" placeholder="••••••••" minlength="6" required>
           </div>
         </div>
 
@@ -503,14 +477,8 @@ SEÇÕES:
           <label class="form-label">Confirmar Nova Senha</label>
           <div class="input-group">
             <i class="bi bi-lock input-icon"></i>
-            <input 
-              type="password" 
-              id="confirmarNovaSenha" 
-              class="form-control" 
-              placeholder="••••••••"
-              minlength="6"
-              required
-            >
+            <input type="password" id="confirmarNovaSenha" class="form-control" placeholder="••••••••" minlength="6"
+              required>
           </div>
         </div>
 
@@ -553,7 +521,7 @@ SEÇÕES:
     togglePassword.addEventListener('click', () => {
       const type = senhaInput.type === 'password' ? 'text' : 'password';
       senhaInput.type = type;
-      
+
       const icon = togglePassword.querySelector('i');
       icon.className = type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
     });
@@ -564,7 +532,7 @@ SEÇÕES:
     function showError(message) {
       alertErrorMessage.textContent = message;
       alertError.classList.remove('hidden');
-      
+
       // Remove classes de erro dos inputs
       emailInput.classList.add('is-invalid');
       senhaInput.classList.add('is-invalid');
@@ -584,7 +552,7 @@ SEÇÕES:
      */
     function setLoading(isLoading) {
       btnLogin.disabled = isLoading;
-      
+
       if (isLoading) {
         btnLoginText.textContent = 'Entrando...';
         btnLoginSpinner.classList.remove('hidden');
@@ -686,7 +654,7 @@ SEÇÕES:
      */
     async function checkExistingAuth() {
       const token = sessionStorage.getItem('auth_token');
-      
+
       if (token) {
         try {
           const response = await fetch(`${API_URL}/api/auth/me`, {
@@ -722,7 +690,7 @@ SEÇÕES:
     // ============================================
     // RECUPERAÇÃO DE SENHA
     // ============================================
-    
+
     let emailRecuperacao = '';
     let codigoRecuperacao = '';
 
@@ -774,9 +742,9 @@ SEÇÕES:
     formRecuperacao.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideError();
-      
+
       emailRecuperacao = document.getElementById('emailRecuperacao').value.trim();
-      
+
       if (!emailRecuperacao || !isValidEmail(emailRecuperacao)) {
         showError('Por favor, informe um email válido');
         return;
@@ -785,7 +753,7 @@ SEÇÕES:
       const btn = document.getElementById('btnEnviarCodigo');
       const btnText = document.getElementById('btnEnviarCodigoText');
       const btnSpinner = document.getElementById('btnEnviarCodigoSpinner');
-      
+
       btn.disabled = true;
       btnText.textContent = 'Enviando...';
       btnSpinner.classList.remove('hidden');
@@ -807,7 +775,7 @@ SEÇÕES:
         formRecuperacao.classList.add('hidden');
         formCodigo.classList.remove('hidden');
         document.getElementById('codigoVerificacao').focus();
-        
+
         alert('📧 Código enviado!\n\nVerifique seu email e digite o código de verificação.');
 
       } catch (error) {
@@ -824,7 +792,7 @@ SEÇÕES:
      */
     linkReenviarCodigo.addEventListener('click', async (e) => {
       e.preventDefault();
-      
+
       if (!emailRecuperacao) {
         voltarAoLogin();
         return;
@@ -861,9 +829,9 @@ SEÇÕES:
     formCodigo.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideError();
-      
+
       codigoRecuperacao = document.getElementById('codigoVerificacao').value.trim().toUpperCase();
-      
+
       if (!codigoRecuperacao || codigoRecuperacao.length < 6) {
         showError('Digite o código de 6 caracteres');
         return;
@@ -872,7 +840,7 @@ SEÇÕES:
       const btn = document.getElementById('btnVerificarCodigo');
       const btnText = document.getElementById('btnVerificarCodigoText');
       const btnSpinner = document.getElementById('btnVerificarCodigoSpinner');
-      
+
       btn.disabled = true;
       btnText.textContent = 'Verificando...';
       btnSpinner.classList.remove('hidden');
@@ -910,10 +878,10 @@ SEÇÕES:
     formNovaSenha.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideError();
-      
+
       const novaSenha = document.getElementById('novaSenha').value;
       const confirmarSenha = document.getElementById('confirmarNovaSenha').value;
-      
+
       if (!novaSenha || novaSenha.length < 6) {
         showError('A senha deve ter pelo menos 6 caracteres');
         return;
@@ -927,7 +895,7 @@ SEÇÕES:
       const btn = document.getElementById('btnAlterarSenha');
       const btnText = document.getElementById('btnAlterarSenhaText');
       const btnSpinner = document.getElementById('btnAlterarSenhaSpinner');
-      
+
       btn.disabled = true;
       btnText.textContent = 'Alterando...';
       btnSpinner.classList.remove('hidden');
@@ -936,10 +904,10 @@ SEÇÕES:
         const response = await fetch(`${API_URL}/api/auth/redefinir-senha`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            email: emailRecuperacao, 
+          body: JSON.stringify({
+            email: emailRecuperacao,
             codigo: codigoRecuperacao,
-            novaSenha: novaSenha 
+            novaSenha: novaSenha
           })
         });
 
@@ -964,4 +932,5 @@ SEÇÕES:
     });
   </script>
 </body>
+
 </html>

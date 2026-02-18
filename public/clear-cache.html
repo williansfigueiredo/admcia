@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
       padding: 0;
       box-sizing: border-box;
     }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -19,25 +21,29 @@
       justify-content: center;
       padding: 20px;
     }
+
     .container {
       background: white;
       border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       padding: 40px;
       max-width: 500px;
       width: 100%;
       text-align: center;
     }
+
     h1 {
       color: #333;
       margin-bottom: 10px;
       font-size: 24px;
     }
+
     p {
       color: #666;
       margin-bottom: 30px;
       line-height: 1.6;
     }
+
     .btn {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -48,15 +54,18 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
+
     .btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     }
+
     .btn:active {
       transform: translateY(0);
     }
+
     .success {
       background: #10b981;
       color: white;
@@ -65,29 +74,35 @@
       margin-top: 20px;
       display: none;
     }
+
     .icon {
       font-size: 48px;
       margin-bottom: 20px;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="icon">🔄</div>
     <h1>Limpar Cache do Sistema</h1>
     <p>Para ver as últimas atualizações, você precisa forçar o navegador a baixar novos arquivos.</p>
-    
+
     <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left;">
       <strong style="color: #0369a1;">📝 Atalhos de Teclado (Recomendado):</strong>
       <div style="margin-top: 10px; font-family: monospace;">
         <div style="margin: 8px 0;">
           <strong>Windows/Linux:</strong><br>
-          <code style="background: white; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 5px;">Ctrl + Shift + R</code> ou 
-          <code style="background: white; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 5px;">Ctrl + F5</code>
+          <code
+            style="background: white; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 5px;">Ctrl + Shift + R</code>
+          ou
+          <code
+            style="background: white; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 5px;">Ctrl + F5</code>
         </div>
         <div style="margin: 8px 0;">
           <strong>Mac:</strong><br>
-          <code style="background: white; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 5px;">Cmd + Shift + R</code>
+          <code
+            style="background: white; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 5px;">Cmd + Shift + R</code>
         </div>
       </div>
     </div>
@@ -95,19 +110,19 @@
     <p style="font-size: 14px; color: #666; margin: 20px 0;">
       <strong>OU</strong> clique no botão abaixo para limpar o cache e recarregar:
     </p>
-    
+
     <button class="btn" onclick="clearAndReload()">
       Limpar Cache e Recarregar
     </button>
-    
+
     <p style="font-size: 12px; color: #999; margin-top: 20px;">
       ⚠️ Você precisará fazer login novamente após limpar o cache.
     </p>
-    
+
     <div class="success" id="successMsg">
       ✅ Cache limpo! Redirecionando para login...
     </div>
-    
+
     <div style="margin-top: 30px; font-size: 12px; color: #999;">
       Versão atual: <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 3px;">v=202602161545</code>
     </div>
@@ -116,34 +131,34 @@
   <script>
     function clearAndReload() {
       console.log('🔄 Limpando cache do sistema...');
-      
+
       // Limpa TUDO do localStorage
       localStorage.clear();
       console.log('✅ localStorage limpo');
-      
+
       // Limpa sessionStorage também
       sessionStorage.clear();
       console.log('✅ sessionStorage limpo');
-      
+
       // Limpa cookies
-      document.cookie.split(";").forEach(function(c) { 
-        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      document.cookie.split(";").forEach(function (c) {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
       console.log('✅ Cookies limpos');
-      
+
       // Limpa service worker cache se existir
       if ('caches' in window) {
-        caches.keys().then(function(names) {
-          names.forEach(function(name) {
+        caches.keys().then(function (names) {
+          names.forEach(function (name) {
             caches.delete(name);
             console.log('✅ Cache deletado:', name);
           });
         });
       }
-      
+
       // Mostra mensagem de sucesso
       document.getElementById('successMsg').style.display = 'block';
-      
+
       // Força reload sem cache após 1.5 segundos
       setTimeout(() => {
         console.log('🔄 Redirecionando para login...');
@@ -151,11 +166,12 @@
         window.location.href = '/public/login.html?t=' + new Date().getTime();
       }, 1500);
     }
-    
+
     // Log da versão atual
     console.log('📅 Versão dos scripts: v=202602161545');
     console.log('🌐 URL atual:', window.location.href);
     console.log('💡 Dica: Use Ctrl+Shift+R para hard refresh');
   </script>
 </body>
+
 </html>

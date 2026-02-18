@@ -12914,12 +12914,17 @@ async function carregarTransacoes() {
 
 // Função global para calcular alertas de vencimento (reutilizável)
 window.calcularAlertaVencimento = function(dataVencimento, status) {
+  // DEBUG: Sempre loga quando a função é chamada
+  console.log('🔔 calcularAlertaVencimento chamada:', { dataVencimento, status });
+  
   // Não mostra alerta se já está pago, cancelado ou vencido
   if (status === 'pago' || status === 'cancelado' || status === 'atrasado' || status === 'Pago' || status === 'Cancelado' || status === 'Vencido') {
+    console.log('⏭️ Status bloqueado (já pago/cancelado/vencido):', status);
     return '';
   }
   
   if (!dataVencimento) {
+    console.log('⏭️ Sem data de vencimento');
     return '';
   }
   
@@ -12955,29 +12960,36 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
     const diffTime = vencimentoDate.getTime() - hojeDate.getTime();
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     
-    console.log('🔔 Alerta vencimento:', { 
+    console.log('🔔 Alerta vencimento calculado:', { 
       dataVencimento, 
       status, 
       hoje: hojeStr,
       vencimento: vencimentoStr,
-      diffDays 
+      diffDays,
+      hojeDate: hojeDate.toISOString(),
+      vencimentoDate: vencimentoDate.toISOString()
     });
     
     // Alertas com ícone ⚠️
     if (diffDays < 0) {
       // Já passou (não mostra, pois status já deve ser "Vencido")
+      console.log('⏭️ Data já passou (diffDays < 0)');
       return '';
     } else if (diffDays === 0) {
       // Vence HOJE
+      console.log('⚠️ VENCE HOJE! Retornando alerta');
       return '<span class="ms-2" title="⚠️ VENCE HOJE!" style="cursor: help; font-size: 1.2em;">⚠️</span>';
     } else if (diffDays === 1) {
       // Vence amanhã
+      console.log('⚠️ Vence amanhã! Retornando alerta');
       return '<span class="ms-2" title="⚠️ Vence amanhã" style="cursor: help; font-size: 1.2em;">⚠️</span>';
     } else if (diffDays === 2) {
       // Vence em 2 dias
+      console.log('⚠️ Vence em 2 dias! Retornando alerta');
       return '<span class="ms-2" title="⚠️ Vence em 2 dias" style="cursor: help; font-size: 1.1em;">⚠️</span>';
     }
     
+    console.log('⏭️ Fora do range de alerta (diffDays:', diffDays, ')');
     return '';
   } catch (error) {
     console.error('❌ Erro ao calcular alerta:', error, dataVencimento);
