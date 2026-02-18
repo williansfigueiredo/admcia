@@ -12976,17 +12976,17 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
       console.log('⏭️ Data já passou (diffDays < 0)');
       return '';
     } else if (diffDays === 0) {
-      // Vence HOJE
+      // Vence HOJE - VERMELHO
       console.log('⚠️ VENCE HOJE! Retornando alerta');
-      return '<span class="ms-2" title="⚠️ VENCE HOJE!" style="cursor: help; font-size: 1.2em;">⚠️</span>';
+      return '<span class="ms-2" title="⚠️ VENCE HOJE!" style="color: #dc3545; font-size: 1.3em; cursor: default;">⚠️</span>';
     } else if (diffDays === 1) {
-      // Vence amanhã
+      // Vence amanhã - LARANJA
       console.log('⚠️ Vence amanhã! Retornando alerta');
-      return '<span class="ms-2" title="⚠️ Vence amanhã" style="cursor: help; font-size: 1.2em;">⚠️</span>';
+      return '<span class="ms-2" title="⚠️ Vence amanhã" style="color: #ff9800; font-size: 1.2em; cursor: default;">⚠️</span>';
     } else if (diffDays === 2) {
-      // Vence em 2 dias
+      // Vence em 2 dias - AMARELO
       console.log('⚠️ Vence em 2 dias! Retornando alerta');
-      return '<span class="ms-2" title="⚠️ Vence em 2 dias" style="cursor: help; font-size: 1.1em;">⚠️</span>';
+      return '<span class="ms-2" title="⚠️ Vence em 2 dias" style="color: #ffc107; font-size: 1.1em; cursor: default;">⚠️</span>';
     }
     
     console.log('⏭️ Fora do range de alerta (diffDays:', diffDays, ')');
