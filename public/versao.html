@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação de Versão</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+        }
+        .version {
+            font-size: 72px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        .check {
+            font-size: 100px;
+            margin: 20px 0;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .status {
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+        .info {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .info ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .info li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="check">✅</div>
+        <h1>Cache Limpo com Sucesso!</h1>
+        <div class="status">VERSÃO ATUALIZADA</div>
+        <div class="version">v2.1.0</div>
+        <p><strong>Última Atualização:</strong></p>
+        <div class="timestamp" id="timestamp"></div>
+        
+        <div class="info">
+            <h3 style="margin-top: 0;">✨ Novidades desta versão:</h3>
+            <ul>
+                <li>✅ Sincronização de transações corrigida</li>
+                <li>✅ Layout dos ícones de alerta ajustado</li>
+                <li>🔴 Ícone vermelho para "VENCE HOJE"</li>
+                <li>🟡 Ícone amarelo para "Vence amanhã"</li>
+                <li>🟡 Ícone amarelo para "Vence em 2 dias"</li>
+            </ul>
+        </div>
+        
+        <p style="margin-top: 20px;">
+            <strong>Se você está vendo esta página com a versão v2.1.0,<br>
+            significa que o cache foi limpo corretamente!</strong>
+        </p>
+        
+        <p style="font-size: 12px; color: #999; margin-top: 20px;">
+            Agora você pode voltar para: <a href="/" style="color: #667eea;">localhost:3000</a>
+        </p>
+    </div>
+    
+    <script>
+        // Mostra timestamp atual
+        const agora = new Date();
+        document.getElementById('timestamp').textContent = 
+            agora.toLocaleString('pt-BR', { 
+                dateStyle: 'full', 
+                timeStyle: 'long' 
+            });
+        
+        // Força recarga a cada 2 segundos para garantir que não está em cache
+        let contador = 5;
+        setInterval(() => {
+            contador--;
+            if (contador === 0) {
+                window.location.reload();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -4649,9 +4649,9 @@ function atualizarCacheEInterface(id, tipo, novoValor) {
     if (typeof carregarEstoque === 'function') carregarEstoque();
     
     // RECARREGA TRANSAÇÕES quando muda status de pagamento
-    if (tipo === 'pagamento' && typeof carregarTransacoes === 'function') {
+    if (tipo === 'pagamento' && typeof window.carregarTransacoes === 'function') {
       console.log('🔄 Recarregando transações após mudança de pagamento...');
-      carregarTransacoes();
+      window.carregarTransacoes();
     }
     
     alert(`✅ Pedido atualizado para: ${novoValor}`);
@@ -12738,7 +12738,7 @@ function inicializarFinanceiro() {
   }
 
   carregarResumoFinanceiro();
-  carregarTransacoes();
+  window.carregarTransacoes();
 
   // Pequeno delay para garantir que o canvas já está renderizado
   setTimeout(() => {
@@ -12867,8 +12867,8 @@ async function carregarResumoFinanceiro() {
   }
 }
 
-// Carrega transações
-async function carregarTransacoes() {
+// Carrega transações (função global para ser chamada de outros lugares)
+window.carregarTransacoes = async function() {
   const tipo = document.getElementById('finFiltroTipo')?.value || 'todos';
   const status = document.getElementById('finFiltroStatus')?.value || 'todos';
   const busca = document.getElementById('finBusca')?.value || '';
@@ -13299,7 +13299,7 @@ window.mudarPaginaTransacoes = function (novaPagina) {
 
 // Filtrar transações
 function filtrarTransacoes() {
-  carregarTransacoes();
+  window.carregarTransacoes();
 }
 
 // Atualiza categorias baseado no tipo selecionado
@@ -13452,7 +13452,7 @@ async function salvarTransacao() {
       bootstrap.Modal.getInstance(document.getElementById('modalNovaTransacao'))?.hide();
 
       // Recarrega tudo
-      carregarTransacoes();
+      window.carregarTransacoes();
       carregarResumoFinanceiro();
       carregarGraficoFluxoCaixa();
       carregarGraficoDespesasCategoria();
@@ -13650,7 +13650,7 @@ async function marcarTransacaoPaga(id) {
 
     if (response.ok) {
       alert('Transação marcada como paga!');
-      carregarTransacoes();
+      window.carregarTransacoes();
       carregarResumoFinanceiro();
     }
   } catch (error) {
@@ -13672,7 +13672,7 @@ async function marcarJobPago(jobId) {
 
     if (response.ok) {
       alert('Job marcado como pago!');
-      carregarTransacoes();
+      window.carregarTransacoes();
       carregarResumoFinanceiro();
       carregarGraficoFluxoCaixa();
       carregarGraficoDespesasCategoria();
@@ -13692,7 +13692,7 @@ async function excluirTransacao(id) {
 
     if (response.ok) {
       alert('Transação excluída!');
-      carregarTransacoes();
+      window.carregarTransacoes();
       carregarResumoFinanceiro();
       carregarGraficoFluxoCaixa();
       carregarGraficoDespesasCategoria();
