@@ -1096,16 +1096,16 @@ document.addEventListener('DOMContentLoaded', function () {
  * @param {object} options - Opções de formatação para toLocaleDateString
  * @returns {string} Data formatada ou '-'
  */
-window.formatarDataLocal = function(dataStr, options = { day: '2-digit', month: 'short', year: 'numeric' }) {
+window.formatarDataLocal = function (dataStr, options = { day: '2-digit', month: 'short', year: 'numeric' }) {
   if (!dataStr) return '-';
-  
+
   // Pega apenas a parte da data (YYYY-MM-DD)
   const dataPura = dataStr.split('T')[0];
   const [ano, mes, dia] = dataPura.split('-').map(Number);
-  
+
   // Cria data local (mês é 0-indexed no JavaScript)
   const data = new Date(ano, mes - 1, dia);
-  
+
   return data.toLocaleDateString('pt-BR', options);
 };
 
@@ -4648,7 +4648,7 @@ function atualizarCacheEInterface(id, tipo, novoValor) {
 // Função para atualizar cards imediatamente usando dados do cache
 function atualizarCardsComCache() {
   const jobs = window.todosOsJobsCache || [];
-  
+
   // --- CARD 1: JOBS ---
   const elValorJobs = document.getElementById('kpi-contratos-ativos');
   if (elValorJobs) {
@@ -12750,6 +12750,12 @@ async function carregarResumoFinanceiro() {
     document.getElementById('finRecebido').textContent = formatarValor(dados.recebidoMes);
     document.getElementById('finDespesas').textContent = formatarValor(dados.despesasMes);
 
+    // Atualiza despesas detalhadas (pagas e pendentes)
+    const despesasPagasEl = document.getElementById('finDespesasPagas');
+    const despesasPendentesEl = document.getElementById('finDespesasPendentes');
+    if (despesasPagasEl) despesasPagasEl.textContent = formatarValor(dados.despesasPagasMes);
+    if (despesasPendentesEl) despesasPendentesEl.textContent = formatarValor(dados.despesasPendentesMes);
+
     // Saldo com cor
     const saldoEl = document.getElementById('finSaldo');
     saldoEl.textContent = formatarValor(dados.saldo);
@@ -12824,7 +12830,7 @@ async function carregarTransacoes() {
   const categoria = document.getElementById('finFiltroCategoria')?.value || 'todos';
   const dataInicio = document.getElementById('finFiltroDataInicio')?.value || '';
   const dataFim = document.getElementById('finFiltroDataFim')?.value || '';
-  
+
   // IMPORTANTE: Zera os cards antes de carregar novos dados (evita valores fantasmas)
   const resumoContainer = document.getElementById('resumoTransacoesFiltradas');
   if (resumoContainer) {
@@ -12969,7 +12975,7 @@ function renderizarTransacoesPaginadas() {
 // Atualiza o resumo das transações filtradas
 function atualizarResumoTransacoesFiltradas() {
   const resumoContainer = document.getElementById('resumoTransacoesFiltradas');
-  
+
   // Formata valores
   const formatarValor = (v) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -12982,7 +12988,7 @@ function atualizarResumoTransacoesFiltradas() {
   // Se não houver transações filtradas, zera os valores e oculta os cards
   if (!Array.isArray(transacoesFiltradas) || transacoesFiltradas.length === 0) {
     console.log('⚠️ Nenhuma transação filtrada - Zerando cards');
-    
+
     // Zera todos os valores
     if (elemAReceber) {
       elemAReceber.textContent = formatarValor(0);
@@ -13000,7 +13006,7 @@ function atualizarResumoTransacoesFiltradas() {
       elemBalanco.textContent = formatarValor(0);
       elemBalanco.className = 'h5 mb-0 fw-bold text-success';
     }
-    
+
     // Oculta o container
     if (resumoContainer) {
       resumoContainer.style.display = 'none';

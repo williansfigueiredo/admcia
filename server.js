@@ -1484,7 +1484,7 @@ app.put('/jobs/:id', (req, res) => {
       `;
       const descricaoTransacao = `Pedido - ${data.descricao || 'Serviço'}`;
       const valorJob = parseFloat(data.valor) || 0;
-      
+
       db.query(sqlUpdateTransacao, [dataVencimento, valorJob, descricaoTransacao, id], (errTrans) => {
         if (errTrans) {
           console.error('❌ Erro ao atualizar transação:', errTrans);
@@ -1675,6 +1675,15 @@ app.get('/financeiro/resumo', (req, res) => {
         AND MONTH(data_vencimento) = MONTH(CURRENT_DATE()) 
         AND YEAR(data_vencimento) = YEAR(CURRENT_DATE())
     `,
+    // Despesas PENDENTES ESTE MÊS (para mostrar no card)
+    despesasPendentesMesAtual: `
+      SELECT COALESCE(SUM(valor), 0) as total 
+      FROM transacoes 
+      WHERE tipo = 'despesa'
+        AND status = 'pendente'
+        AND MONTH(data_vencimento) = MONTH(CURRENT_DATE()) 
+        AND YEAR(data_vencimento) = YEAR(CURRENT_DATE())
+    `,
     // Despesas MÊS ANTERIOR (para comparação)
     despesasMesAnterior: `
       SELECT COALESCE(SUM(valor), 0) as total 
@@ -1698,6 +1707,7 @@ app.get('/financeiro/resumo', (req, res) => {
     recebidoMes: 0,
     recebidoMesAnterior: 0,
     despesasPagasMes: 0, // NOVO: Despesas efetivamente pagas do mês
+    despesasPendentesMes: 0, // NOVO: Despesas pendentes do mês
     despesasMes: 0,
     despesasMesAnterior: 0,
     vencidas: 0,
@@ -1731,26 +1741,30 @@ app.get('/financeiro/resumo', (req, res) => {
           db.query(queries.despesasMesAtual, (err, r3) => {
             if (!err && r3[0]) resultado.despesasMes = parseFloat(r3[0].total) || 0;
 
-            db.query(queries.despesasMesAnterior, (err, r3b) => {
-              if (!err && r3b[0]) resultado.despesasMesAnterior = parseFloat(r3b[0].total) || 0;
+            db.query(queries.despesasPendentesMesAtual, (err, r3p) => {
+              if (!err && r3p[0]) resultado.despesasPendentesMes = parseFloat(r3p[0].total) || 0;
 
-              db.query(queries.vencidas, (err, r4) => {
-                if (!err && r4[0]) {
-                  resultado.vencidas = parseFloat(r4[0].total) || 0;
-                  resultado.qtdVencidas = r4[0].qtd || 0;
-                }
+              db.query(queries.despesasMesAnterior, (err, r3b) => {
+                if (!err && r3b[0]) resultado.despesasMesAnterior = parseFloat(r3b[0].total) || 0;
 
-                // CORREÇÃO: O card "Já Pago/Recebido" deve mostrar: Receitas Pagas - Despesas Pagas
-                // Esse é o saldo REAL já efetivado (não inclui pendentes)
-                resultado.saldo = resultado.recebidoMes - resultado.despesasPagasMes;
-                resultado.saldoMesAnterior = resultado.recebidoMesAnterior - resultado.despesasMesAnterior;
+                db.query(queries.vencidas, (err, r4) => {
+                  if (!err && r4[0]) {
+                    resultado.vencidas = parseFloat(r4[0].total) || 0;
+                    resultado.qtdVencidas = r4[0].qtd || 0;
+                  }
 
-                // Calcula variações percentuais
-                resultado.variacaoRecebido = calcularVariacao(resultado.recebidoMes, resultado.recebidoMesAnterior);
-                resultado.variacaoDespesas = calcularVariacao(resultado.despesasMes, resultado.despesasMesAnterior);
-                resultado.variacaoSaldo = calcularVariacao(resultado.saldo, resultado.saldoMesAnterior);
+                  // CORREÇÃO: O card "Já Pago/Recebido" deve mostrar: Receitas Pagas - Despesas Pagas
+                  // Esse é o saldo REAL já efetivado (não inclui pendentes)
+                  resultado.saldo = resultado.recebidoMes - resultado.despesasPagasMes;
+                  resultado.saldoMesAnterior = resultado.recebidoMesAnterior - resultado.despesasMesAnterior;
 
-                res.json(resultado);
+                  // Calcula variações percentuais
+                  resultado.variacaoRecebido = calcularVariacao(resultado.recebidoMes, resultado.recebidoMesAnterior);
+                  resultado.variacaoDespesas = calcularVariacao(resultado.despesasMes, resultado.despesasMesAnterior);
+                  resultado.variacaoSaldo = calcularVariacao(resultado.saldo, resultado.saldoMesAnterior);
+
+                  res.json(resultado);
+                });
               });
             });
           });
