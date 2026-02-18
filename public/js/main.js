@@ -7388,7 +7388,7 @@ function renderizarTabelaPedidosPerfil(listaJobs) {
   if (mobileContainer) mobileContainer.innerHTML = "";
 
   if (listaJobs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum pedido encontrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Nenhum pedido encontrado.</td></tr>';
     if (mobileContainer) mobileContainer.innerHTML = '<div class="text-center py-4 text-muted">Nenhum pedido encontrado.</div>';
     return;
   }
@@ -7407,6 +7407,10 @@ function renderizarTabelaPedidosPerfil(listaJobs) {
 
     // Pega o badge de status (usando sua função existente)
     const badgeStatus = getStatusPill(job.status);
+    const badgePagamento = getPagamentoPill(job.pagamento);
+    
+    // Alerta de vencimento
+    const alertaVencimento = job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : '';
 
     // Desktop: table row
     const trJob = document.createElement('tr');
@@ -7416,6 +7420,10 @@ function renderizarTabelaPedidosPerfil(listaJobs) {
             <td>${dataFmt}</td>
             <td>${valorFmt}</td>
             <td>${badgeStatus}</td> 
+            <td>
+              ${badgePagamento}
+              ${alertaVencimento}
+            </td> 
             <td class="text-end pe-4">
               <button class="btn btn-sm btn-light border" onclick="window.abrirHistoricoJob(${job.id}, ${window.idPerfilAtual})">
                 <i class="bi bi-eye"></i> Ver
@@ -7439,6 +7447,8 @@ function renderizarTabelaPedidosPerfil(listaJobs) {
         </div>
         <div class="pedido-footer">
           ${badgeStatus}
+          ${badgePagamento}
+          ${alertaVencimento}
           <button class="btn btn-sm btn-light border" onclick="window.abrirHistoricoJob(${job.id}, ${window.idPerfilAtual})">
             <i class="bi bi-eye"></i> Ver
           </button>
@@ -12918,27 +12928,25 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
   const diffTime = vencimento - hoje;
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
-  // Alertas com ANTECEDÊNCIA
+  // Log para debug
+  console.log('🔔 Alerta vencimento:', { dataVencimento, status, diffDays });
+  
+  // Alertas simplificados
   if (diffDays < 0) {
-    // Já venceu
+    // Já passou do vencimento (não mostra, pois status já é "Vencido")
     return '';
   } else if (diffDays === 0) {
-    // Vence hoje - ÚLTIMO DIA
-    return '<span class="badge bg-danger text-white ms-2" title="Último dia para pagamento!"><i class="bi bi-exclamation-octagon-fill"></i> Último dia</span>';
+    // Vence HOJE - dia exato do vencimento
+    return '<span class="badge bg-danger text-white ms-2" title="Vence hoje!"><i class="bi bi-exclamation-octagon-fill"></i> Vence hoje</span>';
   } else if (diffDays === 1) {
-    // Vence amanhã
+    // Vence amanhã - 1 dia antes
     return '<span class="badge bg-warning text-dark ms-2" title="Vence amanhã"><i class="bi bi-exclamation-triangle-fill"></i> Vence amanhã</span>';
   } else if (diffDays === 2) {
     // Vence em 2 dias
-    return '<span class="badge bg-warning text-dark ms-2" title="Vence em 2 dias"><i class="bi bi-exclamation-triangle"></i> 2 dias</span>';
-  } else if (diffDays >= 3 && diffDays <= 5) {
-    // Vence em 3-5 dias - Próximo do vencimento
-    return '<span class="badge bg-info-subtle text-info ms-2" title="Próximo do vencimento (" + diffDays + " dias)"><i class="bi bi-bell-fill"></i> Próximo (" + diffDays + "d)</span>';
-  } else if (diffDays >= 6 && diffDays <= 7) {
-    // Vence em 6-7 dias
-    return '<span class="badge bg-secondary-subtle text-secondary ms-2" title="Vence em " + diffDays + " dias"><i class="bi bi-bell"></i> " + diffDays + " dias</span>';
+    return '<span class="badge bg-warning-subtle text-warning ms-2" title="Vence em 2 dias"><i class="bi bi-bell-fill"></i> Vence em 2 dias</span>';
   }
   
+  // Não mostra alerta para mais de 2 dias
   return '';
 };
 
