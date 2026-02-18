@@ -9350,6 +9350,14 @@ body.hide-values .sensitive-value::before {
   -webkit-text-fill-color: #64748b;
 }
 
+/* Versão menor para valores em tabelas */
+body.hide-values td .sensitive-value::before,
+body.hide-values span.sensitive-value::before {
+  content: '••••';
+  font-size: 1rem;
+  letter-spacing: 2px;
+}
+
 /* Esconde também os trends/percentuais */
 body.hide-values .sensitive-value .bi,
 body.hide-values .sensitive-value span {

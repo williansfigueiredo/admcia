@@ -13105,7 +13105,7 @@ function renderizarTransacoesPaginadas() {
         </td>
         <td class="${tipoClass}">${t.tipo === 'receita' ? 'Receita' : 'Despesa'}</td>
         <td>${t.categoria || '-'}</td>
-        <td class="fw-bold ${tipoClass}">${formatarValor(t.valor, t.tipo)}</td>
+        <td class="fw-bold ${tipoClass}"><span class="sensitive-value">${formatarValor(t.valor, t.tipo)}</span></td>
         <td>${formatarData(t.data_vencimento)}</td>
         <td style="white-space: nowrap;">${getBadgeStatus(t.status)}${getAlertaVencimento(t.data_vencimento, t.status)}</td>
         <td class="text-end">
@@ -13160,19 +13160,19 @@ function atualizarResumoTransacoesFiltradas() {
     // Zera todos os valores
     if (elemAReceber) {
       elemAReceber.textContent = formatarValor(0);
-      elemAReceber.className = 'h5 mb-0 fw-bold text-success';
+      elemAReceber.className = 'h5 mb-0 fw-bold text-success sensitive-value';
     }
     if (elemAPagar) {
       elemAPagar.textContent = formatarValor(0);
-      elemAPagar.className = 'h5 mb-0 fw-bold text-danger';
+      elemAPagar.className = 'h5 mb-0 fw-bold text-danger sensitive-value';
     }
     if (elemRecebido) {
       elemRecebido.textContent = formatarValor(0);
-      elemRecebido.className = 'h5 mb-0 fw-bold text-primary';
+      elemRecebido.className = 'h5 mb-0 fw-bold text-primary sensitive-value';
     }
     if (elemBalanco) {
       elemBalanco.textContent = formatarValor(0);
-      elemBalanco.className = 'h5 mb-0 fw-bold text-success';
+      elemBalanco.className = 'h5 mb-0 fw-bold text-success sensitive-value';
     }
 
     // Oculta o container
@@ -13225,21 +13225,21 @@ function atualizarResumoTransacoesFiltradas() {
   // Atualiza os elementos
   if (elemAReceber) {
     elemAReceber.textContent = formatarValor(totalAReceber);
-    elemAReceber.className = 'h5 mb-0 fw-bold text-success';
+    elemAReceber.className = 'h5 mb-0 fw-bold text-success sensitive-value';
   }
   if (elemAPagar) {
     elemAPagar.textContent = formatarValor(totalAPagar);
-    elemAPagar.className = 'h5 mb-0 fw-bold text-danger';
+    elemAPagar.className = 'h5 mb-0 fw-bold text-danger sensitive-value';
   }
   // CORREÇÃO: Mostra Receitas Pagas - Despesas Pagas
   if (elemRecebido) {
     elemRecebido.textContent = formatarValor(jaEfetivado);
-    elemRecebido.className = 'h5 mb-0 fw-bold ' + (jaEfetivado >= 0 ? 'text-primary' : 'text-danger');
+    elemRecebido.className = 'h5 mb-0 fw-bold sensitive-value ' + (jaEfetivado >= 0 ? 'text-primary' : 'text-danger');
   }
 
   if (elemBalanco) {
     elemBalanco.textContent = formatarValor(balancoFiltrado);
-    elemBalanco.className = 'h5 mb-0 fw-bold ' + (balancoFiltrado >= 0 ? 'text-success' : 'text-danger');
+    elemBalanco.className = 'h5 mb-0 fw-bold sensitive-value ' + (balancoFiltrado >= 0 ? 'text-success' : 'text-danger');
   }
 }
 
