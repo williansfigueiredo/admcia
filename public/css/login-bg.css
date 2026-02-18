@@ -2,6 +2,7 @@
   Adiciona a imagem de background da tela de login
 */
 body.login-bg {
+  position: relative;
   background: url('/public/login-bg.jpg') no-repeat center center fixed;
   background-size: cover;
 }
@@ -11,14 +12,15 @@ body.login-bg::before {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.45);
   /* escurece a imagem para melhor contraste */
-  z-index: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .login-container {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
