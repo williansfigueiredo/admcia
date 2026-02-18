@@ -1,0 +1,11 @@
+{
+  "version": "2.1.1",
+  "build": "20260218-141500",
+  "changes": [
+    "Corrigido cálculo de alerta de vencimento",
+    "Sincronização automática de transações",
+    "Ícones de alerta com cores diferenciadas",
+    "Correção de layout dos ícones"
+  ],
+  "timestamp": "2026-02-18T14:15:00.000Z"
+}
