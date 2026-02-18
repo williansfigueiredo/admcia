@@ -1,11 +1,10 @@
 {
-  "version": "2.1.1",
-  "build": "20260218-141500",
+  "version": "2.1.2",
+  "build": "20260218-155000",
   "changes": [
-    "Corrigido cálculo de alerta de vencimento",
-    "Sincronização automática de transações",
-    "Ícones de alerta com cores diferenciadas",
-    "Correção de layout dos ícones"
+    "FIX CRÍTICO: Usa horário LOCAL (não UTC) para calcular vencimento HOJE",
+    "Corrige layout do ícone de alerta (nowrap, tamanho reduzido)",
+    "Cores corretas: VERMELHO para hoje, AMARELO para 1-2 dias"
   ],
-  "timestamp": "2026-02-18T14:15:00.000Z"
+  "timestamp": "2026-02-18T15:50:00.000Z"
 }
