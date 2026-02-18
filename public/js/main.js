@@ -4647,6 +4647,13 @@ function atualizarCacheEInterface(id, tipo, novoValor) {
       renderizarTabelaContratos(window.paginaAtual || 1);
     }
     if (typeof carregarEstoque === 'function') carregarEstoque();
+    
+    // RECARREGA TRANSAÇÕES quando muda status de pagamento
+    if (tipo === 'pagamento' && typeof carregarTransacoes === 'function') {
+      console.log('🔄 Recarregando transações após mudança de pagamento...');
+      carregarTransacoes();
+    }
+    
     alert(`✅ Pedido atualizado para: ${novoValor}`);
   }, 100);
 }
@@ -12978,15 +12985,15 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
     } else if (diffDays === 0) {
       // Vence HOJE - VERMELHO
       console.log('⚠️ VENCE HOJE! Retornando alerta');
-      return '<span class="ms-2" title="⚠️ VENCE HOJE!" style="color: #dc3545; font-size: 1.3em; cursor: default;">⚠️</span>';
+      return '<span class="ms-1" title="⚠️ VENCE HOJE!" style="color: #dc3545; font-size: 1.2em; cursor: default; display: inline-block; vertical-align: middle;">⚠️</span>';
     } else if (diffDays === 1) {
       // Vence amanhã - AMARELO
       console.log('⚠️ Vence amanhã! Retornando alerta');
-      return '<span class="ms-2" title="⚠️ Vence amanhã" style="color: #ffc107; font-size: 1.2em; cursor: default;">⚠️</span>';
+      return '<span class="ms-1" title="⚠️ Vence amanhã" style="color: #ffc107; font-size: 1.1em; cursor: default; display: inline-block; vertical-align: middle;">⚠️</span>';
     } else if (diffDays === 2) {
       // Vence em 2 dias - AMARELO
       console.log('⚠️ Vence em 2 dias! Retornando alerta');
-      return '<span class="ms-2" title="⚠️ Vence em 2 dias" style="color: #ffc107; font-size: 1.1em; cursor: default;">⚠️</span>';
+      return '<span class="ms-1" title="⚠️ Vence em 2 dias" style="color: #ffc107; font-size: 1.05em; cursor: default; display: inline-block; vertical-align: middle;">⚠️</span>';
     }
     
     console.log('⏭️ Fora do range de alerta (diffDays:', diffDays, ')');
