@@ -4644,14 +4644,14 @@ function atualizarCacheEInterface(id, tipo, novoValor) {
       renderizarTabelaContratos(window.paginaAtual || 1);
     }
     if (typeof carregarEstoque === 'function') carregarEstoque();
-    
+
     // RECARREGA TRANSAÇÕES quando muda status de pagamento
     if (tipo === 'pagamento' && typeof window.carregarTransacoes === 'function') {
       console.log('🔄🔄🔄 PAGAMENTO MUDOU! Recarregando transações após mudança de pagamento...');
       console.log(`   Job #${id} mudou para: ${novoValor}`);
       window.carregarTransacoes();
     }
-    
+
     alert(`✅ Pedido atualizado para: ${novoValor}`);
   }, 100);
 }
@@ -7413,7 +7413,7 @@ function renderizarTabelaPedidosPerfil(listaJobs) {
     // Pega o badge de status (usando sua função existente)
     const badgeStatus = getStatusPill(job.status);
     const badgePagamento = getPagamentoPill(job.pagamento);
-    
+
     // Alerta de vencimento
     const alertaVencimento = job.data_vencimento ? window.calcularAlertaVencimento(job.data_vencimento, job.pagamento) : '';
 
@@ -11617,7 +11617,7 @@ function carregarPreferenciaValores() {
       icon.className = 'bi bi-eye-slash-fill fs-5 text-secondary';
     }
   }
-  
+
   console.log(`👁️ Preferência carregada: ${preferencia || 'visível'} (chave: ${chave})`);
 }
 
@@ -11657,7 +11657,7 @@ window.toggleDarkMode = function () {
       icon.className = 'bi bi-sun-fill fs-5 text-white'; // Sol branco fica melhor no escuro
     }
   }
-  
+
   console.log(`🎨 Tema alterado para ${temaAtual === 'dark' ? 'light' : 'dark'} (chave: ${chave})`);
 }
 
@@ -11675,7 +11675,7 @@ function carregarTemaSalvo() {
     html.setAttribute('data-bs-theme', 'light');
     if (icon) icon.className = 'bi bi-moon-stars-fill fs-5 text-secondary';
   }
-  
+
   console.log(`🎨 Tema carregado: ${temaSalvo || 'light'} (chave: ${chave})`);
 }
 
@@ -12903,9 +12903,9 @@ async function carregarResumoFinanceiro() {
 }
 
 // Carrega transações (função global para ser chamada de outros lugares)
-window.carregarTransacoes = async function() {
+window.carregarTransacoes = async function () {
   console.log('🔄🔄🔄 CARREGANDO TRANSAÇÕES - Timestamp:', new Date().toLocaleTimeString());
-  
+
   const tipo = document.getElementById('finFiltroTipo')?.value || 'todos';
   const status = document.getElementById('finFiltroStatus')?.value || 'todos';
   const busca = document.getElementById('finBusca')?.value || '';
@@ -12957,35 +12957,35 @@ window.carregarTransacoes = async function() {
 }
 
 // Função global para calcular alertas de vencimento (reutilizável)
-window.calcularAlertaVencimento = function(dataVencimento, status) {
+window.calcularAlertaVencimento = function (dataVencimento, status) {
   // DEBUG: Sempre loga quando a função é chamada
   console.log('🔔 calcularAlertaVencimento chamada:', { dataVencimento, status });
-  
+
   // Normaliza status para minúsculo para comparação
   const statusLower = (status || '').toLowerCase();
-  
+
   // Não mostra alerta se já está pago ou cancelado
   // NOTA: Removido "vencido/atrasado" da lista - queremos mostrar alerta para vencidos!
   if (statusLower === 'pago' || statusLower === 'cancelado') {
     console.log('⏭️ Status bloqueado (pago/cancelado):', status);
     return '';
   }
-  
+
   if (!dataVencimento) {
     console.log('⏭️ Sem data de vencimento');
     return '';
   }
-  
+
   try {
     // Pega data de hoje (apenas dia, sem horas) - USA HORÁRIO LOCAL
     const hoje = new Date();
     const hojeAno = hoje.getFullYear();
     const hojeMes = hoje.getMonth() + 1;
     const hojeDia = hoje.getDate();
-    
+
     // Extrai ano/mês/dia da data de vencimento SEM criar objeto Date (evita timezone)
     let vencAno, vencMes, vencDia;
-    
+
     if (typeof dataVencimento === 'string') {
       if (dataVencimento.includes('/')) {
         // Formato brasileiro: DD/MM/YYYY
@@ -13013,25 +13013,25 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
       vencMes = d.getMonth() + 1;
       vencDia = d.getDate();
     }
-    
+
     if (!vencAno || !vencMes || !vencDia) {
       console.error('❌ Não foi possível extrair data de:', dataVencimento);
       return '';
     }
-    
+
     // Calcula diferença em dias (maneira simples e confiável)
     const hojeMs = new Date(hojeAno, hojeMes - 1, hojeDia).getTime();
     const vencMs = new Date(vencAno, vencMes - 1, vencDia).getTime();
     const diffDays = Math.round((vencMs - hojeMs) / (1000 * 60 * 60 * 24));
-    
-    console.log('🔔 Alerta vencimento calculado:', { 
-      dataVencimento, 
+
+    console.log('🔔 Alerta vencimento calculado:', {
+      dataVencimento,
       status,
       hoje: `${hojeDia}/${hojeMes}/${hojeAno}`,
       vencimento: `${vencDia}/${vencMes}/${vencAno}`,
       diffDays
     });
-    
+
     // Alertas com ícone SVG customizado (triângulo colorido + exclamação preta)
     const criarIconeAlerta = (cor, titulo) => {
       return `<span title="${titulo}" style="cursor: default; margin-left: 4px;">
@@ -13060,7 +13060,7 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
       console.log('⚠️ VENCE EM 2 DIAS! Retornando alerta');
       return criarIconeAlerta('#ffc107', 'VENCE EM 2 DIAS!');
     }
-    
+
     console.log('⏭️ Fora do range de alerta (diffDays:', diffDays, ')');
     return '';
   } catch (error) {
@@ -13128,7 +13128,7 @@ function renderizarTransacoesPaginadas() {
   transacoesPagina.forEach(t => {
     const tipoClass = t.tipo === 'receita' ? 'text-income' : 'text-expense';
     const isJob = t.origem === 'job';
-    
+
     // DEBUG: Log de transações que vem de jobs
     if (isJob) {
       console.log(`📊 Transação JOB #${t.id}: "${t.descricao}" | Status: "${t.status}" | Job ID: ${t.job_id}`);

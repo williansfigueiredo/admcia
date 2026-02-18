@@ -13,7 +13,8 @@ body.login-bg::before {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0,0,0,0.45); /* escurece a imagem para melhor contraste */
+  background: rgba(0, 0, 0, 0.45);
+  /* escurece a imagem para melhor contraste */
   z-index: 0;
 }
 
