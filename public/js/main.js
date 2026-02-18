@@ -12980,9 +12980,9 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
       console.log('⚠️ VENCE HOJE! Retornando alerta');
       return '<span class="ms-2" title="⚠️ VENCE HOJE!" style="color: #dc3545; font-size: 1.3em; cursor: default;">⚠️</span>';
     } else if (diffDays === 1) {
-      // Vence amanhã - LARANJA
+      // Vence amanhã - AMARELO
       console.log('⚠️ Vence amanhã! Retornando alerta');
-      return '<span class="ms-2" title="⚠️ Vence amanhã" style="color: #ff9800; font-size: 1.2em; cursor: default;">⚠️</span>';
+      return '<span class="ms-2" title="⚠️ Vence amanhã" style="color: #ffc107; font-size: 1.2em; cursor: default;">⚠️</span>';
     } else if (diffDays === 2) {
       // Vence em 2 dias - AMARELO
       console.log('⚠️ Vence em 2 dias! Retornando alerta');
