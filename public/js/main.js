@@ -11636,11 +11636,12 @@ window.toggleDarkMode = function () {
   const html = document.documentElement;
   const icon = document.getElementById('iconTheme');
   const temaAtual = html.getAttribute('data-bs-theme');
+  const chave = getChaveUsuario('themePreference');
 
   if (temaAtual === 'dark') {
     // MUDAR PARA LIGHT
     html.setAttribute('data-bs-theme', 'light');
-    localStorage.setItem('themePreference', 'light');
+    localStorage.setItem(chave, 'light');
 
     // Ícone vira Lua (para sugerir modo escuro)
     if (icon) {
@@ -11649,18 +11650,21 @@ window.toggleDarkMode = function () {
   } else {
     // MUDAR PARA DARK
     html.setAttribute('data-bs-theme', 'dark');
-    localStorage.setItem('themePreference', 'dark');
+    localStorage.setItem(chave, 'dark');
 
     // Ícone vira Sol (para sugerir modo claro)
     if (icon) {
       icon.className = 'bi bi-sun-fill fs-5 text-white'; // Sol branco fica melhor no escuro
     }
   }
+  
+  console.log(`🎨 Tema alterado para ${temaAtual === 'dark' ? 'light' : 'dark'} (chave: ${chave})`);
 }
 
 // Carregar ao iniciar
 function carregarTemaSalvo() {
-  const temaSalvo = localStorage.getItem('themePreference');
+  const chave = getChaveUsuario('themePreference');
+  const temaSalvo = localStorage.getItem(chave);
   const icon = document.getElementById('iconTheme');
   const html = document.documentElement;
 
@@ -11671,9 +11675,14 @@ function carregarTemaSalvo() {
     html.setAttribute('data-bs-theme', 'light');
     if (icon) icon.className = 'bi bi-moon-stars-fill fs-5 text-secondary';
   }
+  
+  console.log(`🎨 Tema carregado: ${temaSalvo || 'light'} (chave: ${chave})`);
 }
 
 carregarTemaSalvo();
+
+// Recarrega tema quando usuário muda (após login)
+window.recarregarTemaSalvo = carregarTemaSalvo;
 
 
 /* =============================================================
