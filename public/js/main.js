@@ -11560,6 +11560,20 @@ window.processarVoltarDoJob = function () {
    Similar aos apps de banco para esconder saldos
    ============================================================= */
 
+// Função auxiliar para obter chave baseada no usuário logado
+function getChaveUsuario(prefixo) {
+  try {
+    const usuarioStr = sessionStorage.getItem('usuario');
+    if (usuarioStr) {
+      const usuario = JSON.parse(usuarioStr);
+      return `${prefixo}_user_${usuario.id}`;
+    }
+  } catch (e) {
+    console.warn('Erro ao obter usuário para preferência:', e);
+  }
+  return prefixo; // fallback sem usuário
+}
+
 window.toggleHideValues = function () {
   const body = document.body;
   const icon = document.getElementById('iconHideValues');
@@ -11576,28 +11590,42 @@ window.toggleHideValues = function () {
     }
   }
 
-  // Salva preferência
-  localStorage.setItem('hideValuesPreference', isHidden ? 'hidden' : 'visible');
+  // Salva preferência POR USUÁRIO
+  const chave = getChaveUsuario('hideValuesPreference');
+  localStorage.setItem(chave, isHidden ? 'hidden' : 'visible');
 
-  console.log(`👁️ Valores ${isHidden ? 'escondidos' : 'visíveis'}`);
+  console.log(`👁️ Valores ${isHidden ? 'escondidos' : 'visíveis'} (chave: ${chave})`);
 }
 
 // Carregar preferência de valores escondidos ao iniciar
 function carregarPreferenciaValores() {
-  const preferencia = localStorage.getItem('hideValuesPreference');
+  const chave = getChaveUsuario('hideValuesPreference');
+  const preferencia = localStorage.getItem(chave);
   const body = document.body;
   const icon = document.getElementById('iconHideValues');
 
+  // Reseta para estado visível primeiro
+  body.classList.remove('hide-values');
+  if (icon) {
+    icon.className = 'bi bi-eye-fill fs-5 text-secondary';
+  }
+
+  // Aplica preferência do usuário atual
   if (preferencia === 'hidden') {
     body.classList.add('hide-values');
     if (icon) {
       icon.className = 'bi bi-eye-slash-fill fs-5 text-secondary';
     }
   }
+  
+  console.log(`👁️ Preferência carregada: ${preferencia || 'visível'} (chave: ${chave})`);
 }
 
 // Inicializa quando DOM estiver pronto
 document.addEventListener('DOMContentLoaded', carregarPreferenciaValores);
+
+// Recarrega preferência quando usuário muda (após login)
+window.recarregarPreferenciaValores = carregarPreferenciaValores;
 
 
 /* =============================================================
