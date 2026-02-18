@@ -12915,39 +12915,60 @@ async function carregarTransacoes() {
 // Função global para calcular alertas de vencimento (reutilizável)
 window.calcularAlertaVencimento = function(dataVencimento, status) {
   // Não mostra alerta se já está pago, cancelado ou vencido
-  if (status === 'pago' || status === 'cancelado' || status === 'atrasado' || status === 'Pago' || status === 'Cancelado' || status === 'Vencido') return '';
-  
-  if (!dataVencimento) return '';
-  
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  
-  const vencimento = new Date(dataVencimento);
-  vencimento.setHours(0, 0, 0, 0);
-  
-  const diffTime = vencimento - hoje;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  // Log para debug
-  console.log('🔔 Alerta vencimento:', { dataVencimento, status, diffDays });
-  
-  // Alertas simplificados
-  if (diffDays < 0) {
-    // Já passou do vencimento (não mostra, pois status já é "Vencido")
+  if (status === 'pago' || status === 'cancelado' || status === 'atrasado' || status === 'Pago' || status === 'Cancelado' || status === 'Vencido') {
     return '';
-  } else if (diffDays === 0) {
-    // Vence HOJE - dia exato do vencimento
-    return '<span class="badge bg-danger text-white ms-2" title="Vence hoje!"><i class="bi bi-exclamation-octagon-fill"></i> Vence hoje</span>';
-  } else if (diffDays === 1) {
-    // Vence amanhã - 1 dia antes
-    return '<span class="badge bg-warning text-dark ms-2" title="Vence amanhã"><i class="bi bi-exclamation-triangle-fill"></i> Vence amanhã</span>';
-  } else if (diffDays === 2) {
-    // Vence em 2 dias
-    return '<span class="badge bg-warning-subtle text-warning ms-2" title="Vence em 2 dias"><i class="bi bi-bell-fill"></i> Vence em 2 dias</span>';
   }
   
-  // Não mostra alerta para mais de 2 dias
-  return '';
+  if (!dataVencimento) {
+    return '';
+  }
+  
+  try {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    // Trata a data de vencimento - pode vir como string ou Date
+    let vencimento = new Date(dataVencimento);
+    
+    // Se a data veio no formato brasileiro ou ISO, ajusta
+    if (isNaN(vencimento.getTime())) {
+      console.error('❌ Data inválida:', dataVencimento);
+      return '';
+    }
+    
+    vencimento.setHours(0, 0, 0, 0);
+    
+    const diffTime = vencimento.getTime() - hoje.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    console.log('🔔 Alerta vencimento:', { 
+      dataVencimento, 
+      status, 
+      hoje: hoje.toISOString().split('T')[0],
+      vencimento: vencimento.toISOString().split('T')[0],
+      diffDays 
+    });
+    
+    // Alertas simplificados - APENAS ÍCONE
+    if (diffDays < 0) {
+      // Já passou (não mostra, pois status já é "Vencido")
+      return '';
+    } else if (diffDays === 0) {
+      // Vence HOJE
+      return '<span class="ms-2" title="⚠️ VENCE HOJE!" style="cursor: help; font-size: 1.2em;">⚠️</span>';
+    } else if (diffDays === 1) {
+      // Vence amanhã
+      return '<span class="ms-2" title="Vence amanhã" style="cursor: help; font-size: 1.2em;">⚠️</span>';
+    } else if (diffDays === 2) {
+      // Vence em 2 dias
+      return '<span class="ms-2" title="Vence em 2 dias" style="cursor: help; font-size: 1.1em;">⚠️</span>';
+    }
+    
+    return '';
+  } catch (error) {
+    console.error('❌ Erro ao calcular alerta:', error, dataVencimento);
+    return '';
+  }
 };
 
 // Renderiza transações com paginação
