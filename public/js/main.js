@@ -1841,7 +1841,7 @@ function preencherTabela(listaJobs) {
                 <div class="text-muted small" style="font-size: 11px;">Período</div>
             </td>
 
-            <td class="fw-bold text-dark">${formatarMoeda(job.valor)}</td>
+            <td class="fw-bold text-dark"><span class="sensitive-value">${formatarMoeda(job.valor)}</span></td>
             
             <td>
                 <div class="text-dark small fw-bold">${job.data_vencimento ? window.formatarDataLocal(job.data_vencimento, { day: '2-digit', month: 'short' }) : '-'}</div>
@@ -1869,7 +1869,7 @@ function preencherTabela(listaJobs) {
           <div class="diaria-date">${textoData}</div>
         </div>
         <div class="diaria-footer">
-          <div class="diaria-valor">${formatarMoeda(job.valor)}</div>
+          <div class="diaria-valor"><span class="sensitive-value">${formatarMoeda(job.valor)}</span></div>
           ${job.data_vencimento ? `<div class="small text-muted"><i class="bi bi-calendar-check"></i> Venc: ${window.formatarDataLocal(job.data_vencimento, { day: '2-digit', month: 'short' })}</div>` : ''}
           <div class="diaria-pills">
             ${getStatusPill(job.status)}
@@ -3859,7 +3859,7 @@ function renderizarTabelaContratos(pagina) {
                     <div class="text-dark small fw-bold">${textoData}</div>
                     <div class="text-muted small" style="font-size: 11px;">Vigência</div>
                 </td>
-                <td class="fw-bold text-dark">${formatarMoeda(job.valor)}</td>
+                <td class="fw-bold text-dark"><span class="sensitive-value">${formatarMoeda(job.valor)}</span></td>
                 <td>
                     <div class="text-dark small fw-bold">${job.data_vencimento ? window.formatarDataLocal(job.data_vencimento, { day: '2-digit', month: 'short' }) : '-'}</div>
                     <div class="text-muted small" style="font-size: 11px;">Prazo pgto</div>
@@ -3913,7 +3913,7 @@ function renderizarTabelaContratos(pagina) {
           </div>
           <div class="contrato-meta">
             <span class="contrato-date">${textoData}</span>
-            <span class="contrato-valor">${formatarMoeda(job.valor)}</span>
+            <span class="contrato-valor"><span class="sensitive-value">${formatarMoeda(job.valor)}</span></span>
             ${job.data_vencimento ? `<span class="small text-muted"><i class="bi bi-calendar-check"></i> Venc: ${window.formatarDataLocal(job.data_vencimento, { day: '2-digit', month: 'short' })}</span>` : ''}
           </div>
           <div class="contrato-pills" style="white-space: nowrap;">
@@ -12997,7 +12997,7 @@ window.calcularAlertaVencimento = function(dataVencimento, status) {
     
     // Alertas com ícone SVG customizado (triângulo colorido + exclamação preta)
     const criarIconeAlerta = (cor, titulo) => {
-      return `<span title="${titulo}" style="cursor: help; margin-left: 4px;">
+      return `<span title="${titulo}" style="cursor: default; margin-left: 4px;">
         <svg style="width: 20px; height: 18px; vertical-align: middle;" viewBox="0 0 24 24">
           <path fill="${cor}" d="M1 21h22L12 2 1 21z"/>
           <path fill="${cor}" stroke="#000" stroke-width="1.5" d="M1 21h22L12 2 1 21z"/>
