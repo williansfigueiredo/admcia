@@ -4647,7 +4647,8 @@ function atualizarCacheEInterface(id, tipo, novoValor) {
     
     // RECARREGA TRANSAÇÕES quando muda status de pagamento
     if (tipo === 'pagamento' && typeof window.carregarTransacoes === 'function') {
-      console.log('🔄 Recarregando transações após mudança de pagamento...');
+      console.log('🔄🔄🔄 PAGAMENTO MUDOU! Recarregando transações após mudança de pagamento...');
+      console.log(`   Job #${id} mudou para: ${novoValor}`);
       window.carregarTransacoes();
     }
     
@@ -12866,6 +12867,8 @@ async function carregarResumoFinanceiro() {
 
 // Carrega transações (função global para ser chamada de outros lugares)
 window.carregarTransacoes = async function() {
+  console.log('🔄🔄🔄 CARREGANDO TRANSAÇÕES - Timestamp:', new Date().toLocaleTimeString());
+  
   const tipo = document.getElementById('finFiltroTipo')?.value || 'todos';
   const status = document.getElementById('finFiltroStatus')?.value || 'todos';
   const busca = document.getElementById('finBusca')?.value || '';
@@ -13072,6 +13075,11 @@ function renderizarTransacoesPaginadas() {
   transacoesPagina.forEach(t => {
     const tipoClass = t.tipo === 'receita' ? 'text-income' : 'text-expense';
     const isJob = t.origem === 'job';
+    
+    // DEBUG: Log de transações que vem de jobs
+    if (isJob) {
+      console.log(`📊 Transação JOB #${t.id}: "${t.descricao}" | Status: "${t.status}" | Job ID: ${t.job_id}`);
+    }
 
     html += `
       <tr>

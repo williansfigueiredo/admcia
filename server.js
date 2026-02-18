@@ -3059,10 +3059,12 @@ app.post('/jobs/update/:id', (req, res) => {
       // === SINCRONIZAÇÃO COM TRANSAÇÕES ===
       // Se mudou o status de PAGAMENTO, sincroniza com a transação
       if (campo === 'pagamento' && jobAntigo) {
+        console.log(`🔄 SINCRONIZAÇÃO: Pagamento mudou para "${valor}" no Job #${id}`);
+        
         // Verifica se já existe uma transação para esse job
-        db.query('SELECT id FROM transacoes WHERE job_id = ? AND tipo = "receita"', [id], (errTrans, transResults) => {
+        db.query('SELECT id, status FROM transacoes WHERE job_id = ? AND tipo = "receita"', [id], (errTrans, transResults) => {
           if (errTrans) {
-            console.error('Erro ao verificar transação:', errTrans);
+            console.error('❌ Erro ao verificar transação:', errTrans);
             return;
           }
 
@@ -3071,7 +3073,8 @@ app.post('/jobs/update/:id', (req, res) => {
           if (transResults && transResults.length > 0) {
             // Transação JÁ EXISTE - apenas ATUALIZA
             const transacaoId = transResults[0].id;
-            console.log(`📝 Atualizando transação #${transacaoId} para status: ${valor}`);
+            const statusAntigoTransacao = transResults[0].status;
+            console.log(`📝 Transação #${transacaoId} encontrada (status atual: ${statusAntigoTransacao})`);
 
             let novoStatusTransacao = 'pendente';
             let dataFinal = null;
@@ -3087,6 +3090,8 @@ app.post('/jobs/update/:id', (req, res) => {
               novoStatusTransacao = 'atrasado';
             }
 
+            console.log(`🔄 Atualizando transação #${transacaoId}: ${statusAntigoTransacao} → ${novoStatusTransacao}`);
+
             db.query(
               'UPDATE transacoes SET status = ?, data_pagamento = ? WHERE id = ?',
               [novoStatusTransacao, dataFinal, transacaoId],
@@ -3094,7 +3099,7 @@ app.post('/jobs/update/:id', (req, res) => {
                 if (errUpdate) {
                   console.error('❌ Erro ao atualizar transação:', errUpdate);
                 } else {
-                  console.log(`✅ Transação #${transacaoId} atualizada para: ${novoStatusTransacao}`);
+                  console.log(`✅ Transação #${transacaoId} atualizada com sucesso para: ${novoStatusTransacao}`);
                 }
               }
             );
